@@ -372,34 +372,71 @@ WordPress mu-plugins/
 **Auto-Rebuild on Product Sync:**
 
 1. **GitHub Repository Setup:**
-   - Initialized git repository
-   - Created GitHub repo: https://github.com/kamindu01/hercules-astro
-   - Pushed all code to GitHub
+   - Initialized git repository in `/home/kamindu/Headerless Herculess site/astro-hercules`
+   - Created GitHub repo: https://github.com/kamindu01/hercules-astro (private)
+   - Pushed all 194 files to GitHub
 
-2. **GitHub Actions Workflow:**
-   - Created `.github/workflows/deploy.yml`
+2. **GitHub Actions Workflow** (`.github/workflows/deploy.yml`):
    - Triggers: push to main, workflow_dispatch (API)
-   - Build: npm ci, npm run build
-   - Deploy: wrangler pages deploy to herculesde
+   - Steps: checkout → setup Node.js 20 → npm ci → npm run build → wrangler pages deploy
+   - Deploy target: herculesde Pages project
 
-3. **Worker Updates:**
+3. **Worker Updates** (`workers/product-sync/src/index.ts`):
    - Added `GITHUB_TOKEN` to Env interface
-   - Created `triggerSiteRebuild()` function
-   - Uses GitHub workflow_dispatch API
-   - 5-minute debounce to prevent excessive rebuilds
-   - Triggers on: product create/update/delete, category create/update/delete
-   - Scheduled sync (3 AM) clears debounce and always rebuilds
+   - Added `GITHUB_REPO` and `GITHUB_WORKFLOW` constants
+   - Created `triggerSiteRebuild()` function using GitHub workflow_dispatch API
+   - 5-minute debounce stored in KV (`last_rebuild` key)
+   - Added rebuild trigger to all webhook handlers:
+     - `/webhook/product-create`
+     - `/webhook/product-update`
+     - `/webhook/product-delete`
+     - `/webhook/category-create`
+     - `/webhook/category-update`
+     - `/webhook/category-delete`
+   - Scheduled sync (3 AM UTC) clears debounce and always rebuilds
+   - Added debug endpoints:
+     - `GET /status` - Shows last_sync, last_rebuild, github_token_configured
+     - `POST /trigger-rebuild` - Manual rebuild trigger (clears debounce first)
 
-4. **Secrets Added:**
-   - GitHub repo: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, WC_CONSUMER_KEY, WC_CONSUMER_SECRET
-   - Worker: GITHUB_TOKEN
+4. **Secrets Configured:**
+   - **GitHub repo secrets:** CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, WC_CONSUMER_KEY, WC_CONSUMER_SECRET
+   - **Worker secrets:** GITHUB_TOKEN (from `gh auth token`)
 
-5. **Worker Version:** `85c00f0d-1389-4cfb-94cb-533e74d33cc8`
+5. **Worker Version:** `fa3654f5-bec5-4c28-af9a-8b1b155040d2`
 
 6. **Test Results:**
-   - Push to main triggers build ✓
-   - Manual workflow_dispatch works ✓
-   - GitHub Actions successfully deploys to Pages ✓
+   - Push to main triggers GitHub Actions build ✓
+   - Manual `gh workflow run` works ✓
+   - Direct GitHub API call with token works (HTTP 204) ✓
+   - GitHub Actions successfully deploys to Cloudflare Pages (~50-60s) ✓
+   - Webhook signature verification works ✓
+   - **KV daily write limit hit** - rebuild debounce write failing (resets tomorrow)
+
+7. **Known Issue:**
+   - Cloudflare KV free tier has daily write limits (1,000 writes)
+   - Heavy testing exhausted today's quota
+   - Error: `KV put() limit exceeded for the day`
+   - **Will work tomorrow** when limit resets at midnight UTC
+
+8. **Verification Commands:**
+   ```bash
+   # Check worker status (shows debounce state and token config)
+   curl -s "https://hercules-product-sync.kamindudushmantha.workers.dev/status"
+
+   # Manual rebuild trigger (clears debounce)
+   curl -s -X POST "https://hercules-product-sync.kamindudushmantha.workers.dev/trigger-rebuild" \
+     -H "Authorization: Bearer hercules-webhook-secret-2024"
+
+   # Simulate WooCommerce webhook
+   PAYLOAD='{"id": 6721}'
+   SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "hercules-webhook-secret-2024" -binary | base64)
+   curl -X POST "https://hercules-product-sync.kamindudushmantha.workers.dev/webhook/product-update" \
+     -H "X-WC-Webhook-Signature: $SIGNATURE" \
+     -d "$PAYLOAD"
+
+   # Check GitHub Actions runs
+   gh run list --limit 5
+   ```
 
 ---
 

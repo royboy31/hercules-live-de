@@ -1287,7 +1287,32 @@ export default {
     // Get sync status
     if (url.pathname === '/status') {
       const lastSync = await env.PRODUCTS_KV.get('last_sync');
-      return new Response(JSON.stringify({ last_sync: lastSync }), {
+      const lastRebuild = await env.PRODUCTS_KV.get('last_rebuild');
+      const hasGithubToken = !!env.GITHUB_TOKEN;
+      return new Response(JSON.stringify({
+        last_sync: lastSync,
+        last_rebuild: lastRebuild,
+        last_rebuild_date: lastRebuild ? new Date(parseInt(lastRebuild)).toISOString() : null,
+        github_token_configured: hasGithubToken,
+        current_time: Date.now(),
+        current_time_iso: new Date().toISOString(),
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Manual rebuild trigger (for testing)
+    if (url.pathname === '/trigger-rebuild' && request.method === 'POST') {
+      const authHeader = request.headers.get('Authorization');
+      if (authHeader !== `Bearer ${env.WEBHOOK_SECRET}`) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+
+      // Clear debounce first
+      await env.PRODUCTS_KV.delete('last_rebuild');
+
+      const result = await triggerSiteRebuild(env);
+      return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

@@ -1,0 +1,202 @@
+---
+// Design Service Section - "Erwecke deine Vision zum Leben"
+---
+
+<section class="design-service-section">
+  <div class="design-service-container">
+    <!-- Image Column -->
+    <div class="image-column">
+      <div class="image-wrapper">
+        <img
+          src="/images/design/design-herc-3.png"
+          alt="Custom Design Service"
+          class="main-image"
+        />
+      </div>
+      <div class="arrow-wrapper">
+        <img
+          src="/images/design/arrow.png"
+          alt=""
+          class="arrow-image"
+        />
+      </div>
+    </div>
+
+    <!-- Content Column -->
+    <div class="content-column">
+      <h2 class="section-heading">
+        Erwecke deine Vision zum Leben – <span class="highlight">Hol dir ein individuelles Design!</span>
+      </h2>
+      <div class="description">
+        <p>Benötigen Sie personalisierte Sportartikel oder Mannschaftsbekleidung? Unser Team aus echten Designern verwandelt Ihre Idee in ein einzigartiges, professionelles Design – völlig kostenlos. Egal, ob für eine Sportmannschaft, einen Verein oder ein Unternehmen, wir kreieren etwas, das zu Ihrem Stil passt, von Fußballtrikots bis hin zu Schals und mehr.</p>
+        <p>Sagen Sie uns einfach, was Sie suchen, und wir kümmern uns darum.</p>
+      </div>
+      <a href="/angebot-anfragen" class="cta-button">
+        Kostenloses Design anfordern
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .design-service-section {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .design-service-container {
+    display: flex;
+    flex-direction: row;
+    background-image: url('/images/design/footer-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    padding: 50px 30px;
+    position: relative;
+  }
+
+  .image-column {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .image-wrapper {
+    width: 100%;
+  }
+
+  .main-image {
+    width: 75%;
+    height: auto;
+  }
+
+  .arrow-wrapper {
+    position: absolute;
+    right: -392px;
+    bottom: 13px;
+  }
+
+  .arrow-image {
+    width: 244px;
+    height: 95px;
+  }
+
+  .content-column {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .section-heading {
+    font-family: 'Jost', sans-serif;
+    font-size: 35px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    text-align: left;
+    margin: 0 0 20px 0;
+    line-height: 1.2;
+  }
+
+  .section-heading .highlight {
+    color: #469ADC;
+  }
+
+  .description {
+    font-family: 'Roboto', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: #FFFFFF;
+    line-height: 1.6;
+    margin-bottom: 25px;
+  }
+
+  .description p {
+    margin: 0 0 15px 0;
+  }
+
+  .description p:last-child {
+    margin-bottom: 0;
+  }
+
+  .cta-button {
+    display: inline-block;
+    background-color: #10C99E;
+    color: #FFFFFF;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 15px 50px;
+    border: 1px solid #10C99E;
+    border-radius: 100px;
+    transition: all 0.3s ease;
+    align-self: flex-start;
+  }
+
+  .cta-button:hover {
+    background-color: transparent;
+    color: #10C99E;
+  }
+
+  /* Tablet Responsive */
+  @media (max-width: 1024px) {
+    .section-heading {
+      font-size: 30px;
+    }
+
+    .description {
+      font-size: 15px;
+    }
+
+    .cta-button {
+      font-size: 13px;
+    }
+
+    .arrow-wrapper {
+      display: none;
+    }
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 767px) {
+    .design-service-container {
+      flex-direction: column;
+      padding: 0;
+    }
+
+    .image-column {
+      width: 100%;
+      order: 99999;
+    }
+
+    .main-image {
+      width: 100%;
+    }
+
+    .content-column {
+      width: 100%;
+      padding: 35px 20px;
+      text-align: center;
+    }
+
+    .section-heading {
+      text-align: center;
+    }
+
+    .description {
+      text-align: center;
+    }
+
+    .cta-button {
+      align-self: center;
+    }
+
+    .arrow-wrapper {
+      display: none;
+    }
+  }
+</style>

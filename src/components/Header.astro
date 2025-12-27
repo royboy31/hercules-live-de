@@ -1,0 +1,742 @@
+---
+// Header component matching WordPress Elementor header exactly
+// Container: 1280px, Logo: 70%, Icons: 22px/15px radius, Nav: 16px Jost
+import MobileMenu from './MobileMenu.astro';
+import ProductSearch from './ProductSearch.tsx';
+
+// Sportarten menu items with icons
+const sportarten = [
+  { label: 'Fußball', href: '/collections/fussball/', icon: 'Football.svg' },
+  { label: 'Rugby', href: '/collections/rugby/', icon: 'Rugby-1.svg' },
+  { label: 'Basketball', href: '/collections/basketball/', icon: 'Basketball-1.svg' },
+  { label: 'Laufen', href: '/collections/laufen/', icon: 'running-1.svg' },
+  { label: 'Field hockey', href: '/collections/feldhockey/', icon: 'field-hockey-1.svg' },
+  { label: 'Volleyball', href: '/collections/volleyball/', icon: 'volleyball-1.svg' },
+  { label: 'Handball', href: '/collections/handball/', icon: 'handball-1.svg' },
+  { label: 'Radfahren', href: '/collections/radfahren/', icon: 'cycling-1.svg' },
+  { label: 'Fitness', href: '/collections/fitness/', icon: 'fitness-1.svg' },
+  { label: 'Golf', href: '/collections/golf/', icon: 'golf-1.svg' },
+  { label: 'eSports', href: '/collections/esport/', icon: 'esport-1.svg' },
+];
+
+// Produkte menu items with icons
+const produkte = [
+  { label: 'Sportbekleidung', href: '/collections/personalisierte-sportbekleidung/', icon: 'teamwear-1.svg' },
+  { label: 'Schals', href: '/collections/personalisierte-fanschals/', icon: 'scarves-1.svg' },
+  { label: 'Mützen', href: '/collections/personalisierte-mutzen/', icon: 'beanies-3.svg' },
+  { label: 'Kopfbedeckung', href: '/collections/kopfbedeckung/', icon: 'cap-1.svg' },
+  { label: 'Wimpel', href: '/collections/personalisierte-wimpel/', icon: 'pennants-3.svg' },
+  { label: 'Handtücher', href: '/collections/handtucher/', icon: 'towelst-1.svg' },
+  { label: 'Flaggen', href: '/collections/flaggen/', icon: 'flags-1.svg' },
+  { label: 'Schuhwerk', href: '/collections/schuhwerk/', icon: 'footwear-1.svg' },
+  { label: 'Taschen', href: '/collections/taschen/', icon: 'sportsbag-1.svg' },
+  { label: 'Textilien', href: '/collections/personalisierte-textilien/', icon: 'textile-1.svg' },
+  { label: 'Trinkgefäße', href: '/collections/trinkflaschen/', icon: 'drinkware-1.svg' },
+  { label: 'Bälle', href: '/collections/balle/', icon: 'balls-1.svg' },
+  { label: 'Zubehör', href: '/collections/zubehor/', icon: 'accessories-1.svg' },
+];
+
+// Themen menu items with icons
+const themen = [
+  { label: 'Sommer', href: '/collections/sommer/', icon: 'summer-1.svg' },
+  { label: 'Winter', href: '/collections/winter/', icon: 'winter-1.svg' },
+  { label: 'Nachhaltig', href: '/collections/nachhaltigkeit/', icon: 'sustainable-2.svg' },
+  { label: 'Made in Europa', href: '/collections/hergestellt-in-europa/', icon: 'made-in-europe-1.svg' },
+  { label: 'Mode', href: '/collections/mode/', icon: 'fashion-1.svg' },
+  { label: 'Schulanfang', href: '/collections/schulanfang/', icon: 'back-to-school-1.svg' },
+  { label: 'Tifo', href: '/collections/tifo/', icon: 'tifo-1.svg' },
+  { label: 'Weihnachten', href: '/collections/weihnachten/', icon: 'christmas-1.svg' },
+  { label: 'Kleine Preise', href: '/collections/kleine-preise/', icon: 'smallprices.svg' },
+  { label: 'Geschäft', href: '/collections/business/', icon: 'business.svg' },
+  { label: 'Werbegeschenke', href: '/collections/werbegeschenke/', icon: 'giive-aways.svg' },
+  { label: 'Kinder', href: '/collections/kinder/', icon: 'kids.svg' },
+];
+
+// Direct navigation links
+const directLinks = [
+  { label: 'SPORTBEKLEIDUNG', href: '/collections/personalisierte-sportbekleidung/' },
+  { label: 'SCHALS', href: '/collections/personalisierte-fanschals/' },
+  { label: 'KOPFBEDECKUNG', href: '/collections/kopfbedeckung/' },
+  { label: 'MÜTZEN', href: '/collections/personalisierte-mutzen/' },
+];
+---
+
+<!-- Desktop Header -->
+<header class="header" id="main-header">
+  <!-- Main Header Row -->
+  <div class="header-main">
+    <div class="header-container">
+      <!-- Logo - 282x126px original, displayed at 70% width -->
+      <div class="header-logo-wrap">
+        <a href="/" class="header-logo">
+          <img
+            src="/images/hercules-logo-original1.png"
+            alt="Hercules Merchandise"
+          />
+        </a>
+      </div>
+
+      <!-- Search Bar - Full Width with React Component -->
+      <div class="header-search">
+        <ProductSearch client:load placeholder="Produkte suchen..." />
+      </div>
+
+      <!-- Header Icons -->
+      <div class="header-icons">
+        <a href="/mein-konto/" class="header-icon" aria-label="Mein Konto">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 29 29" fill="none">
+            <path d="M26.1586 24.0156C24.4333 21.0329 21.7746 18.8942 18.6718 17.8803C20.2066 16.9667 21.399 15.5744 22.0659 13.9175C22.7329 12.2606 22.8375 10.4305 22.3637 8.70833C21.8899 6.98618 20.8639 5.46717 19.4432 4.38458C18.0226 3.30198 16.2858 2.71567 14.4997 2.71567C12.7135 2.71567 10.9768 3.30198 9.55609 4.38458C8.13542 5.46717 7.1094 6.98618 6.6356 8.70833C6.16179 10.4305 6.2664 12.2606 6.93335 13.9175C7.60031 15.5744 8.79273 16.9667 10.3275 17.8803C7.22473 18.893 4.56602 21.0318 2.84074 24.0156C2.77748 24.1188 2.73551 24.2336 2.71732 24.3532C2.69914 24.4729 2.7051 24.5949 2.73485 24.7122C2.76461 24.8295 2.81756 24.9397 2.89058 25.0362C2.9636 25.1327 3.05521 25.2136 3.16 25.2742C3.26479 25.3347 3.38065 25.3736 3.50073 25.3886C3.62081 25.4037 3.74269 25.3945 3.85917 25.3617C3.97565 25.3288 4.08437 25.273 4.17892 25.1975C4.27347 25.1219 4.35194 25.0282 4.40969 24.9219C6.54391 21.2334 10.3162 19.0312 14.4997 19.0312C18.6831 19.0312 22.4554 21.2334 24.5896 24.9219C24.6474 25.0282 24.7258 25.1219 24.8204 25.1975C24.9149 25.273 25.0237 25.3288 25.1401 25.3617C25.2566 25.3945 25.3785 25.4037 25.4986 25.3886C25.6187 25.3736 25.7345 25.3347 25.8393 25.2742C25.9441 25.2136 26.0357 25.1327 26.1087 25.0362C26.1817 24.9397 26.2347 24.8295 26.2644 24.7122C26.2942 24.5949 26.3002 24.4729 26.282 24.3532C26.2638 24.2336 26.2218 24.1188 26.1586 24.0156ZM8.1559 10.875C8.1559 9.62032 8.52795 8.39383 9.22502 7.3506C9.92208 6.30738 10.9128 5.49428 12.072 5.01414C13.2312 4.534 14.5067 4.40837 15.7373 4.65314C16.9678 4.89792 18.0982 5.5021 18.9854 6.38929C19.8725 7.27648 20.4767 8.40683 20.7215 9.6374C20.9663 10.868 20.8407 12.1435 20.3605 13.3026C19.8804 14.4618 19.0673 15.4526 18.024 16.1496C16.9808 16.8467 15.7543 17.2188 14.4997 17.2188C12.8177 17.217 11.2052 16.548 10.0159 15.3587C8.82664 14.1694 8.1577 12.5569 8.1559 10.875Z" fill="#253461"></path>
+          </svg>
+        </a>
+
+        <a href="/wishlist/" class="header-icon" aria-label="Wunschliste">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 27 27" fill="none">
+            <path d="M18.7734 4.21875C16.5955 4.21875 14.6886 5.15531 13.5 6.7384C12.3114 5.15531 10.4045 4.21875 8.22656 4.21875C6.4929 4.2207 4.83079 4.91027 3.60491 6.13616C2.37902 7.36204 1.68945 9.02415 1.6875 10.7578C1.6875 18.1406 12.6341 24.1165 13.1003 24.3633C13.2231 24.4294 13.3605 24.464 13.5 24.464C13.6395 24.464 13.7769 24.4294 13.8997 24.3633C14.3659 24.1165 25.3125 18.1406 25.3125 10.7578C25.3105 9.02415 24.621 7.36204 23.3951 6.13616C22.1692 4.91027 20.5071 4.2207 18.7734 4.21875ZM13.5 22.6547C11.5741 21.5325 3.375 16.4204 3.375 10.7578C3.37667 9.47161 3.88836 8.23857 4.79784 7.32909C5.70732 6.41961 6.94036 5.90792 8.22656 5.90625C10.2779 5.90625 12.0002 6.99891 12.7195 8.75391C12.7831 8.90866 12.8912 9.04102 13.0302 9.13417C13.1692 9.22732 13.3327 9.27706 13.5 9.27706C13.6673 9.27706 13.8308 9.22732 13.9698 9.13417C14.1088 9.04102 14.2169 8.90866 14.2805 8.75391C14.9998 6.99574 16.7221 5.90625 18.7734 5.90625C20.0596 5.90792 21.2927 6.41961 22.2022 7.32909C23.1116 8.23857 23.6233 9.47161 23.625 10.7578C23.625 16.412 15.4237 21.5314 13.5 22.6547Z" fill="#253461"></path>
+          </svg>
+        </a>
+
+        <a href="#" class="header-icon cart-icon" aria-label="Warenkorb" id="header-cart-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 31 31" fill="none">
+            <path d="M12.5938 26.1562C12.5938 26.5395 12.4801 26.914 12.2672 27.2327C12.0543 27.5513 11.7517 27.7996 11.3977 27.9463C11.0437 28.0929 10.6541 28.1313 10.2783 28.0565C9.90242 27.9818 9.5572 27.7972 9.28623 27.5263C9.01527 27.2553 8.83074 26.9101 8.75598 26.5342C8.68122 26.1584 8.71959 25.7688 8.86623 25.4148C9.01288 25.0608 9.26121 24.7582 9.57983 24.5453C9.89845 24.3324 10.273 24.2188 10.6562 24.2188C11.1701 24.2188 11.6629 24.4229 12.0263 24.7862C12.3896 25.1496 12.5938 25.6424 12.5938 26.1562ZM23.25 24.2188C22.8668 24.2188 22.4922 24.3324 22.1736 24.5453C21.855 24.7582 21.6066 25.0608 21.46 25.4148C21.3133 25.7688 21.275 26.1584 21.3497 26.5342C21.4245 26.9101 21.609 27.2553 21.88 27.5263C22.1509 27.7972 22.4962 27.9818 22.872 28.0565C23.2479 28.1313 23.6374 28.0929 23.9914 27.9463C24.3455 27.7996 24.6481 27.5513 24.861 27.2327C25.0739 26.914 25.1875 26.5395 25.1875 26.1562C25.1875 25.6424 24.9834 25.1496 24.62 24.7862C24.2567 24.4229 23.7639 24.2188 23.25 24.2188ZM29.0274 8.97789L25.9225 20.1524C25.7518 20.7628 25.3867 21.3009 24.8826 21.6851C24.3784 22.0693 23.7627 22.2786 23.1289 22.2812H11.16C10.5243 22.281 9.90613 22.0728 9.39978 21.6884C8.89343 21.3041 8.52668 20.7646 8.35547 20.1524L4.1075 4.84375H1.9375C1.68057 4.84375 1.43417 4.74169 1.25249 4.56001C1.07081 4.37833 0.96875 4.13193 0.96875 3.875C0.96875 3.61807 1.07081 3.37167 1.25249 3.18999C1.43417 3.00831 1.68057 2.90625 1.9375 2.90625H4.84375C5.05554 2.90621 5.26152 2.97558 5.43014 3.10374C5.59875 3.2319 5.72073 3.41178 5.77738 3.61586L6.92535 7.75H28.0938C28.2431 7.74997 28.3904 7.78447 28.5242 7.85081C28.658 7.91714 28.7747 8.01352 28.8651 8.1324C28.9555 8.25129 29.0172 8.38946 29.0453 8.53613C29.0735 8.6828 29.0673 8.83399 29.0274 8.97789ZM26.8186 9.6875H7.46422L10.2264 19.6341C10.283 19.8382 10.405 20.0181 10.5736 20.1463C10.7422 20.2744 10.9482 20.3438 11.16 20.3438H23.1289C23.3407 20.3438 23.5467 20.2744 23.7153 20.1463C23.8839 20.0181 24.0059 19.8382 24.0625 19.6341L26.8186 9.6875Z" fill="#253461"></path>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Row -->
+  <nav class="header-nav" aria-label="Hauptnavigation">
+    <div class="nav-container">
+      <div class="nav-menu">
+        <!-- Dropdown Menus -->
+        <div class="nav-item has-dropdown" data-menu="sportarten">
+          <button class="nav-link">
+            SPORTARTEN
+            <svg class="nav-arrow" width="8" height="8" viewBox="0 0 320 512"><path d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z" fill="currentColor"/></svg>
+          </button>
+          <div class="mega-menu">
+            <div class="mega-menu-inner">
+              <ul class="mega-menu-list with-icons">
+                {sportarten.map((item) => (
+                  <li>
+                    <a href={item.href}>
+                      <img src={`/images/menu/${item.icon}`} alt="" width="24" height="24" />
+                      <span>{item.label}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-item has-dropdown" data-menu="produkte">
+          <button class="nav-link">
+            PRODUKTE
+            <svg class="nav-arrow" width="8" height="8" viewBox="0 0 320 512"><path d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z" fill="currentColor"/></svg>
+          </button>
+          <div class="mega-menu">
+            <div class="mega-menu-inner">
+              <ul class="mega-menu-list with-icons">
+                {produkte.map((item) => (
+                  <li>
+                    <a href={item.href}>
+                      <img src={`/images/menu/${item.icon}`} alt="" width="24" height="24" />
+                      <span>{item.label}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-item has-dropdown" data-menu="themen">
+          <button class="nav-link">
+            THEMEN
+            <svg class="nav-arrow" width="8" height="8" viewBox="0 0 320 512"><path d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z" fill="currentColor"/></svg>
+          </button>
+          <div class="mega-menu">
+            <div class="mega-menu-inner">
+              <ul class="mega-menu-list with-icons">
+                {themen.map((item) => (
+                  <li>
+                    <a href={item.href}>
+                      <img src={`/images/menu/${item.icon}`} alt="" width="24" height="24" />
+                      <span>{item.label}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Direct Links -->
+        {directLinks.map((link) => (
+          <a href={link.href} class="nav-direct-link">{link.label}</a>
+        ))}
+      </div>
+
+      <!-- Contact Button -->
+      <a href="/kontakt/" class="nav-cta">KONTAKT</a>
+    </div>
+  </nav>
+</header>
+
+<!-- Mobile Header -->
+<header class="mobile-header" id="mobile-header">
+  <!-- Top Bar - Google Reviews (Dark Blue Background) -->
+  <div class="mobile-topbar">
+    <div class="mobile-topbar-reviews">
+      <a href="#review-section">
+        <img src="/images/google-reviews.png" alt="Google Reviews" />
+      </a>
+    </div>
+  </div>
+
+  <!-- Logo & Icons Row -->
+  <div class="mobile-header-inner">
+    <div class="mobile-logo-wrap">
+      <a href="/" class="mobile-logo">
+        <img src="/images/hercules-logo-mobile.png" alt="Hercules Merchandise" />
+      </a>
+    </div>
+    <div class="mobile-actions">
+      <button class="mobile-btn mobile-search-btn" aria-label="Suchen" id="mobile-search-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M21.3248 20.1752L16.2396 15.0909C17.7135 13.3214 18.4485 11.0518 18.2916 8.75419C18.1347 6.45658 17.0981 4.3079 15.3974 2.75513C13.6967 1.20236 11.4628 0.365042 9.16039 0.417367C6.85803 0.469692 4.66448 1.40763 3.03605 3.03606C1.40761 4.6645 0.469677 6.85805 0.417352 9.16041C0.365027 11.4628 1.20234 13.6967 2.75512 15.3974C4.30789 17.0981 6.45657 18.1348 8.75417 18.2916C11.0518 18.4485 13.3214 17.7135 15.0909 16.2396L20.1751 21.3249C20.2506 21.4003 20.3403 21.4602 20.4389 21.5011C20.5375 21.5419 20.6432 21.563 20.75 21.563C20.8567 21.563 20.9625 21.5419 21.0611 21.5011C21.1597 21.4602 21.2493 21.4003 21.3248 21.3249C21.4003 21.2494 21.4602 21.1597 21.5011 21.0611C21.5419 20.9625 21.5629 20.8568 21.5629 20.75C21.5629 20.6432 21.5419 20.5375 21.5011 20.4389C21.4602 20.3403 21.4003 20.2507 21.3248 20.1752ZM2.06249 9.375C2.06249 7.92873 2.49136 6.51493 3.29487 5.3124C4.09837 4.10986 5.24043 3.1726 6.57662 2.61913C7.9128 2.06567 9.3831 1.92086 10.8016 2.20301C12.2201 2.48517 13.523 3.18161 14.5457 4.20428C15.5684 5.22696 16.2648 6.52992 16.547 7.94841C16.8291 9.36689 16.6843 10.8372 16.1309 12.1734C15.5774 13.5096 14.6401 14.6516 13.4376 15.4551C12.2351 16.2586 10.8213 16.6875 9.37499 16.6875C7.43625 16.6854 5.57754 15.9142 4.20664 14.5433C2.83575 13.1725 2.06464 11.3137 2.06249 9.375Z" fill="#253461"></path>
+        </svg>
+      </button>
+      <a href="#" class="mobile-btn mobile-contact-btn" aria-label="Kontakt" id="mobile-contact-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 512 512" fill="#FFFFFF">
+          <path d="M464 64H48C21.49 64 0 85.49 0 112v288c0 26.51 21.49 48 48 48h416c26.51 0 48-21.49 48-48V112c0-26.51-21.49-48-48-48zm0 48v40.805c-22.422 18.259-58.168 46.651-134.587 106.49-16.841 13.247-50.201 45.072-73.413 44.701-23.208.375-56.579-31.459-73.413-44.701C106.18 199.465 70.425 171.067 48 152.805V112h416zM48 400V214.398c22.914 18.251 55.409 43.862 104.938 82.646 21.857 17.205 60.134 55.186 103.062 54.955 42.717.231 80.509-37.199 103.053-54.947 49.528-38.783 82.032-64.401 104.947-82.653V400H48z"></path>
+        </svg>
+      </a>
+      <button class="mobile-hamburger" id="mobile-menu-toggle" aria-label="Menu">
+        &#9776;
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile Search Overlay -->
+<div class="mobile-search-overlay" id="mobile-search-overlay">
+  <div class="mobile-search-container">
+    <button class="mobile-search-close" id="mobile-search-close" aria-label="Schließen">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+    <ProductSearch client:load placeholder="Produkte suchen..." />
+  </div>
+</div>
+
+<MobileMenu />
+
+<style>
+  /* Desktop Header - EXACT WordPress Elementor CSS */
+  .header {
+    display: none;
+    background: #fff;
+    position: relative;
+    z-index: 100;
+    font-family: 'Jost', sans-serif;
+  }
+
+  @media (min-width: 769px) {
+    .header {
+      display: block;
+    }
+  }
+
+  /* Main Header Row - elementor-element-f7f2fa7 */
+  .header-main {
+    background: #fff;
+    padding: 5px 0;
+  }
+
+  .header-container {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: space-around;
+  }
+
+  /* Logo wrapper - elementor-element-222f227 */
+  .header-logo-wrap {
+    flex-shrink: 0;
+    padding: 10px 10px 10px 0;
+  }
+
+  .header-logo {
+    display: block;
+  }
+
+  /* Logo - 172px width */
+  .header-logo img {
+    width: 172px;
+    height: auto;
+    display: block;
+  }
+
+  /* Search - 708px width, 144px gap from logo */
+  .header-search {
+    width: 708px;
+    flex-shrink: 0;
+    margin-left: 144px;
+  }
+
+  /* Override ProductSearch component styles to match header */
+  .header-search :global(.product-search-input) {
+    height: 44px;
+    padding: 12px 45px 12px 18px;
+    font-size: 14px;
+    border: 1px solid #bfbfbf;
+    border-radius: 15px;
+  }
+
+  .header-search :global(.product-search-input::placeholder) {
+    color: #888;
+  }
+
+  /* Header Icons - right aligned */
+  .header-icons {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    flex-shrink: 0;
+    padding: 0 0 4px 0;
+    margin-left: auto;
+  }
+
+  /* Icon buttons - elementor-element-5bdc66d, dd73c14, d8c5621 */
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #253461;
+    border-radius: 15px;
+    color: #253461;
+    background: transparent;
+    transition: all 0.3s;
+  }
+
+  .header-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .header-icon:hover {
+    border-color: #469ADC;
+  }
+
+  .header-icon:hover svg path {
+    fill: #469ADC;
+  }
+
+  /* Navigation - elementor-element-93ee650 */
+  .header-nav {
+    background: #fff;
+    border-top: 1px solid #FAFAFA;
+    box-shadow: 0px 9px 10px 0px rgba(0, 0, 0, 0.05);
+    padding-bottom: 3px;
+  }
+
+  .nav-container {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .nav-item {
+    position: relative;
+  }
+
+  /* Navigation links with dropdown - 44px gap */
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 14px 22px;
+    background: none;
+    border: none;
+    font-family: 'Jost', Sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #00aeef;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+
+  .nav-link:hover {
+    color: #469ADC;
+  }
+
+  .nav-arrow {
+    transition: transform 0.2s;
+    opacity: 0.7;
+  }
+
+  .nav-item:hover .nav-arrow {
+    transform: rotate(180deg);
+  }
+
+  .nav-direct-link {
+    display: flex;
+    align-items: center;
+    padding: 14px 25px;
+    font-family: 'Jost', Sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #253461;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .nav-direct-link:hover {
+    color: #469ADC;
+  }
+
+  .nav-cta {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 28px;
+    background: #10C99E;
+    color: white;
+    font-family: 'Jost', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: background 0.2s;
+  }
+
+  .nav-cta:hover {
+    background: #0eb58d;
+  }
+
+  /* Mega Menu - matching WordPress Elementor styling */
+  .mega-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border-top: 1px solid #FAFAFA;
+    box-shadow: 0px 23px 4px -21px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+    z-index: 100;
+  }
+
+  .nav-item:hover .mega-menu {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .mega-menu-inner {
+    padding: 10px 0;
+  }
+
+  .mega-menu-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-width: 780px;
+  }
+
+  .mega-menu-list.with-icons {
+    grid-template-columns: repeat(4, 1fr);
+    min-width: 780px;
+  }
+
+  .mega-menu-list li a {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 39px;
+    padding: 0 15px;
+    color: #253461;
+    font-family: 'Jost', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    text-decoration: none;
+    transition: color 0.3s, background-color 0.3s;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  .mega-menu-list li a:hover {
+    background: #F5F5F5;
+    color: #469ADC;
+  }
+
+  .mega-menu-list li a img {
+    width: 17px;
+    height: 17px;
+    object-fit: contain;
+    margin-right: calc(17px * 0.25);
+  }
+
+  /* Mobile Header - Exact Elementor Styles */
+  .mobile-header {
+    display: block;
+    background: #FFFFFF;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  @media (min-width: 769px) {
+    .mobile-header {
+      display: none;
+    }
+  }
+
+  /* Top Bar - Dark Blue Background (#253461) */
+  .mobile-topbar {
+    background-color: #253461;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+  }
+
+  .mobile-topbar-reviews {
+    width: 35%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 6px;
+    padding-top: 6px;
+  }
+
+  .mobile-topbar-reviews a {
+    display: inline-block;
+  }
+
+  .mobile-topbar-reviews img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Logo & Icons Row */
+  .mobile-header-inner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 10px;
+    background: #FFFFFF;
+  }
+
+  .mobile-logo-wrap {
+    width: 40%;
+    display: flex;
+    align-items: center;
+  }
+
+  .mobile-logo img {
+    width: 100%;
+    height: auto;
+    max-width: 140px;
+  }
+
+  .mobile-actions {
+    width: 60%;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Search Button - White bg, dark blue border */
+  .mobile-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 20px;
+    font-weight: 500;
+    text-transform: uppercase;
+    border-radius: 5px;
+    padding: 13px;
+    transition: all 0.2s;
+  }
+
+  .mobile-search-btn {
+    background-color: #FFFFFF;
+    color: #253461;
+    fill: #253461;
+    border: 1px solid #253461;
+  }
+
+  .mobile-search-btn:hover,
+  .mobile-search-btn:focus {
+    background-color: #FFFFFF;
+    color: #253461;
+    border-color: #253461;
+  }
+
+  .mobile-search-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Contact/Mail Button - Green bg */
+  .mobile-contact-btn {
+    background-color: #10C99E;
+    color: #FFFFFF;
+    fill: #FFFFFF;
+    border: 1px solid #10C99E;
+  }
+
+  .mobile-contact-btn:hover,
+  .mobile-contact-btn:focus {
+    background-color: #FFFFFF;
+    color: #10C99E;
+    border-color: #10C99E;
+  }
+
+  .mobile-contact-btn:hover svg,
+  .mobile-contact-btn:focus svg {
+    fill: #10C99E;
+  }
+
+  .mobile-contact-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Hamburger Menu Button - Brand blue (#253461), same size as other icons */
+  .mobile-hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #FFFFFF;
+    cursor: pointer;
+    background-color: #253461;
+    border: 1px solid #253461;
+    border-radius: 5px;
+    padding: 13px;
+    line-height: 1;
+    transition: all 0.2s;
+  }
+
+  .mobile-hamburger:hover,
+  .mobile-hamburger:focus {
+    background-color: #FFFFFF;
+    color: #253461;
+    border-color: #253461;
+  }
+
+  /* Mobile Search Overlay */
+  .mobile-search-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .mobile-search-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .mobile-search-container {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .mobile-search-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: none;
+    border: none;
+    color: #253461;
+    cursor: pointer;
+    margin-left: auto;
+    margin-bottom: 20px;
+  }
+
+  .mobile-search-close:hover {
+    color: #469ADC;
+  }
+
+  /* Adjust ProductSearch in mobile overlay */
+  .mobile-search-container :global(.product-search-results) {
+    position: relative;
+    max-height: calc(100vh - 200px);
+  }
+</style>
+
+<script>
+  // Mobile menu toggle
+  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  mobileMenuToggle?.addEventListener('click', () => {
+    document.body.classList.add('mobile-menu-open');
+  });
+
+  // Mobile search toggle
+  const mobileSearchBtn = document.getElementById('mobile-search-btn');
+  const mobileSearchOverlay = document.getElementById('mobile-search-overlay');
+  const mobileSearchClose = document.getElementById('mobile-search-close');
+
+  mobileSearchBtn?.addEventListener('click', () => {
+    mobileSearchOverlay?.classList.add('active');
+    // Focus the search input
+    setTimeout(() => {
+      const searchInput = mobileSearchOverlay?.querySelector('input');
+      searchInput?.focus();
+    }, 100);
+  });
+
+  mobileSearchClose?.addEventListener('click', () => {
+    mobileSearchOverlay?.classList.remove('active');
+  });
+
+  // Close on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mobileSearchOverlay?.classList.contains('active')) {
+      mobileSearchOverlay.classList.remove('active');
+    }
+  });
+</script>

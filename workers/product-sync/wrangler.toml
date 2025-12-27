@@ -1,0 +1,31 @@
+name = "hercules-product-sync"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# KV namespace for product data
+[[kv_namespaces]]
+binding = "PRODUCTS_KV"
+id = "9b35cae40f234d1ea15e974aa8acbb85"
+preview_id = "6f1c941171f5422391f3b2b8caeb9bd0"
+
+# R2 bucket for product images (optional - enable in Cloudflare dashboard first)
+# [[r2_buckets]]
+# binding = "PRODUCTS_BUCKET"
+# bucket_name = "hercules-products"
+
+# Scheduled triggers (cron jobs)
+[triggers]
+crons = ["0 3 * * *"]  # Run daily at 3 AM UTC
+
+# Environment variables (set via wrangler secret)
+[vars]
+WC_STORE_URL = "https://staging.hercules-merchandise.de"
+ASTRO_SITE_URL = "https://herculesde.pages.dev"
+
+# Development environment
+[env.dev]
+vars = { WC_STORE_URL = "https://staging.hercules-merchandise.de" }
+
+# Production environment
+[env.production]
+vars = { WC_STORE_URL = "https://hercules-merchandise.de" }

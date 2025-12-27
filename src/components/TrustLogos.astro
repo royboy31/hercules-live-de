@@ -1,0 +1,222 @@
+---
+// Sie vertrauen uns - Trust Logos Section
+// Using Swiper.js to match WordPress Elementor carousel exactly
+
+const logosRow1 = [
+  { src: '/images/logos/Glasgow-Saints.png', alt: 'Glasgow Saints' },
+  { src: '/images/logos/Glasgow-Tigers.png', alt: 'Glasgow Tigers' },
+  { src: '/images/logos/afc-1.png', alt: 'AFC' },
+  { src: '/images/logos/aof.png', alt: 'AOF' },
+  { src: '/images/logos/Arbroath-FC.png', alt: 'Arbroath FC' },
+  { src: '/images/logos/Banbury-United.png', alt: 'Banbury United' },
+  { src: '/images/logos/Barnet-FC.png', alt: 'Barnet FC' },
+  { src: '/images/logos/Basingstoke-FC.png', alt: 'Basingstoke FC' },
+  { src: '/images/logos/bbc.png', alt: 'BBC' },
+  { src: '/images/logos/Blackburn-Hawks.png', alt: 'Blackburn Hawks' },
+  { src: '/images/logos/Bromley-FC.png', alt: 'Bromley FC' },
+  { src: '/images/logos/Bury-FC.png', alt: 'Bury FC' },
+  { src: '/images/logos/Camden-Town-Brewery.png', alt: 'Camden Town Brewery' },
+  { src: '/images/logos/Cardiff-Bay-FC.png', alt: 'Cardiff Bay FC' },
+  { src: '/images/logos/Chelsea-Women.png', alt: 'Chelsea Women' },
+  { src: '/images/logos/Clapton-CFC.png', alt: 'Clapton CFC' },
+  { src: '/images/logos/Djurgardens-IF.png', alt: 'Djurgardens IF' },
+  { src: '/images/logos/Doncaster-Rovers.png', alt: 'Doncaster Rovers' },
+  { src: '/images/logos/Dorchester-Town-FC.png', alt: 'Dorchester Town FC' },
+  { src: '/images/logos/Durham-United-FC.png', alt: 'Durham United FC' },
+  { src: '/images/logos/East-Grinstead-Hockey-Club.png', alt: 'East Grinstead Hockey Club' },
+  { src: '/images/logos/Enfield-Town.png', alt: 'Enfield Town' },
+  { src: '/images/logos/Farnham-Town-FC.png', alt: 'Farnham Town FC' },
+  { src: '/images/logos/Gateshead-FC.png', alt: 'Gateshead FC' },
+  { src: '/images/logos/Gillingham-Football-Club.png', alt: 'Gillingham Football Club' },
+];
+
+const logosRow2 = [
+  { src: '/images/logos/Harrogate-Town-AFC.png', alt: 'Harrogate Town AFC' },
+  { src: '/images/logos/Hayes-Yeading-UFC.png', alt: 'Hayes & Yeading UFC' },
+  { src: '/images/logos/Imperial-College-Football-Club.png', alt: 'Imperial College Football Club' },
+  { src: '/images/logos/Kings-College-London.png', alt: 'Kings College London' },
+  { src: '/images/logos/Leyton-Orient-FC.png', alt: 'Leyton Orient FC' },
+  { src: '/images/logos/Liverpool-FC.png', alt: 'Liverpool FC' },
+  { src: '/images/logos/London-Celta.png', alt: 'London Celta' },
+  { src: '/images/logos/London-Irish.png', alt: 'London Irish' },
+  { src: '/images/logos/Moet-Chandon.png', alt: 'Moet Chandon' },
+  { src: '/images/logos/Norwich-United-FC.png', alt: 'Norwich United FC' },
+  { src: '/images/logos/Oxford-Saints.png', alt: 'Oxford Saints' },
+  { src: '/images/logos/Red-Bull-Racing.png', alt: 'Red Bull Racing' },
+  { src: '/images/logos/Salford-Red-Devils.png', alt: 'Salford Red Devils' },
+  { src: '/images/logos/sap.png', alt: 'SAP' },
+  { src: '/images/logos/Sony-Music.png', alt: 'Sony Music' },
+  { src: '/images/logos/Stamford-AFC.png', alt: 'Stamford AFC' },
+  { src: '/images/logos/Stenhousemuir-Football-Club.png', alt: 'Stenhousemuir Football Club' },
+  { src: '/images/logos/Swansea-Union.png', alt: 'Swansea Union' },
+  { src: '/images/logos/The-National-Gallery.png', alt: 'The National Gallery' },
+  { src: '/images/logos/Tinder.png', alt: 'Tinder' },
+  { src: '/images/logos/Wealdstone-FC.png', alt: 'Wealdstone FC' },
+  { src: '/images/logos/Whitley-Warriors.png', alt: 'Whitley Warriors' },
+  { src: '/images/logos/Witham-Town-FC.png', alt: 'Witham Town FC' },
+  { src: '/images/logos/wix.png', alt: 'Wix' },
+];
+---
+
+<section class="trust-section">
+  <div class="trust-container">
+    <h2 class="section-heading">Sie vertrauen uns</h2>
+
+    <!-- Row 1: Left to Right -->
+    <div class="swiper trust-swiper-ltr">
+      <div class="swiper-wrapper">
+        {logosRow1.map((logo) => (
+          <div class="swiper-slide">
+            <figure class="logo-figure">
+              <img src={logo.src} alt={logo.alt} loading="lazy" />
+            </figure>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Row 2: Right to Left -->
+    <div class="swiper trust-swiper-rtl" dir="rtl">
+      <div class="swiper-wrapper">
+        {logosRow2.map((logo) => (
+          <div class="swiper-slide">
+            <figure class="logo-figure">
+              <img src={logo.src} alt={logo.alt} loading="lazy" />
+            </figure>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Swiper CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
+
+<style>
+  .trust-section {
+    background-color: #F4F4F4;
+    padding: 30px 0;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .trust-container {
+    width: 100%;
+  }
+
+  .section-heading {
+    font-family: 'Jost', sans-serif;
+    font-size: 35px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #253461;
+    text-align: center;
+    margin: 0 0 20px 0;
+    padding: 0 20px;
+  }
+
+  .swiper {
+    width: 100%;
+    padding: 10px 0;
+  }
+
+  .swiper-slide {
+    width: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-figure {
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-figure img {
+    width: 218.13px;
+    height: auto;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+  }
+
+  .logo-figure img:hover {
+    transform: scale(1.05);
+  }
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    .logo-figure img {
+      width: 180px;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 767px) {
+    .section-heading {
+      font-size: 28px;
+    }
+
+    .logo-figure img {
+      width: 140px;
+    }
+  }
+</style>
+
+<!-- Swiper JS -->
+<script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Common Swiper settings matching WordPress Elementor
+    const swiperSettings = {
+      slidesPerView: 8,
+      spaceBetween: 20,
+      loop: true,
+      speed: 9000,
+      autoplay: {
+        delay: 0,
+        disableOnInteraction: false,
+        pauseOnMouseEnter: true,
+      },
+      allowTouchMove: true,
+      breakpoints: {
+        0: {
+          slidesPerView: 2,
+          spaceBetween: 20,
+        },
+        768: {
+          slidesPerView: 4,
+          spaceBetween: 20,
+        },
+        1025: {
+          slidesPerView: 8,
+          spaceBetween: 20,
+        },
+      },
+    };
+
+    // Initialize LTR carousel
+    const swiperLtr = new Swiper('.trust-swiper-ltr', {
+      ...swiperSettings,
+    });
+
+    // Initialize RTL carousel
+    const swiperRtl = new Swiper('.trust-swiper-rtl', {
+      ...swiperSettings,
+    });
+
+    // Force linear timing for continuous scroll
+    const style = document.createElement('style');
+    style.textContent = `
+      .trust-swiper-ltr .swiper-wrapper,
+      .trust-swiper-rtl .swiper-wrapper {
+        transition-timing-function: linear !important;
+      }
+    `;
+    document.head.appendChild(style);
+  });
+</script>

@@ -1,0 +1,171 @@
+---
+// Hercules Merchandise - About Section
+---
+
+<section class="hercules-section">
+  <div class="hercules-container">
+    <!-- Content Column -->
+    <div class="content-column">
+      <h2 class="section-heading">
+        Hercules Merchandise – <span class="highlight">individuelle Sportbekleidung und Merchandise-Artikel</span>
+      </h2>
+      <div class="description">
+        <p>Bei <strong>Hercules Merchandise</strong> entwerfen und liefern wir hochwertige, umweltbewusste <strong>Teamwear und Sportartikel mit Markenzeichen</strong> für <strong>Sportvereine, Verbände und Unternehmen</strong> in ganz Großbritannien und Europa. Egal, ob Sie sich für den Spieltag rüsten oder Ihre Markenpräsenz stärken möchten, wir erwecken Ihre Identität durch fachmännisch gefertigte, vollständig anpassbare Produkte zum Leben.</p>
+        <p>Von <strong>Schals und Mützen bis hin zu Trikots, Trainingsbekleidung und Werbeartikeln</strong> werden alle unsere Artikel auf Bestellung gefertigt und mit Ihrem Logo, Ihren Farben und Designs personalisiert. Wir verbinden jahrelange Branchenerfahrung mit einem Engagement für nachhaltige Produktion – die meisten unserer Artikel werden mit Stolz in Europa hergestellt.</p>
+        <p>Wir bieten <strong>schnelle Bearbeitungszeiten</strong> und zuverlässige Lieferung in ganz Europa, um sicherzustellen, dass Sie das bekommen, was Sie brauchen, wann Sie es brauchen.</p>
+        <p>Wenn Sie Ihr Projekt besprechen oder ein Angebot einholen möchten, <strong>freuen wir uns darauf, von Ihnen zu hören</strong>.</p>
+      </div>
+      <a href="/kontakt" class="cta-button">
+        Kontaktieren Sie uns jetzt
+      </a>
+    </div>
+
+    <!-- Image Column -->
+    <div class="image-column">
+      <img
+        src="/images/about-hercules.webp"
+        alt="Hercules Merchandise - Individuelle Sportbekleidung"
+        class="about-image"
+        loading="lazy"
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hercules-section {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .hercules-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    padding: 50px 0;
+  }
+
+  .content-column {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .section-heading {
+    font-family: 'Jost', sans-serif;
+    font-size: 35px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #253461;
+    text-align: left;
+    margin: 0 0 20px 0;
+    line-height: 1.2;
+  }
+
+  .section-heading .highlight {
+    color: #469ADC;
+  }
+
+  .description {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: #5F5F5F;
+    line-height: 1.6;
+    margin-bottom: 25px;
+  }
+
+  .description p {
+    margin: 0 0 15px 0;
+  }
+
+  .description p:last-child {
+    margin-bottom: 0;
+  }
+
+  .description strong {
+    font-weight: 700;
+  }
+
+  .cta-button {
+    display: inline-block;
+    background-color: #10C99E;
+    color: #FFFFFF;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 15px 50px;
+    border: 1px solid #10C99E;
+    border-radius: 100px;
+    transition: all 0.3s ease;
+    align-self: flex-start;
+  }
+
+  .cta-button:hover {
+    background-color: transparent;
+    color: #10C99E;
+  }
+
+  .image-column {
+    width: 50%;
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .about-image {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    border-radius: 30px;
+    object-fit: cover;
+  }
+
+  /* Tablet Responsive */
+  @media (max-width: 1024px) {
+    .section-heading {
+      font-size: 30px;
+    }
+
+    .description {
+      font-size: 15px;
+    }
+
+    .cta-button {
+      font-size: 14px;
+    }
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 767px) {
+    .hercules-container {
+      flex-direction: column;
+      padding: 35px 20px;
+    }
+
+    .content-column {
+      width: 100%;
+      text-align: center;
+    }
+
+    .section-heading {
+      text-align: center;
+    }
+
+    .description {
+      text-align: center;
+    }
+
+    .cta-button {
+      align-self: center;
+      margin-bottom: 24px;
+    }
+
+    .image-column {
+      width: 100%;
+    }
+  }
+</style>

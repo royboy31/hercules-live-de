@@ -1,0 +1,602 @@
+---
+// Global Footer Component - Matches WordPress Elementor footer exactly
+---
+
+<footer class="site-footer">
+  <!-- Newsletter Section -->
+  <div class="newsletter-section">
+    <div class="newsletter-container">
+      <div class="newsletter-content">
+        <h2 class="newsletter-heading">Interesse?</h2>
+        <form class="newsletter-form" action="/api/newsletter" method="POST">
+          <div class="form-row">
+            <input
+              type="email"
+              name="email"
+              placeholder="Newsletter abonnieren"
+              required
+              class="newsletter-input"
+            />
+            <button type="submit" class="newsletter-button">Senden</button>
+          </div>
+        </form>
+        <p class="newsletter-description">
+          Seien Sie der Erste, der unsere neuesten Sportartikel sieht – Abonnieren Sie unseren Newsletter!
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Footer -->
+  <div class="main-footer">
+    <div class="footer-container">
+      <!-- Logo Column -->
+      <div class="footer-column logo-column">
+        <a href="/">
+          <img
+            src="/images/hercules-logo-original1.png"
+            alt="Hercules Merchandise"
+            class="footer-logo"
+          />
+        </a>
+      </div>
+
+      <!-- About Us Column -->
+      <div class="footer-column">
+        <h3 class="footer-heading">über uns</h3>
+        <ul class="footer-links">
+          <li><a href="/uber-uns">Über uns</a></li>
+          <li><a href="/blogs">Blog</a></li>
+          <li><a href="/lieferungen-und-rucksendungen">Lieferungen und Rücksendungen</a></li>
+          <li><a href="/zahlungsmethoden">Zahlungsmethoden</a></li>
+          <li><a href="/kontaktieren-sie-uns">Kontakt</a></li>
+          <li><a href="/mein-konto">Mein Konto</a></li>
+        </ul>
+      </div>
+
+      <!-- Sports Column -->
+      <div class="footer-column">
+        <h3 class="footer-heading">Sportarten</h3>
+        <ul class="footer-links">
+          <li><a href="/collections/fussball">Fußball</a></li>
+          <li><a href="/collections/rugby">Rugby</a></li>
+          <li><a href="/collections/basketball">Basketball</a></li>
+          <li><a href="/collections/laufen">Laufen</a></li>
+          <li><a href="/collections/radfahren">Radfahren</a></li>
+          <li><a href="/collections/volleyball">Volleyball</a></li>
+        </ul>
+      </div>
+
+      <!-- Products Column -->
+      <div class="footer-column">
+        <h3 class="footer-heading">Produkte</h3>
+        <ul class="footer-links">
+          <li><a href="/collections/personalisierte-fanschals">Schals</a></li>
+          <li><a href="/collections/personalisierte-mutzen">Mützen</a></li>
+          <li><a href="/collections/personalisierte-sportbekleidung">Sportbekleidung</a></li>
+          <li><a href="/collections/personalisierte-wimpel">Wimpel</a></li>
+          <li><a href="/collections/zubehor">Zubehör</a></li>
+          <li><a href="/collections/tifo">Tifo</a></li>
+        </ul>
+      </div>
+
+      <!-- Reseller Column -->
+      <div class="footer-column reseller-column">
+        <h3 class="footer-heading">Wiederverkäufer oder professioneller Verein?</h3>
+        <p class="footer-text">Wir bieten Mengenrabatte an.</p>
+        <a href="/angebot-anfragen" class="footer-cta-button">Kontakt</a>
+        <div class="footer-phone">
+          <a href="tel:+498001833745">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 256 256"><path d="M222.37,158.46l-47.11-21.11-.13-.06a16,16,0,0,0-15.17,1.4,8.12,8.12,0,0,0-.75.56L134.87,160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.25.39-.5.57-.77a16,16,0,0,0,1.32-15.06l0-.12L97.54,33.64a16,16,0,0,0-16.62-9.52A56.26,56.26,0,0,0,32,80c0,79.4,64.6,144,144,144a56.26,56.26,0,0,0,55.88-48.92A16,16,0,0,0,222.37,158.46ZM176,208A128.14,128.14,0,0,1,48,80,40.2,40.2,0,0,1,82.87,40a.61.61,0,0,0,0,.12l21,47L83.2,111.86a6.13,6.13,0,0,0-.57.77,16,16,0,0,0-1,15.7c9.06,18.53,27.73,37.06,46.46,46.11a16,16,0,0,0,15.75-1.14,8.44,8.44,0,0,0,.74-.56L168.89,152l47,21.05h0s.08,0,.11,0A40.21,40.21,0,0,1,176,208Z"></path></svg>
+            <span>+49 8001833745</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Footer -->
+  <div class="bottom-footer">
+    <div class="footer-container bottom-container">
+      <!-- Row 1: Legal links, Payment icons, Language switcher -->
+      <div class="bottom-footer-row">
+        <div class="legal-links">
+          <a href="/rechtlicher-hinweis">Rechtliche Hinweise</a>
+          <a href="/nutzungsbedingungen">Nutzungsbedingungen</a>
+          <a href="/datenschutzerklarung">Datenschutzbestimmungen</a>
+        </div>
+        <div class="payment-icons">
+          <img src="/images/pay-her-2.png" alt="Zahlungsmethoden" />
+        </div>
+        <div class="language-switcher">
+          <button class="language-current" type="button">
+            <img src="/images/german.png" alt="Deutsch" width="24" height="24" />
+            <span>Deutschland</span>
+            <svg class="dropdown-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <ul class="language-dropdown">
+            <li>
+              <a href="https://staging.hercules-merchandise.de/" target="_blank">
+                <img src="/images/flags/uk-flag.png" alt="UK" width="24" height="24" />
+                <span>Vereinigtes Königreich</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://hercules-merchandising.fr/" target="_blank">
+                <img src="/images/flags/fr-flag.png" alt="France" width="24" height="24" />
+                <span>Frankreich</span>
+              </a>
+            </li>
+            <li>
+              <a href="https://www.hercules-merchandise.nl/" target="_blank">
+                <img src="/images/flags/nl-flag.png" alt="Netherlands" width="24" height="24" />
+                <span>Niederlande</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <!-- Row 2: Copyright -->
+      <div class="copyright">
+        © 2025. Hercules Merchandise Deutschland. Alle Rechte vorbehalten | Design & Entwicklung von <a href="https://perelweb.studio/" target="_blank" rel="noopener noreferrer">Perel Web Studio</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    width: 100%;
+  }
+
+  /* Newsletter Section */
+  .newsletter-section {
+    background-image: url('/images/footer-newsletter-bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 30px;
+    margin: 0 auto;
+    max-width: 1280px;
+    position: relative;
+    z-index: 2;
+    height: auto;
+    min-height: unset;
+  }
+
+  .newsletter-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 30px;
+  }
+
+  .newsletter-container {
+    position: relative;
+    padding: 100px 50px;
+    height: auto;
+  }
+
+  .newsletter-content {
+    max-width: 500px;
+  }
+
+  .newsletter-heading {
+    font-family: 'Jost', sans-serif;
+    font-size: 50px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    margin: 0 0 20px 0;
+  }
+
+  .newsletter-form {
+    margin-bottom: 15px;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .newsletter-input {
+    flex: 1;
+    padding: 12px 16px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    border: none;
+    border-radius: 20px;
+    background-color: #FFFFFF;
+  }
+
+  .newsletter-input::placeholder {
+    color: #5F5F5F;
+  }
+
+  .newsletter-button {
+    padding: 12px 24px;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    background-color: #10C99E;
+    border: 1px solid #10C99E;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .newsletter-button:hover {
+    background-color: transparent;
+    color: #FFFFFF;
+  }
+
+  .newsletter-description {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 19px;
+    color: #FFFFFF;
+    margin: 0;
+  }
+
+  /* Main Footer */
+  .main-footer {
+    background-color: #E8F5FF;
+    margin-top: -170px;
+    padding: 250px 0 30px 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+  }
+
+  .footer-column {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .logo-column {
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+  }
+
+  .footer-logo {
+    max-width: 170px;
+    height: auto;
+  }
+
+  .footer-heading {
+    font-family: 'Jost', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #253461;
+    margin: 0 0 15px 0;
+  }
+
+  .footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-links li {
+    margin-bottom: 8px;
+  }
+
+  .footer-links a {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: #253461;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+  }
+
+  .footer-links a:hover {
+    color: #469ADC;
+    transform: translateX(3px);
+  }
+
+  .reseller-column {
+    min-width: 200px;
+  }
+
+  .footer-text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    color: #253461;
+    margin: 0 0 15px 0;
+  }
+
+  .footer-cta-button {
+    display: inline-block;
+    padding: 12px 30px;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    background-color: #10C99E;
+    border: 1px solid #10C99E;
+    border-radius: 100px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+  }
+
+  .footer-cta-button:hover {
+    background-color: transparent;
+    color: #10C99E;
+  }
+
+  .footer-phone {
+    margin-top: 10px;
+  }
+
+  .footer-phone a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    color: #253461;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .footer-phone a:hover {
+    color: #469ADC;
+    transform: translateX(3px);
+  }
+
+  .footer-phone svg {
+    width: 20px;
+    height: 20px;
+    fill: #253461;
+    flex-shrink: 0;
+    transition: fill 0.3s ease;
+  }
+
+  .footer-phone a:hover svg {
+    fill: #469ADC;
+  }
+
+  /* Bottom Footer */
+  .bottom-footer {
+    background-color: #E8F5FF;
+    padding: 20px 0;
+    border-top: 1px solid rgba(37, 52, 97, 0.12);
+  }
+
+  .bottom-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .bottom-footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .legal-links {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .legal-links a {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #253461;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .legal-links a:hover {
+    color: #469ADC;
+    transform: translateX(3px);
+  }
+
+  .payment-icons {
+    display: flex;
+    align-items: center;
+  }
+
+  .payment-icons img {
+    max-width: 300px;
+    height: auto;
+  }
+
+  .language-switcher {
+    position: relative;
+  }
+
+  .language-current {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #253461;
+    padding: 8px 12px;
+    transition: color 0.3s ease;
+  }
+
+  .language-current:hover {
+    color: #469ADC;
+  }
+
+  .language-current img {
+    border-radius: 2px;
+  }
+
+  .dropdown-arrow {
+    transition: transform 0.3s ease;
+  }
+
+  .language-switcher:hover .dropdown-arrow {
+    transform: rotate(180deg);
+  }
+
+  .language-dropdown {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background: white;
+    list-style: none;
+    margin: 0;
+    padding: 10px 0;
+    min-width: 200px;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    z-index: 100;
+  }
+
+  .language-switcher:hover .language-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .language-dropdown li a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #253461;
+    text-decoration: none;
+    transition: background 0.3s ease;
+  }
+
+  .language-dropdown li a:hover {
+    background: #F5F5F5;
+  }
+
+  .language-dropdown li a img {
+    border-radius: 2px;
+  }
+
+  .copyright {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #253461;
+    text-align: center;
+    width: 100%;
+    padding-top: 15px;
+    border-top: 1px solid rgba(37, 52, 97, 0.12);
+  }
+
+  .copyright a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .copyright a:hover {
+    color: #469ADC;
+  }
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    .newsletter-heading {
+      font-size: 40px;
+    }
+
+    .footer-column {
+      min-width: 45%;
+    }
+
+    .main-footer {
+      margin-top: -100px;
+      padding-top: 130px;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 767px) {
+    .newsletter-section {
+      border-radius: 0;
+      margin: 0;
+    }
+
+    .newsletter-section::before {
+      border-radius: 0;
+    }
+
+    .newsletter-container {
+      padding: 30px 20px;
+    }
+
+    .newsletter-heading {
+      font-size: 32px;
+    }
+
+    .form-row {
+      flex-direction: column;
+    }
+
+    .newsletter-button {
+      width: 100%;
+    }
+
+    .main-footer {
+      margin-top: 0;
+      padding-top: 40px;
+    }
+
+    .footer-column {
+      min-width: 100%;
+      text-align: center;
+    }
+
+    .footer-links a:hover {
+      transform: none;
+    }
+
+    .footer-cta-button {
+      display: block;
+      text-align: center;
+    }
+
+    .legal-links {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .country-selector {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+</style>

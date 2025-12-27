@@ -1,0 +1,79 @@
+---
+// Was Kunden über uns sagen - Customer Reviews Section
+// Uses TrustIndex widget for Google Reviews (same widget ID as WordPress)
+---
+
+<section class="reviews-section" id="review-section">
+  <div class="reviews-container">
+    <h2 class="section-heading">
+      Was Kunden <span class="highlight">über uns sagen</span>
+    </h2>
+
+    <!-- TrustIndex Widget - Same widget ID as WordPress -->
+    <div class="reviews-widget" id="trustindex-widget"></div>
+  </div>
+</section>
+
+<style>
+  .reviews-section {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 60px 0 50px 0;
+  }
+
+  .reviews-container {
+    width: 100%;
+  }
+
+  .section-heading {
+    font-family: 'Jost', sans-serif;
+    font-size: 35px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #253461;
+    text-align: center;
+    margin: 0 0 20px 0;
+  }
+
+  .section-heading .highlight {
+    color: #469ADC;
+  }
+
+  .reviews-widget {
+    width: 100%;
+    min-height: 300px;
+  }
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    .section-heading {
+      font-size: 30px;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 767px) {
+    .reviews-section {
+      padding: 40px 20px;
+    }
+
+    .section-heading {
+      font-size: 28px;
+    }
+  }
+</style>
+
+<script is:inline>
+  // Load TrustIndex widget after DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    var container = document.getElementById('trustindex-widget');
+    if (container) {
+      var script = document.createElement('script');
+      script.src = 'https://cdn.trustindex.io/loader.js?72406ce58900366af2861a4ccab';
+      script.defer = true;
+      script.async = true;
+      container.appendChild(script);
+    }
+  });
+</script>

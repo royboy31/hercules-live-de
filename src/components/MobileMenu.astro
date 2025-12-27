@@ -1,0 +1,454 @@
+---
+// Mobile slide-out menu with sliding submenus
+
+const mobileMenuItems = {
+  sportarten: {
+    title: 'Sportarten',
+    items: [
+      { label: 'Fußball', href: '/collections/fussball/', icon: 'Football.svg' },
+      { label: 'Rugby', href: '/collections/rugby/', icon: 'Rugby-1.svg' },
+      { label: 'Basketball', href: '/collections/basketball/', icon: 'Basketball-1.svg' },
+      { label: 'Laufen', href: '/collections/laufen/', icon: 'running-1.svg' },
+      { label: 'Feldhockey', href: '/collections/feldhockey/', icon: 'field-hockey-1.svg' },
+      { label: 'Volleyball', href: '/collections/volleyball/', icon: 'volleyball-1.svg' },
+      { label: 'Handball', href: '/collections/handball/', icon: 'handball-1.svg' },
+      { label: 'Radfahren', href: '/collections/radfahren/', icon: 'cycling-1.svg' },
+      { label: 'Fitness', href: '/collections/fitness/', icon: 'fitness-1.svg' },
+      { label: 'Golf', href: '/collections/golf/', icon: 'golf-1.svg' },
+      { label: 'eSports', href: '/collections/esport/', icon: 'esport-1.svg' },
+    ]
+  },
+  produkte: {
+    title: 'Produkte',
+    items: [
+      { label: 'Sportbekleidung', href: '/collections/personalisierte-sportbekleidung/', icon: 'teamwear-1.svg' },
+      { label: 'Schals', href: '/collections/personalisierte-fanschals/', icon: 'scarves-1.svg' },
+      { label: 'Mützen', href: '/collections/personalisierte-mutzen/', icon: 'beanies-3.svg' },
+      { label: 'Kopfbedeckung', href: '/collections/kopfbedeckung/', icon: 'cap-1.svg' },
+      { label: 'Wimpel', href: '/collections/personalisierte-wimpel/', icon: 'pennants-3.svg' },
+      { label: 'Handtücher', href: '/collections/handtucher/', icon: 'towelst-1.svg' },
+      { label: 'Flaggen', href: '/collections/flaggen/', icon: 'flags-1.svg' },
+      { label: 'Schuhwerk', href: '/collections/schuhwerk/', icon: 'footwear-1.svg' },
+      { label: 'Taschen', href: '/collections/taschen/', icon: 'sportsbag-1.svg' },
+      { label: 'Textilien', href: '/collections/personalisierte-textilien/', icon: 'textile-1.svg' },
+      { label: 'Trinkgefäße', href: '/collections/trinkflaschen/', icon: 'drinkware-1.svg' },
+      { label: 'Bälle', href: '/collections/balle/', icon: 'balls-1.svg' },
+      { label: 'Zubehör', href: '/collections/zubehor/', icon: 'accessories-1.svg' },
+    ]
+  },
+  themen: {
+    title: 'Themen',
+    items: [
+      { label: 'Sommer', href: '/collections/sommer/', icon: 'summer-1.svg' },
+      { label: 'Winter', href: '/collections/winter/', icon: 'winter-1.svg' },
+      { label: 'Nachhaltig', href: '/collections/nachhaltigkeit/', icon: 'sustainable-2.svg' },
+      { label: 'Made in Europa', href: '/collections/hergestellt-in-europa/', icon: 'made-in-europe-1.svg' },
+      { label: 'Mode', href: '/collections/mode/', icon: 'fashion-1.svg' },
+      { label: 'Schulanfang', href: '/collections/schulanfang/', icon: 'back-to-school-1.svg' },
+      { label: 'Tifo', href: '/collections/tifo/', icon: 'tifo-1.svg' },
+      { label: 'Weihnachten', href: '/collections/weihnachten/', icon: 'christmas-1.svg' },
+      { label: 'Kleine Preise', href: '/collections/kleine-preise/', icon: 'smallprices.svg' },
+      { label: 'Geschäft', href: '/collections/business/', icon: 'business.svg' },
+      { label: 'Werbegeschenke', href: '/collections/werbegeschenke/', icon: 'giive-aways.svg' },
+      { label: 'Kinder', href: '/collections/kinder/', icon: 'kids.svg' },
+    ]
+  },
+};
+---
+
+<!-- Mobile Menu Overlay -->
+<div id="mobile-menu" class="mobile-menu">
+  <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
+
+  <div class="mobile-menu-panel">
+    <!-- Main Menu Panel -->
+    <div class="menu-panel main-panel" id="main-panel">
+      <!-- Header -->
+      <div class="mobile-menu-header">
+        <img
+          src="/images/hercules-logo-original1.png"
+          alt="Hercules Merchandise"
+          class="menu-logo"
+        />
+        <button id="mobile-menu-close" class="close-btn" aria-label="Menu schließen">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Main Menu Items -->
+      <div class="menu-content">
+        {Object.entries(mobileMenuItems).map(([key, menu]) => (
+          <button class="menu-item has-submenu" data-submenu={key}>
+            <span class="menu-item-label">{menu.title}</span>
+            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        ))}
+
+        <!-- Direct Links -->
+        <a href="/collections/personalisierte-sportbekleidung/" class="menu-item">
+          <span class="menu-item-label">Sportbekleidung</span>
+        </a>
+        <a href="/collections/personalisierte-fanschals/" class="menu-item">
+          <span class="menu-item-label">Schals</span>
+        </a>
+        <a href="/collections/kopfbedeckung/" class="menu-item">
+          <span class="menu-item-label">Kopfbedeckung</span>
+        </a>
+        <a href="/collections/personalisierte-mutzen/" class="menu-item">
+          <span class="menu-item-label">Mützen</span>
+        </a>
+
+        <!-- CTA Button -->
+        <div class="menu-cta">
+          <a href="/kontakt/" class="cta-button">Kontakt</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submenu Panels -->
+    {Object.entries(mobileMenuItems).map(([key, menu]) => (
+      <div class="menu-panel sub-panel" id={`submenu-${key}`} data-panel={key}>
+        <!-- Submenu Header -->
+        <div class="submenu-header">
+          <button class="back-btn" data-back={key}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            <span>Zurück</span>
+          </button>
+          <button class="close-btn submenu-close" aria-label="Menu schließen">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Submenu Title -->
+        <div class="submenu-title">{menu.title}</div>
+
+        <!-- Submenu Items -->
+        <div class="submenu-content">
+          {menu.items.map((item) => (
+            <a href={item.href} class="submenu-item">
+              <img src={`/images/menu/${item.icon}`} alt="" class="submenu-icon" />
+              <span>{item.label}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .mobile-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+  }
+
+  body.mobile-menu-open .mobile-menu {
+    pointer-events: auto;
+  }
+
+  .mobile-menu-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  body.mobile-menu-open .mobile-menu-overlay {
+    opacity: 1;
+  }
+
+  .mobile-menu-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 85%;
+    max-width: 400px;
+    height: 100%;
+    background: white;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+    overflow: hidden;
+  }
+
+  body.mobile-menu-open .mobile-menu-panel {
+    transform: translateX(0);
+  }
+
+  /* Menu Panels */
+  .menu-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+  }
+
+  .main-panel {
+    transform: translateX(0);
+  }
+
+  .main-panel.slide-out {
+    transform: translateX(-100%);
+  }
+
+  .sub-panel {
+    transform: translateX(100%);
+  }
+
+  .sub-panel.active {
+    transform: translateX(0);
+  }
+
+  /* Header */
+  .mobile-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .menu-logo {
+    height: 40px;
+    width: auto;
+  }
+
+  .close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: none;
+    border: none;
+    color: #253461;
+    cursor: pointer;
+  }
+
+  .close-btn:hover {
+    color: #469ADC;
+  }
+
+  /* Menu Content */
+  .menu-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 15px 20px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .menu-item:hover {
+    background-color: #f9fafb;
+  }
+
+  .menu-item-label {
+    font-family: 'Jost', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: #253461;
+    text-transform: uppercase;
+  }
+
+  .menu-arrow {
+    color: #253461;
+    flex-shrink: 0;
+  }
+
+  /* CTA */
+  .menu-cta {
+    padding: 20px;
+  }
+
+  .cta-button {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    background: #10C99E;
+    color: white;
+    font-family: 'Jost', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    border-radius: 50px;
+    transition: background-color 0.2s;
+  }
+
+  .cta-button:hover {
+    background: #0eb58d;
+  }
+
+  /* Submenu Header */
+  .submenu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    color: #253461;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 5px 0;
+  }
+
+  .back-btn:hover {
+    color: #469ADC;
+  }
+
+  /* Submenu Title */
+  .submenu-title {
+    padding: 20px;
+    font-family: 'Jost', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #253461;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* Submenu Content */
+  .submenu-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+  }
+
+  .submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 20px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+
+  .submenu-item:hover {
+    background-color: #f9fafb;
+  }
+
+  .submenu-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .submenu-item span {
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #253461;
+  }
+
+  .submenu-item:hover span {
+    color: #469ADC;
+  }
+</style>
+
+<script>
+  // Mobile menu controls
+  const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+  const mobileMenuClose = document.getElementById('mobile-menu-close');
+  const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+  const mainPanel = document.getElementById('main-panel');
+
+  // Open menu
+  mobileMenuToggle?.addEventListener('click', () => {
+    document.body.classList.add('mobile-menu-open');
+  });
+
+  // Close menu function
+  function closeMenu() {
+    document.body.classList.remove('mobile-menu-open');
+    // Reset panels after animation
+    setTimeout(() => {
+      mainPanel?.classList.remove('slide-out');
+      document.querySelectorAll('.sub-panel').forEach(panel => {
+        panel.classList.remove('active');
+      });
+    }, 300);
+  }
+
+  // Close menu buttons
+  mobileMenuClose?.addEventListener('click', closeMenu);
+  mobileMenuOverlay?.addEventListener('click', closeMenu);
+
+  // All close buttons in submenus
+  document.querySelectorAll('.submenu-close').forEach(btn => {
+    btn.addEventListener('click', closeMenu);
+  });
+
+  // Open submenu
+  document.querySelectorAll('.has-submenu').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const submenuId = btn.getAttribute('data-submenu');
+      const submenu = document.getElementById(`submenu-${submenuId}`);
+
+      mainPanel?.classList.add('slide-out');
+      submenu?.classList.add('active');
+    });
+  });
+
+  // Back button
+  document.querySelectorAll('.back-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const panelId = btn.getAttribute('data-back');
+      const submenu = document.getElementById(`submenu-${panelId}`);
+
+      mainPanel?.classList.remove('slide-out');
+      submenu?.classList.remove('active');
+    });
+  });
+
+  // Close menu on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeMenu();
+    }
+  });
+</script>

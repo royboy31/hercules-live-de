@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Slider from '../components/Slider.astro';
+import TopPerformer from '../components/TopPerformer.astro';
+import WhyChooseUs from '../components/WhyChooseUs.astro';
+import DesignService from '../components/DesignService.astro';
+import HerculesMerchandise from '../components/HerculesMerchandise.astro';
+import TrustLogos from '../components/TrustLogos.astro';
+import CustomerReviews from '../components/CustomerReviews.astro';
+import homepageData from '../data/homepage-products.json';
+
+const products = homepageData.products;
+---
+
+<BaseLayout
+  title="Individuelle Fußballschals und personalisierte Merchandise-Artikel"
+  description="Ihr Spezialist seit mehr als 15 Jahren: Individuelle Fußball- und Fanschals, individuelle Mützen und Fußball-Merchandise-Artikel. Hergestellt in Europa. Bestellen Sie jetzt kleine Mengen."
+>
+  <!-- Hero Slider Section -->
+  <Slider />
+
+  <!-- Top-Performer im RAMPENLICHT Section -->
+  <TopPerformer products={products} />
+
+  <!-- Warum uns wählen? Section -->
+  <WhyChooseUs />
+
+  <!-- Design Service Section -->
+  <DesignService />
+
+  <!-- Hercules Merchandise About Section -->
+  <HerculesMerchandise />
+
+  <!-- Sie vertrauen uns - Trust Logos Section -->
+  <TrustLogos />
+
+  <!-- Was Kunden über uns sagen - Customer Reviews Section -->
+  <CustomerReviews />
+</BaseLayout>

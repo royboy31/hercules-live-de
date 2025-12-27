@@ -1,0 +1,60 @@
+{
+  "products": [
+    {
+      "id": 4280,
+      "name": "Personalisiertes Fußballtrikot",
+      "slug": "personalisiertes-fussballtrikot",
+      "image": "/images/products/Hercules_Merchandise_football_kit_99-19.png",
+      "alt": "Hercules Merchandise football kit"
+    },
+    {
+      "id": 6721,
+      "name": "Personalisierter HD-Fußballschal",
+      "slug": "personalisierter-fussballschal",
+      "image": "/images/products/HerculesMerchandisecustomfootballscarf102_c547ca87-7aa5-4360-a060-bf1176e710a0-23.png",
+      "alt": "Hercules Merchandise custom football scarf"
+    },
+    {
+      "id": 4253,
+      "name": "Personalisierte Standard-Mütze",
+      "slug": "custom-football-beanie-hats",
+      "image": "/images/products/HerculesMerchandisestandardknittedbeaniehat51-20.png",
+      "alt": "Hercules Merchandise standard knitted beanie hat"
+    },
+    {
+      "id": 10105,
+      "name": "Basecap",
+      "slug": "baseball-cap",
+      "image": "/images/products/HerculesMerchandisecap21.png",
+      "alt": "Hercules Merchandise cap"
+    },
+    {
+      "id": 4381,
+      "name": "Personalisierte Badeschlappen",
+      "slug": "personalisierte-badeschlappen",
+      "image": "/images/products/Hercules-Merchandise-slides-63.png",
+      "alt": "Hercules Merchandise slides"
+    },
+    {
+      "id": 4294,
+      "name": "Individuell gedruckter Wimpel",
+      "slug": "individuell-gedruckter-wimpel",
+      "image": "/images/products/HerculesMerchandiseprintedpennant7-17.png",
+      "alt": "Hercules Merchandise printed pennant"
+    },
+    {
+      "id": 4332,
+      "name": "Personalisierte Handtücher",
+      "slug": "personalisierte-handtucher",
+      "image": "/images/products/HerculesMerchandisetowels3-16.png",
+      "alt": "Hercules Merchandise towels"
+    },
+    {
+      "id": 4213,
+      "name": "Personalisierter Fischerhut",
+      "slug": "bucket-hat",
+      "image": "/images/products/Hercules_Merchandise_bucket_hat_64-21.png",
+      "alt": "Hercules Merchandise bucket hat"
+    }
+  ]
+}

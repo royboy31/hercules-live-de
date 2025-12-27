@@ -129,6 +129,7 @@ npm run build && CLOUDFLARE_API_TOKEN="<token>" CLOUDFLARE_ACCOUNT_ID="d6d3df04a
 - ✅ **Weiterlesen Link** - Scrolls to read-more content section
 - ✅ **Desktop Mega Menu Icons** - All categories have icons (Sportarten, Produkte, Themen)
 - ✅ **Mobile Menu Sliding Submenus** - Submenus slide in from right with back button
+- ✅ **Auto-Rebuild on Product Sync** - GitHub Actions workflow triggers on WooCommerce webhook
 
 ### Next Steps
 1. Create product detail pages (`/produkt/[slug]`)
@@ -138,9 +139,67 @@ npm run build && CLOUDFLARE_API_TOKEN="<token>" CLOUDFLARE_ACCOUNT_ID="d6d3df04a
 
 ---
 
+## Auto-Rebuild on Product Sync (IMPLEMENTED)
+
+### How It Works
+When products or categories are updated in WooCommerce:
+1. WooCommerce webhook fires to the Product Sync Worker
+2. Worker syncs product data to KV storage
+3. Worker triggers GitHub Actions workflow via workflow_dispatch API
+4. GitHub Actions builds Astro site and deploys to Cloudflare Pages
+5. Site is rebuilt with latest product data (~1-2 minutes)
+
+### Debouncing
+- 5-minute debounce prevents excessive rebuilds
+- Multiple product updates within 5 minutes only trigger one rebuild
+- Scheduled sync (3 AM UTC) clears debounce and always rebuilds
+
+### Components
+```
+WooCommerce → Webhook → Product Sync Worker → GitHub Actions → Cloudflare Pages
+                              ↓
+                        KV Storage (products/categories)
+```
+
+### GitHub Repository
+- **URL:** https://github.com/kamindu01/hercules-astro
+- **Workflow:** `.github/workflows/deploy.yml`
+- **Triggers:** Push to main, workflow_dispatch (API)
+
+### Worker Secrets
+- `GITHUB_TOKEN` - GitHub Personal Access Token with `workflow` scope
+
+### Manual Trigger
+```bash
+# Via GitHub CLI
+gh workflow run deploy.yml --ref main -f reason="Manual trigger"
+
+# Via GitHub API
+curl -X POST "https://api.github.com/repos/kamindu01/hercules-astro/actions/workflows/deploy.yml/dispatches" \
+  -H "Authorization: Bearer <GITHUB_TOKEN>" \
+  -H "Accept: application/vnd.github.v3+json" \
+  -d '{"ref":"main","inputs":{"reason":"Manual trigger"}}'
+```
+
+---
+
 ## PLANNED FEATURES (TODO for Next Session)
 
-### 1. Edge Router Worker (Hybrid Routing)
+### 1. Product Detail Pages (`/produkt/[slug]`)
+
+**Priority:** Next implementation step
+
+**Requirements:**
+- Fetch product data from Worker API
+- Display product images with gallery
+- Show pricing (conditional prices from variations)
+- Attribute selectors (size, color, etc.)
+- Add to cart functionality
+- Related products section
+
+---
+
+### 3. Edge Router Worker (Hybrid Routing)
 
 **Purpose:** Route traffic between Astro (static pages) and WordPress (dynamic pages like checkout) on the same domain.
 
@@ -218,7 +277,7 @@ define('COOKIE_DOMAIN', '.hercules-merchandise.de');
 
 ---
 
-### 2. Session Management (WordPress ↔ Astro)
+### 4. Session Management (WordPress ↔ Astro)
 
 **Purpose:** Show logged-in user info and cart count on Astro pages.
 
@@ -284,83 +343,11 @@ Create `src/components/UserSession.tsx`:
 
 ---
 
-### 3. Auto-Rebuild on Product Sync
-
-**Purpose:** Automatically rebuild Astro site when products change in WordPress.
-
-**Flow:**
-```
-WordPress Product Updated
-         │
-         ▼
-   WooCommerce Webhook
-         │
-         ▼
-   Product Sync Worker
-         │
-         ├─► Sync to KV (immediate)
-         │
-         └─► Trigger Cloudflare Pages Deploy Hook
-                    │
-                    ▼
-            Site Rebuilds (~1-2 min)
-```
-
-**Step 1: Create Deploy Hook in Cloudflare**
-1. Cloudflare Dashboard → Pages → herculesde → Settings
-2. Builds & deployments → Deploy hooks → Add
-3. Name: `woocommerce-product-update`, Branch: `main`
-4. Copy the URL
-
-**Step 2: Add Secret to Worker**
-```bash
-cd workers/product-sync
-npx wrangler secret put DEPLOY_HOOK_URL
-# Paste the deploy hook URL
-```
-
-**Step 3: Update Worker Code**
-Add to `workers/product-sync/src/index.ts`:
-```typescript
-// Debounced rebuild trigger (5 min cooldown)
-async function triggerSiteRebuild(env: Env): Promise<void> {
-  if (!env.DEPLOY_HOOK_URL) return;
-
-  const lastRebuild = await env.PRODUCTS_KV.get('last_rebuild');
-  const now = Date.now();
-
-  // Debounce: 5 minutes between rebuilds
-  if (lastRebuild && now - parseInt(lastRebuild) < 5 * 60 * 1000) {
-    console.log('Skipping rebuild - too recent');
-    return;
-  }
-
-  await env.PRODUCTS_KV.put('last_rebuild', now.toString());
-  await fetch(env.DEPLOY_HOOK_URL, { method: 'POST' });
-  console.log('Triggered site rebuild');
-}
-```
-
-Add to webhook handlers after sync:
-```typescript
-ctx.waitUntil(syncSingleProduct(env, productId));
-ctx.waitUntil(triggerSiteRebuild(env)); // Add this
-```
-
-**Timeline After Product Update:**
-| Time | Event |
-|------|-------|
-| 0s | Product updated in WordPress |
-| ~2s | Synced to KV + rebuild triggered |
-| ~90s | Site rebuilt with new products |
-
----
-
 ### Implementation Priority
 
-1. **Edge Router** - Required for same-domain cart/checkout
-2. **Session Management** - Shows user login state on Astro pages
-3. **Auto-Rebuild** - Keeps static pages fresh without manual deploys
+1. **Product Detail Pages** - Required to view products and add to cart
+2. **Edge Router** - Required for same-domain cart/checkout
+3. **Session Management** - Shows user login state on Astro pages
 
 ### Files to Create
 
@@ -381,7 +368,42 @@ WordPress mu-plugins/
 
 ## Session History
 
-### Session 2025-12-27 (Latest)
+### Session 2025-12-27 (Latest - Auto-Rebuild Implementation)
+**Auto-Rebuild on Product Sync:**
+
+1. **GitHub Repository Setup:**
+   - Initialized git repository
+   - Created GitHub repo: https://github.com/kamindu01/hercules-astro
+   - Pushed all code to GitHub
+
+2. **GitHub Actions Workflow:**
+   - Created `.github/workflows/deploy.yml`
+   - Triggers: push to main, workflow_dispatch (API)
+   - Build: npm ci, npm run build
+   - Deploy: wrangler pages deploy to herculesde
+
+3. **Worker Updates:**
+   - Added `GITHUB_TOKEN` to Env interface
+   - Created `triggerSiteRebuild()` function
+   - Uses GitHub workflow_dispatch API
+   - 5-minute debounce to prevent excessive rebuilds
+   - Triggers on: product create/update/delete, category create/update/delete
+   - Scheduled sync (3 AM) clears debounce and always rebuilds
+
+4. **Secrets Added:**
+   - GitHub repo: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, WC_CONSUMER_KEY, WC_CONSUMER_SECRET
+   - Worker: GITHUB_TOKEN
+
+5. **Worker Version:** `85c00f0d-1389-4cfb-94cb-533e74d33cc8`
+
+6. **Test Results:**
+   - Push to main triggers build ✓
+   - Manual workflow_dispatch works ✓
+   - GitHub Actions successfully deploys to Pages ✓
+
+---
+
+### Session 2025-12-27 (Earlier)
 **Category Page Sections, Menu Icons & Mobile Menu Overhaul:**
 
 1. **Related Products Section ("Andere Kunden mochten diese Produkte ebenfalls"):**

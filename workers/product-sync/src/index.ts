@@ -16,8 +16,12 @@ export interface Env {
   WC_CONSUMER_KEY: string;
   WC_CONSUMER_SECRET: string;
   WEBHOOK_SECRET: string;
-  DEPLOY_HOOK_URL?: string;  // Cloudflare Pages deploy hook URL for auto-rebuild
+  GITHUB_TOKEN?: string;  // GitHub Personal Access Token for triggering workflow_dispatch
 }
+
+// GitHub repo for triggering auto-rebuild
+const GITHUB_REPO = 'kamindu01/hercules-astro';
+const GITHUB_WORKFLOW = 'deploy.yml';
 
 // Worker base URL for image serving
 const WORKER_URL = 'https://hercules-product-sync.kamindudushmantha.workers.dev';
@@ -915,12 +919,13 @@ async function deleteCategory(env: Env, categoryId: number): Promise<void> {
 // Debounce interval for site rebuilds (5 minutes)
 const REBUILD_DEBOUNCE_MS = 5 * 60 * 1000;
 
-// Trigger Cloudflare Pages site rebuild with debouncing
+// Trigger GitHub Actions workflow to rebuild and deploy the site
+// Uses workflow_dispatch API to trigger the deploy.yml workflow
 // Prevents excessive rebuilds when multiple products are updated in quick succession
 async function triggerSiteRebuild(env: Env): Promise<{ triggered: boolean; reason: string }> {
-  // Skip if no deploy hook configured
-  if (!env.DEPLOY_HOOK_URL) {
-    return { triggered: false, reason: 'No DEPLOY_HOOK_URL configured' };
+  // Skip if no GitHub token configured
+  if (!env.GITHUB_TOKEN) {
+    return { triggered: false, reason: 'No GITHUB_TOKEN configured' };
   }
 
   try {
@@ -942,21 +947,33 @@ async function triggerSiteRebuild(env: Env): Promise<{ triggered: boolean; reaso
     // Update last rebuild timestamp BEFORE triggering to prevent race conditions
     await env.PRODUCTS_KV.put('last_rebuild', now.toString());
 
-    // Trigger the deploy hook
-    const response = await fetch(env.DEPLOY_HOOK_URL, {
+    // Trigger GitHub Actions workflow via workflow_dispatch
+    const workflowUrl = `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/${GITHUB_WORKFLOW}/dispatches`;
+
+    const response = await fetch(workflowUrl, {
       method: 'POST',
       headers: {
+        'Accept': 'application/vnd.github.v3+json',
+        'Authorization': `Bearer ${env.GITHUB_TOKEN}`,
         'Content-Type': 'application/json',
+        'User-Agent': 'Hercules-Product-Sync-Worker',
       },
+      body: JSON.stringify({
+        ref: 'main',
+        inputs: {
+          reason: 'WooCommerce product sync webhook',
+        },
+      }),
     });
 
     if (!response.ok) {
-      console.error(`Deploy hook failed: ${response.status} ${response.statusText}`);
-      return { triggered: false, reason: `Deploy hook failed: ${response.status}` };
+      const errorText = await response.text();
+      console.error(`GitHub workflow trigger failed: ${response.status} ${errorText}`);
+      return { triggered: false, reason: `GitHub API failed: ${response.status}` };
     }
 
-    console.log('Site rebuild triggered successfully');
-    return { triggered: true, reason: 'Rebuild triggered' };
+    console.log('GitHub Actions workflow triggered successfully');
+    return { triggered: true, reason: 'GitHub workflow triggered' };
   } catch (error) {
     console.error('Error triggering site rebuild:', error);
     return { triggered: false, reason: `Error: ${error}` };

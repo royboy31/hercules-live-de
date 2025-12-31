@@ -2,7 +2,7 @@ name = "hercules-product-sync"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
-# KV namespace for product data
+# KV namespace for product data (Hercules account)
 [[kv_namespaces]]
 binding = "PRODUCTS_KV"
 id = "9b35cae40f234d1ea15e974aa8acbb85"

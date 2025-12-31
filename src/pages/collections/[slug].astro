@@ -158,7 +158,7 @@ export async function getStaticPaths() {
           <ul class="related-products">
             {relatedProducts.map((product: any) => (
               <li class="related-product-item">
-                <a href={`/produkt/${product.slug}`} class="related-product-link">
+                <a href={`/produkte/${product.slug}`} class="related-product-link">
                   <img
                     src={`https://hercules-product-sync.kamindudushmantha.workers.dev/image/${product.slug}/0`}
                     alt={product.name}

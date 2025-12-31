@@ -10,5 +10,10 @@ export default defineConfig({
     plugins: [tailwindcss()]
   },
 
-  integrations: [react()]
+  integrations: [react()],
+
+  redirects: {
+    '/blogs': '/blog',
+    '/blogs/': '/blog',
+  }
 });

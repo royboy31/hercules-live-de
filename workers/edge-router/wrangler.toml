@@ -1,0 +1,14 @@
+name = "hercules-edge-router"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Environment variables
+[vars]
+ASTRO_ORIGIN = "https://herculesde.pages.dev"
+WORDPRESS_ORIGIN = "https://staging.hercules-merchandise.de"
+WORDPRESS_HOST = "staging.hercules-merchandise.de"
+
+# Routes for staging domain
+routes = [
+  { pattern = "staging.hercules-merchandise.de/*", zone_name = "hercules-merchandise.de" }
+]

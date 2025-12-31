@@ -4,13 +4,39 @@ import TopBar from '../components/TopBar.astro';
 import Header from '../components/Header.astro';
 import StickyHeader from '../components/StickyHeader.astro';
 import Footer from '../components/Footer.astro';
+import CookieConsent from '../components/CookieConsent.tsx';
 
 interface Props {
   title: string;
   description?: string;
+  hreflangUrls?: {
+    de?: string;
+    en?: string;
+    fr?: string;
+  };
 }
 
-const { title, description = 'Hercules Merchandise - Hochwertige Werbeartikel mit Ihrem Logo' } = Astro.props;
+const { title, description = 'Hercules Merchandise - Hochwertige Werbeartikel mit Ihrem Logo', hreflangUrls } = Astro.props;
+
+// Base domains for each language
+const domains = {
+  de: 'https://www.hercules-merchandise.de',
+  en: 'https://www.hercules-trophy.com',
+  fr: 'https://www.hercules-merchandising.fr'
+};
+
+// Get current path
+const currentPath = Astro.url.pathname;
+
+// Build hreflang URLs - use provided custom URLs or fallback to same path on each domain
+const hreflangs = {
+  de: hreflangUrls?.de || `${domains.de}${currentPath}`,
+  en: hreflangUrls?.en || `${domains.en}${currentPath}`,
+  fr: hreflangUrls?.fr || `${domains.fr}${currentPath}`
+};
+
+// Canonical URL (current DE page)
+const canonicalUrl = `${domains.de}${currentPath}`;
 ---
 
 <!DOCTYPE html>
@@ -21,19 +47,86 @@ const { title, description = 'Hercules Merchandise - Hochwertige Werbeartikel mi
   <meta name="description" content={description}>
   <meta name="robots" content="index, follow">
 
+  <!-- Canonical URL -->
+  <link rel="canonical" href={canonicalUrl} />
+
+  <!-- Hreflang Tags for International SEO -->
+  <link rel="alternate" hreflang="de" href={hreflangs.de} />
+  <link rel="alternate" hreflang="en" href={hreflangs.en} />
+  <link rel="alternate" hreflang="fr" href={hreflangs.fr} />
+  <link rel="alternate" hreflang="x-default" href={hreflangs.de} />
+
   <!-- Open Graph -->
   <meta property="og:title" content={title}>
   <meta property="og:description" content={description}>
   <meta property="og:type" content="website">
+  <meta property="og:url" content={canonicalUrl}>
   <meta property="og:locale" content="de_DE">
+  <meta property="og:locale:alternate" content="en_GB">
+  <meta property="og:locale:alternate" content="fr_FR">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 
+  <!-- Google Analytics 4 (gtag.js) -->
+  <!-- TODO: Replace G-XXXXXXXXX with actual GA4 Measurement ID -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <script is:inline>
+    // Initialize dataLayer and gtag function
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+
+    // GA4 Measurement ID - Replace with actual ID
+    window.GA4_MEASUREMENT_ID = 'G-XXXXXXXXX';
+
+    // Check if statistics consent is given
+    function hasStatisticsConsent() {
+      try {
+        const prefs = JSON.parse(localStorage.getItem('cmplz_preferences') || '{}');
+        return prefs.statistics === true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // Initialize GA4 with consent mode
+    function initGA4() {
+      if (window.ga4Initialized) return;
+
+      // Load gtag.js script
+      var script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=' + window.GA4_MEASUREMENT_ID;
+      document.head.appendChild(script);
+
+      gtag('js', new Date());
+      gtag('config', window.GA4_MEASUREMENT_ID, {
+        send_page_view: true,
+        cookie_flags: 'SameSite=None;Secure'
+      });
+
+      window.ga4Initialized = true;
+    }
+
+    // Initialize if consent already given
+    if (hasStatisticsConsent()) {
+      initGA4();
+    }
+
+    // Listen for consent updates
+    window.addEventListener('cmplz_consent_updated', function(e) {
+      if (e.detail && e.detail.statistics) {
+        initGA4();
+      }
+    });
+  </script>
+
   <!-- Favicon -->
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 
   <title>{title} | Hercules Merchandise</title>
 </head>
@@ -47,5 +140,8 @@ const { title, description = 'Hercules Merchandise - Hochwertige Werbeartikel mi
   </main>
 
   <Footer />
+
+  <!-- Cookie Consent Banner -->
+  <CookieConsent client:load />
 </body>
 </html>

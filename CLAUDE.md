@@ -7,6 +7,7 @@ Migrating WordPress/WooCommerce Hercules Merchandise site (staging.hercules-merc
 
 ### URLs
 - **Astro Site:** https://herculesde.pages.dev
+- **Edge Router:** https://hercules-edge-router.kamindudushmantha.workers.dev
 - **Worker API:** https://hercules-product-sync.kamindudushmantha.workers.dev
 - **WordPress Staging:** https://staging.hercules-merchandise.de
 - **WordPress Admin:** https://staging.hercules-merchandise.de/wp-admin/
@@ -105,7 +106,7 @@ npm run build && CLOUDFLARE_API_TOKEN="<token>" CLOUDFLARE_ACCOUNT_ID="d6d3df04a
 2. **Slide 2:** "HEBEN SIE SICH AB IN IHREN FARBEN MIT STOLZ." → /collections/personalisierte-fanschals/
 3. **Slide 3:** "Umkleidekabinen-Komfort, Streetstyle-Stolz." → /product/personalisierte-badeschlappen/
 
-## Current Status (Last Updated: 2025-12-27)
+## Current Status (Last Updated: 2025-12-29)
 
 ### Completed
 - ✅ Homepage fully replicated from WordPress
@@ -130,12 +131,125 @@ npm run build && CLOUDFLARE_API_TOKEN="<token>" CLOUDFLARE_ACCOUNT_ID="d6d3df04a
 - ✅ **Desktop Mega Menu Icons** - All categories have icons (Sportarten, Produkte, Themen)
 - ✅ **Mobile Menu Sliding Submenus** - Submenus slide in from right with back button
 - ✅ **Auto-Rebuild on Product Sync** - GitHub Actions workflow triggers on WooCommerce webhook
+- ✅ **Session Management** - Cart count badge and user state via WordPress REST API
+- ✅ **Contact Form Popup** - Matches WordPress popup form with Google Sheets sync
 
 ### Next Steps
 1. Create product detail pages (`/produkt/[slug]`)
-2. Implement cart functionality
+2. Implement cart functionality (add to cart from Astro pages)
 3. Add to cart with custom pricing (matching Pearl plugin)
 4. Checkout integration
+
+---
+
+## Contact Form Popup (IMPLEMENTED - 2025-12-30)
+
+### Overview
+Contact form popup matching the WordPress Elementor popup (ID: 5735) with Google Sheets sync.
+
+### Form Fields
+1. **Nach- und Vorname** - text, required, 50% width
+2. **Email** - email, required, 50% width
+3. **Telefonnummer** - tel, optional, 100% width
+4. **Nachricht** - textarea, optional, 4 rows
+5. **Datei hochladen** - file upload, multiple files, max 10MB
+
+### Components Created
+
+**1. React Component:**
+- File: `src/components/ContactFormPopup.tsx`
+- Props: `triggerType` ("button" | "icon" | "link"), `triggerText`, `triggerClassName`
+- Features:
+  - Animated popup overlay with close on ESC/click outside
+  - Form validation (name & email required)
+  - File upload with size validation (10MB max)
+  - Loading state with spinner
+  - Success state with submitted details
+  - Body scroll lock when open
+
+**2. Cloudflare Pages Function:**
+- File: `functions/api/contact.ts`
+- Endpoint: `POST /api/contact`
+- Features:
+  - Google Sheets API integration with JWT auth
+  - Auto-creates "Kontaktanfragen" sheet with headers
+  - Stores: date, time, name, email, phone, message, files, page, URL, timestamp
+  - Works without Google Sheets configured (for testing)
+
+### Integration Points
+1. **Desktop Header:** KONTAKT button opens popup
+2. **Mobile Header:** Email icon button opens popup
+3. **Footer:** Kontakt button in reseller section opens popup
+
+### Google Sheets Setup
+Environment variables needed (set in Cloudflare Pages):
+```
+GOOGLE_SERVICE_ACCOUNT_EMAIL=your-service-account@project.iam.gserviceaccount.com
+GOOGLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----
+GOOGLE_SPREADSHEET_ID=your-spreadsheet-id
+```
+
+### Sheet Structure
+Sheet name: "Kontaktanfragen"
+Columns: Datum | Uhrzeit | Name | Email | Telefon | Nachricht | Dateien | Seite | URL | Zeitstempel
+
+### Success Message
+- "Danke, dass Sie uns kontaktiert haben!"
+- "Ihre Anfrage war erfolgreich. Einer unserer Mitarbeitenden wird sich so bald wie möglich bei Ihnen melden."
+
+---
+
+## Session Management (IMPLEMENTED - 2025-12-29)
+
+### Overview
+Real-time cart count and user login state displayed on Astro pages via WordPress REST API.
+
+### Components Created
+
+**1. WordPress API Endpoint:**
+- File: `wp-content/mu-plugins/hercules-session-api.php`
+- Endpoint: `GET /wp-json/hercules/v1/session`
+- Returns: `logged_in`, `user` (name, email, avatar), `cart` (count, total, items)
+- CORS configured for Edge Router and localhost
+
+**2. React Island Component:**
+- File: `src/components/UserSession.tsx`
+- Props: `type="cart"` | `type="account"` | `type="cart-count"`
+- Features:
+  - 30-second localStorage cache
+  - Auto-refresh on tab visibility change
+  - Custom event listener for cart updates (`hercules:cart-updated`)
+  - Smart URL detection (uses relative URLs through Edge Router)
+
+**3. Header Integration:**
+- Cart icon shows count badge when items in cart
+- Account icon shows user avatar when logged in
+- Green dot indicator for logged-in state
+
+### How It Works
+1. UserSession component loads on client (`client:load`)
+2. Fetches `/wp-json/hercules/v1/session` with `credentials: 'include'`
+3. WordPress returns session data using native WC cookies
+4. Component displays cart count badge and user state
+5. Cache refreshes on tab switch or custom events
+
+### Testing
+```bash
+# Test session API directly
+curl "https://staging.hercules-merchandise.de/wp-json/hercules/v1/session"
+
+# Test through Edge Router (will share cookies with cart/checkout)
+curl "https://hercules-edge-router.kamindudushmantha.workers.dev/wp-json/hercules/v1/session"
+```
+
+### Files Modified
+- `src/components/Header.astro` - Replaced static icons with UserSession component
+- `src/components/UserSession.tsx` - New React component
+
+### Deployed
+- Astro Site: https://977acc2b.herculesde.pages.dev
+- Production: https://herculesde.pages.dev
+- Edge Router: https://hercules-edge-router.kamindudushmantha.workers.dev
 
 ---
 
@@ -368,7 +482,41 @@ WordPress mu-plugins/
 
 ## Session History
 
-### Session 2025-12-27 (Latest - Auto-Rebuild Implementation)
+### Session 2025-12-28 (Latest - Edge Router Verification)
+**Edge Router Status Check:**
+
+1. **Edge Router Worker Deployed:**
+   - **URL:** https://hercules-edge-router.kamindudushmantha.workers.dev
+   - **Location:** `workers/edge-router/src/index.ts`
+   - **Status:** ✅ Working correctly
+
+2. **Routing Logic:**
+   - **Astro routes** (`/`, `/collections/*`, `/produkt/*`, etc.) → `herculesde.pages.dev`
+   - **WordPress routes** (`/cart`, `/checkout`, `/wp-admin/*`, `/wp-json/*`, etc.) → `staging.hercules-merchandise.de`
+   - URL rewriting enabled for HTML, JSON, CSS, JS content
+   - Redirect handling to keep users on same domain
+
+3. **Tested Routes:**
+   - `GET /` → Returns Astro homepage ✓
+   - `GET /collections/personalisierte-fanschals/` → Returns Astro category page ✓
+   - `GET /wp-admin/` → Redirects to WordPress login ✓
+
+4. **Worker Configuration (`wrangler.toml`):**
+   ```toml
+   name = "hercules-edge-router"
+   ASTRO_ORIGIN = "https://herculesde.pages.dev"
+   WORDPRESS_ORIGIN = "https://staging.hercules-merchandise.de"
+   ```
+
+5. **Next Steps (For Production):**
+   - Configure DNS for `hercules-merchandise.de` to point to Cloudflare
+   - Add route pattern: `hercules-merchandise.de/*`
+   - Update WordPress `WP_HOME` and `WP_SITEURL` to production domain
+   - Set `COOKIE_DOMAIN` to `.hercules-merchandise.de` for session sharing
+
+---
+
+### Session 2025-12-27 (Auto-Rebuild Implementation)
 **Auto-Rebuild on Product Sync:**
 
 1. **GitHub Repository Setup:**

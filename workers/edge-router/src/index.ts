@@ -87,8 +87,7 @@ const WORDPRESS_PATHS = [
 const ASTRO_PATHS = [
   '/',
   '/collections',
-  '/blog',
-  '/blogs',  // Redirects to /blog
+  '/blogs',
 ];
 
 function shouldBypassCache(pathname: string, search: string): boolean {
@@ -132,6 +131,12 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const { pathname, search } = url;
+
+    // Handle /blog -> /blogs redirect (keep on same domain)
+    if (pathname === '/blog' || pathname === '/blog/') {
+      const redirectUrl = new URL('/blogs/', url.origin);
+      return Response.redirect(redirectUrl.toString(), 301);
+    }
 
     // Handle CORS preflight for API requests
     if (request.method === 'OPTIONS' && pathname.startsWith('/wp-json/')) {
@@ -192,8 +197,14 @@ export default {
 
           // Check if redirect is to our WordPress origin
           const wpOriginHost = env.WORDPRESS_HOST;
+          const astroOriginHost = new URL(env.ASTRO_ORIGIN).host;
+
           if (redirectUrl.host === wpOriginHost || redirectUrl.host === new URL(env.WORDPRESS_ORIGIN).host) {
-            // Rewrite to our domain
+            // Rewrite WordPress redirects to our domain
+            redirectUrl.host = url.host;
+            redirectUrl.protocol = url.protocol;
+          } else if (redirectUrl.host === astroOriginHost) {
+            // Rewrite Astro/Pages redirects to our domain
             redirectUrl.host = url.host;
             redirectUrl.protocol = url.protocol;
           }
@@ -212,6 +223,10 @@ export default {
               newHeaders.set(key, value);
             }
           }
+
+          // Debug headers for redirects
+          newHeaders.set('X-Edge-Router', 'hercules');
+          newHeaders.set('X-Routed-To', isWordPress ? 'wordpress' : 'astro');
 
           return new Response(response.body, {
             status: response.status,
@@ -286,6 +301,12 @@ export default {
           body = body.replaceAll(`http://${wpOriginHost}`, ourOrigin);
           body = body.replaceAll(`//${wpOriginHost}`, `//${ourHost}`);
         }
+
+        // Also rewrite Astro/Pages URLs to our domain
+        const astroHost = new URL(env.ASTRO_ORIGIN).host;
+        body = body.replaceAll(`https://${astroHost}`, ourOrigin);
+        body = body.replaceAll(`http://${astroHost}`, ourOrigin);
+        body = body.replaceAll(`//${astroHost}`, `//${ourHost}`);
 
         newHeaders.delete('Content-Length'); // Length may have changed
 

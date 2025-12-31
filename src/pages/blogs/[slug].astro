@@ -79,7 +79,7 @@ const metaDescription = post.excerpt?.substring(0, 160) || post.title;
       <nav class="breadcrumb">
         <a href="/">Startseite</a>
         <span class="separator">/</span>
-        <a href="/blog">Blog</a>
+        <a href="/blogs">Blog</a>
         <span class="separator">/</span>
         <span class="current">{post.title}</span>
       </nav>
@@ -154,7 +154,7 @@ const metaDescription = post.excerpt?.substring(0, 160) || post.title;
         <div class="related-grid">
           {relatedPosts.map((rp) => (
             <article class="related-card">
-              <a href={`/blog/${rp.slug}`}>
+              <a href={`/blogs/${rp.slug}`}>
                 {rp.featuredImage && (
                   <div class="related-image">
                     <img src={rp.featuredImage} alt={rp.title} loading="lazy" />

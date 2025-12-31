@@ -13,7 +13,7 @@ export default defineConfig({
   integrations: [react()],
 
   redirects: {
-    '/blogs': '/blog',
-    '/blogs/': '/blog',
+    '/blog': '/blogs',
+    '/blog/': '/blogs',
   }
 });

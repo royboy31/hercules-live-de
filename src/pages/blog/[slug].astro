@@ -1,0 +1,495 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const WORKER_URL = 'https://hercules-product-sync.kamindudushmantha.workers.dev';
+
+// Get the post slug from the URL
+const { slug } = Astro.params;
+
+// Fetch post details
+let post = null;
+try {
+  const postRes = await fetch(`${WORKER_URL}/post/${slug}`);
+  if (postRes.ok) {
+    post = await postRes.json();
+  }
+} catch (error) {
+  console.error('Error fetching post:', error);
+}
+
+// If post not found, return 404
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+// Fetch other posts for "Related Posts" section
+let relatedPosts: any[] = [];
+try {
+  const postsRes = await fetch(`${WORKER_URL}/posts`);
+  if (postsRes.ok) {
+    const allPosts = await postsRes.json();
+    // Filter out current post and take 3
+    relatedPosts = allPosts
+      .filter((p: any) => p.slug !== slug)
+      .slice(0, 3);
+  }
+} catch (error) {
+  console.error('Error fetching related posts:', error);
+}
+
+// Format date for display
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('de-DE', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+// Generate static paths for all posts
+export async function getStaticPaths() {
+  const WORKER_URL = 'https://hercules-product-sync.kamindudushmantha.workers.dev';
+
+  try {
+    const res = await fetch(`${WORKER_URL}/posts`);
+    if (!res.ok) return [];
+
+    const posts = await res.json();
+    return posts.map((post: any) => ({
+      params: { slug: post.slug }
+    }));
+  } catch (error) {
+    console.error('Error generating static paths:', error);
+    return [];
+  }
+}
+
+// Clean excerpt for meta description
+const metaDescription = post.excerpt?.substring(0, 160) || post.title;
+---
+
+<BaseLayout
+  title={`${post.title} - Hercules Merchandise Blog`}
+  description={metaDescription}
+>
+  <!-- Breadcrumb -->
+  <div class="breadcrumb-section">
+    <div class="container">
+      <nav class="breadcrumb">
+        <a href="/">Startseite</a>
+        <span class="separator">/</span>
+        <a href="/blog">Blog</a>
+        <span class="separator">/</span>
+        <span class="current">{post.title}</span>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Article Header -->
+  <article class="blog-article">
+    <header class="article-header">
+      <div class="container">
+        {post.categories?.length > 0 && (
+          <div class="categories">
+            {post.categories.map((cat: any) => (
+              <span class="category">{cat.name}</span>
+            ))}
+          </div>
+        )}
+        <h1>{post.title}</h1>
+        <div class="meta">
+          <time datetime={post.date}>{formatDate(post.date)}</time>
+          {post.author?.name && (
+            <>
+              <span class="meta-separator">|</span>
+              <span class="author">
+                {post.author.avatar && (
+                  <img src={post.author.avatar} alt={post.author.name} class="author-avatar" />
+                )}
+                {post.author.name}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </header>
+
+    <!-- Featured Image -->
+    {post.localFeaturedImage && (
+      <div class="featured-image">
+        <div class="container">
+          <img src={post.localFeaturedImage} alt={post.title} />
+        </div>
+      </div>
+    )}
+
+    <!-- Article Content -->
+    <div class="article-content">
+      <div class="container">
+        <div class="content" set:html={post.content} />
+      </div>
+    </div>
+
+    <!-- Tags -->
+    {post.tags?.length > 0 && (
+      <div class="article-tags">
+        <div class="container">
+          <div class="tags">
+            <span class="tags-label">Tags:</span>
+            {post.tags.map((tag: any) => (
+              <span class="tag">{tag.name}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+  </article>
+
+  <!-- Related Posts -->
+  {relatedPosts.length > 0 && (
+    <section class="related-posts">
+      <div class="container">
+        <h2>WEITERE ARTIKEL</h2>
+        <div class="related-grid">
+          {relatedPosts.map((rp) => (
+            <article class="related-card">
+              <a href={`/blog/${rp.slug}`}>
+                {rp.featuredImage && (
+                  <div class="related-image">
+                    <img src={rp.featuredImage} alt={rp.title} loading="lazy" />
+                  </div>
+                )}
+                <div class="related-content">
+                  <time>{formatDate(rp.date)}</time>
+                  <h3>{rp.title}</h3>
+                </div>
+              </a>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+</BaseLayout>
+
+<style>
+  .breadcrumb-section {
+    background: #fff;
+    padding: 20px 0;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .breadcrumb {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #5F5F5F;
+  }
+
+  .breadcrumb a {
+    color: #253461;
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: #469ADC;
+  }
+
+  .breadcrumb .separator {
+    margin: 0 10px;
+    color: #BFBFBF;
+  }
+
+  .breadcrumb .current {
+    color: #469ADC;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .article-header {
+    text-align: center;
+    padding: 50px 0 40px;
+    background: #fff;
+  }
+
+  .categories {
+    margin-bottom: 15px;
+  }
+
+  .category {
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    background: #469ADC;
+    padding: 5px 15px;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-block;
+    margin: 0 5px;
+  }
+
+  .article-header h1 {
+    font-family: 'Jost', sans-serif;
+    font-size: 42px;
+    font-weight: 600;
+    color: #253461;
+    line-height: 1.2;
+    margin: 0 0 20px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @media (max-width: 768px) {
+    .article-header h1 {
+      font-size: 28px;
+    }
+  }
+
+  .meta {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    color: #5F5F5F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .meta-separator {
+    color: #DCDCDC;
+  }
+
+  .author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .author-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .featured-image {
+    padding: 0 0 40px;
+    background: #fff;
+  }
+
+  .featured-image img {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    display: block;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  }
+
+  .article-content {
+    padding: 40px 0 60px;
+    background: #fff;
+  }
+
+  .content {
+    max-width: 800px;
+    margin: 0 auto;
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    line-height: 1.8;
+    color: #333;
+  }
+
+  .content :global(h2) {
+    font-family: 'Jost', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: #253461;
+    margin: 40px 0 20px;
+  }
+
+  .content :global(h3) {
+    font-family: 'Jost', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #253461;
+    margin: 30px 0 15px;
+  }
+
+  .content :global(p) {
+    margin: 0 0 20px;
+  }
+
+  .content :global(a) {
+    color: #469ADC;
+    text-decoration: underline;
+  }
+
+  .content :global(a:hover) {
+    color: #253461;
+  }
+
+  .content :global(img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin: 20px 0;
+  }
+
+  .content :global(ul),
+  .content :global(ol) {
+    margin: 0 0 20px;
+    padding-left: 25px;
+  }
+
+  .content :global(li) {
+    margin-bottom: 10px;
+  }
+
+  .content :global(blockquote) {
+    border-left: 4px solid #469ADC;
+    padding-left: 20px;
+    margin: 30px 0;
+    font-style: italic;
+    color: #5F5F5F;
+  }
+
+  .article-tags {
+    padding: 0 0 40px;
+    background: #fff;
+  }
+
+  .tags {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .tags-label {
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #253461;
+  }
+
+  .tag {
+    font-family: 'Roboto', sans-serif;
+    font-size: 13px;
+    color: #5F5F5F;
+    background: #F5F5F5;
+    padding: 5px 12px;
+    border-radius: 50px;
+  }
+
+  .related-posts {
+    padding: 60px 0;
+    background: #F5F5F5;
+  }
+
+  .related-posts h2 {
+    font-family: 'Jost', sans-serif;
+    font-size: 35px;
+    font-weight: 600;
+    color: #253461;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0 0 40px;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+  }
+
+  @media (max-width: 1024px) {
+    .related-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .related-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .related-posts h2 {
+      font-size: 28px;
+    }
+  }
+
+  .related-card {
+    background: #fff;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+
+  .related-card:hover {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transform: translateY(-5px);
+  }
+
+  .related-card a {
+    text-decoration: none;
+    display: block;
+  }
+
+  .related-image {
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background: #F2F2F2;
+  }
+
+  .related-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .related-card:hover .related-image img {
+    transform: scale(1.05);
+  }
+
+  .related-content {
+    padding: 20px;
+  }
+
+  .related-content time {
+    font-family: 'Roboto', sans-serif;
+    font-size: 12px;
+    color: #469ADC;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .related-content h3 {
+    font-family: 'Jost', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #253461;
+    margin: 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

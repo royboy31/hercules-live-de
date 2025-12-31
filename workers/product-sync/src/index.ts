@@ -157,6 +157,53 @@ interface WCCategory {
   second_description?: string;
 }
 
+// WordPress Post from REST API
+interface WPPost {
+  id: number;
+  date: string;
+  date_gmt: string;
+  modified: string;
+  modified_gmt: string;
+  slug: string;
+  status: string;
+  type: string;
+  link: string;
+  title: { rendered: string };
+  content: { rendered: string; protected: boolean };
+  excerpt: { rendered: string; protected: boolean };
+  author: number;
+  featured_media: number;
+  categories: number[];
+  tags: number[];
+  // Embedded data when using _embed
+  _embedded?: {
+    author?: Array<{ id: number; name: string; avatar_urls?: Record<string, string> }>;
+    'wp:featuredmedia'?: Array<{ id: number; source_url: string; alt_text: string; media_details?: { sizes?: Record<string, { source_url: string }> } }>;
+    'wp:term'?: Array<Array<{ id: number; name: string; slug: string }>>;
+  };
+}
+
+// Synced Post format
+interface SyncedPost {
+  id: number;
+  title: string;
+  slug: string;
+  date: string;
+  modified: string;
+  excerpt: string;
+  content: string;
+  author: {
+    id: number;
+    name: string;
+    avatar: string | null;
+  };
+  featuredImage: string | null;
+  localFeaturedImage: string | null;
+  categories: Array<{ id: number; name: string; slug: string }>;
+  tags: Array<{ id: number; name: string; slug: string }>;
+  synced_at: string;
+}
+
 // Synced Category format
 interface SyncedCategory {
   id: number;
@@ -302,6 +349,59 @@ class WooCommerceClient {
 
     if (!response.ok) {
       throw new Error(`Failed to fetch category ${categoryId}: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // WordPress Posts API (standard WP REST API, no auth required for public posts)
+  async fetchPosts(page: number = 1, perPage: number = 100): Promise<WPPost[]> {
+    // Use _embed to get author, featured image, and terms in one request
+    const url = `${this.baseUrl}/wp-json/wp/v2/posts?page=${page}&per_page=${perPage}&status=publish&_embed`;
+
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch posts: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async fetchAllPosts(): Promise<WPPost[]> {
+    const allPosts: WPPost[] = [];
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const posts = await this.fetchPosts(page, 100);
+      allPosts.push(...posts);
+
+      if (posts.length < 100) {
+        hasMore = false;
+      } else {
+        page++;
+      }
+    }
+
+    return allPosts;
+  }
+
+  async fetchPost(postId: number): Promise<WPPost> {
+    const url = `${this.baseUrl}/wp-json/wp/v2/posts/${postId}?_embed`;
+
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch post ${postId}: ${response.status}`);
     }
 
     return response.json();
@@ -541,7 +641,8 @@ const BATCH_SIZE = 2;
 const MAX_GALLERY_IMAGES = 5;
 
 // Main sync function with batching support
-async function syncAllProducts(env: Env, offset: number = 0): Promise<{ synced: number; errors: string[]; hasMore: boolean; nextOffset: number }> {
+// forceImageRefresh: if true, re-download all images even if already cached (for upgrading image sizes)
+async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: boolean = false): Promise<{ synced: number; errors: string[]; hasMore: boolean; nextOffset: number }> {
   const client = new WooCommerceClient(
     env.WC_STORE_URL,
     env.WC_CONSUMER_KEY,
@@ -601,14 +702,15 @@ async function syncAllProducts(env: Env, offset: number = 0): Promise<{ synced: 
         );
 
         // Cache gallery images in KV (limited to MAX_GALLERY_IMAGES to stay within subrequest limits)
+        // forceRefresh parameter passed from sync endpoint to re-download all images
         if (product.slug && product.images?.length > 0) {
           const imagesToCache = Math.min(product.images.length, MAX_GALLERY_IMAGES);
           for (let i = 0; i < imagesToCache; i++) {
             const img = product.images[i];
             if (img?.src) {
-              // Try thumbnail first, fallback to original if 404
-              const thumbnailUrl = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
-              const success = await syncImageToKV(env.PRODUCTS_KV, thumbnailUrl, product.slug, i);
+              // Try 600x600 thumbnail first (higher quality for display at 361x361), fallback to original if 404
+              const thumbnailUrl = img.src.replace(/(\.[^.]+)$/, '-600x600$1');
+              const success = await syncImageToKV(env.PRODUCTS_KV, thumbnailUrl, product.slug, i, forceImageRefresh);
               if (!success && img.src !== thumbnailUrl) {
                 // Fallback to original image if thumbnail doesn't exist
                 // Force refresh since we know it's not cached (just failed above)
@@ -718,9 +820,9 @@ async function syncSingleProduct(env: Env, productId: number): Promise<SyncedPro
     JSON.stringify(syncedProduct)
   );
 
-  // Cache thumbnail image in KV
+  // Cache thumbnail image in KV (600x600 for higher quality display)
   if (product.slug && product.images?.[0]?.src) {
-    const thumbnailUrl = product.images[0].src.replace(/(\.[^.]+)$/, '-300x300$1');
+    const thumbnailUrl = product.images[0].src.replace(/(\.[^.]+)$/, '-600x600$1');
     await syncImageToKV(env.PRODUCTS_KV, thumbnailUrl, product.slug);
   }
 
@@ -914,6 +1016,226 @@ async function deleteCategory(env: Env, categoryId: number): Promise<void> {
     const filtered = index.filter((c: any) => c.id !== categoryId);
     await env.PRODUCTS_KV.put('category:index', JSON.stringify(filtered));
   }
+}
+
+// ============================================
+// BLOG POST SYNC FUNCTIONS
+// ============================================
+
+// Transform WordPress post to synced format
+function transformPost(post: WPPost): SyncedPost {
+  // Extract author from embedded data
+  const authorData = post._embedded?.author?.[0];
+  const author = {
+    id: authorData?.id || post.author,
+    name: authorData?.name || 'Unknown',
+    avatar: authorData?.avatar_urls?.['96'] || authorData?.avatar_urls?.['48'] || null,
+  };
+
+  // Extract featured image from embedded data
+  const mediaData = post._embedded?.['wp:featuredmedia']?.[0];
+  const featuredImage = mediaData?.source_url || null;
+  // Get medium or large size if available for better performance
+  const featuredImageMedium = mediaData?.media_details?.sizes?.['medium_large']?.source_url
+    || mediaData?.media_details?.sizes?.['large']?.source_url
+    || featuredImage;
+
+  // Extract categories and tags from embedded terms
+  const terms = post._embedded?.['wp:term'] || [];
+  const categories = terms[0]?.map((t: any) => ({ id: t.id, name: t.name, slug: t.slug })) || [];
+  const tags = terms[1]?.map((t: any) => ({ id: t.id, name: t.name, slug: t.slug })) || [];
+
+  // Clean excerpt (remove HTML tags and extra whitespace)
+  const cleanExcerpt = post.excerpt.rendered
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return {
+    id: post.id,
+    title: post.title.rendered,
+    slug: post.slug,
+    date: post.date,
+    modified: post.modified,
+    excerpt: cleanExcerpt,
+    content: post.content.rendered,
+    author,
+    featuredImage: featuredImageMedium,
+    localFeaturedImage: post.slug ? `${WORKER_URL}/post-image/${post.slug}` : null,
+    categories,
+    tags,
+    synced_at: new Date().toISOString(),
+  };
+}
+
+// Sync all blog posts
+async function syncAllPosts(env: Env): Promise<{ synced: number; errors: string[] }> {
+  const client = new WooCommerceClient(
+    env.WC_STORE_URL,
+    env.WC_CONSUMER_KEY,
+    env.WC_CONSUMER_SECRET
+  );
+
+  const errors: string[] = [];
+  let synced = 0;
+
+  try {
+    console.log('Fetching all blog posts...');
+    const posts = await client.fetchAllPosts();
+    console.log(`Found ${posts.length} posts`);
+
+    // Build post index
+    const postIndex: Array<{ id: number; title: string; slug: string; date: string; excerpt: string; featuredImage: string | null }> = [];
+
+    for (const post of posts) {
+      try {
+        console.log(`Syncing post ${post.id}: ${post.title.rendered}`);
+
+        const syncedPost = transformPost(post);
+
+        // Store in KV by ID
+        await env.PRODUCTS_KV.put(
+          `post:${post.id}`,
+          JSON.stringify(syncedPost)
+        );
+
+        // Store by slug for easy lookup
+        await env.PRODUCTS_KV.put(
+          `post:slug:${post.slug}`,
+          JSON.stringify(syncedPost)
+        );
+
+        // Cache featured image if it exists
+        if (syncedPost.featuredImage && post.slug) {
+          await syncImageToKV(env.PRODUCTS_KV, syncedPost.featuredImage, `post:${post.slug}`);
+        }
+
+        // Add to index
+        postIndex.push({
+          id: post.id,
+          title: syncedPost.title,
+          slug: post.slug,
+          date: syncedPost.date,
+          excerpt: syncedPost.excerpt.substring(0, 200) + (syncedPost.excerpt.length > 200 ? '...' : ''),
+          featuredImage: syncedPost.localFeaturedImage,
+        });
+
+        synced++;
+      } catch (error) {
+        const errorMsg = `Error syncing post ${post.id}: ${error}`;
+        console.error(errorMsg);
+        errors.push(errorMsg);
+      }
+    }
+
+    // Store post index (sorted by date, newest first)
+    postIndex.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    await env.PRODUCTS_KV.put('post:index', JSON.stringify(postIndex));
+
+    // Store last sync timestamp for posts
+    await env.PRODUCTS_KV.put('last_post_sync', new Date().toISOString());
+
+    console.log(`Post sync complete. Synced ${synced} posts, ${errors.length} errors`);
+    return { synced, errors };
+  } catch (error) {
+    const errorMsg = `Fatal post sync error: ${error}`;
+    console.error(errorMsg);
+    errors.push(errorMsg);
+    return { synced, errors };
+  }
+}
+
+// Sync a single blog post (for webhook updates)
+async function syncSinglePost(env: Env, postId: number): Promise<SyncedPost | null> {
+  const client = new WooCommerceClient(
+    env.WC_STORE_URL,
+    env.WC_CONSUMER_KEY,
+    env.WC_CONSUMER_SECRET
+  );
+
+  try {
+    const post = await client.fetchPost(postId);
+
+    // If post is not published, remove from KV
+    if (post.status !== 'publish') {
+      console.log(`Post ${postId} is not published (status: ${post.status}), removing from KV`);
+      await deletePost(env, postId);
+      return null;
+    }
+
+    const syncedPost = transformPost(post);
+
+    // Store in KV
+    await env.PRODUCTS_KV.put(
+      `post:${post.id}`,
+      JSON.stringify(syncedPost)
+    );
+    await env.PRODUCTS_KV.put(
+      `post:slug:${post.slug}`,
+      JSON.stringify(syncedPost)
+    );
+
+    // Cache featured image
+    if (syncedPost.featuredImage && post.slug) {
+      await syncImageToKV(env.PRODUCTS_KV, syncedPost.featuredImage, `post:${post.slug}`);
+    }
+
+    // Update index
+    const indexStr = await env.PRODUCTS_KV.get('post:index');
+    if (indexStr) {
+      const index = JSON.parse(indexStr);
+      const existingIndex = index.findIndex((p: any) => p.id === postId);
+      const newEntry = {
+        id: post.id,
+        title: syncedPost.title,
+        slug: post.slug,
+        date: syncedPost.date,
+        excerpt: syncedPost.excerpt.substring(0, 200) + (syncedPost.excerpt.length > 200 ? '...' : ''),
+        featuredImage: syncedPost.localFeaturedImage,
+      };
+
+      if (existingIndex >= 0) {
+        index[existingIndex] = newEntry;
+      } else {
+        index.push(newEntry);
+      }
+
+      // Re-sort by date
+      index.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      await env.PRODUCTS_KV.put('post:index', JSON.stringify(index));
+    }
+
+    return syncedPost;
+  } catch (error) {
+    console.error(`Error syncing single post ${postId}:`, error);
+    return null;
+  }
+}
+
+// Delete a blog post from KV
+async function deletePost(env: Env, postId: number): Promise<void> {
+  // Get post to find slug for image deletion
+  const postStr = await env.PRODUCTS_KV.get(`post:${postId}`);
+  if (postStr) {
+    const post = JSON.parse(postStr);
+    // Delete by slug
+    await env.PRODUCTS_KV.delete(`post:slug:${post.slug}`);
+    // Delete cached image
+    await env.PRODUCTS_KV.delete(`image:post:${post.slug}`);
+  }
+
+  // Delete by ID
+  await env.PRODUCTS_KV.delete(`post:${postId}`);
+
+  // Update index
+  const indexStr = await env.PRODUCTS_KV.get('post:index');
+  if (indexStr) {
+    const index = JSON.parse(indexStr);
+    const filtered = index.filter((p: any) => p.id !== postId);
+    await env.PRODUCTS_KV.put('post:index', JSON.stringify(filtered));
+  }
+
+  console.log(`Deleted post ${postId} from KV`);
 }
 
 // Debounce interval for site rebuilds (5 minutes)
@@ -1194,7 +1516,92 @@ export default {
       }
     }
 
+    // ============================================
+    // BLOG POST WEBHOOK ENDPOINTS
+    // ============================================
+
+    // Webhook endpoint for blog post updates (create/update)
+    if ((url.pathname === '/webhook/post-update' || url.pathname === '/webhook/post-create') && request.method === 'POST') {
+      try {
+        const signature = request.headers.get('X-WC-Webhook-Signature') || '';
+        const payload = await request.text();
+
+        // Verify HMAC-SHA256 signature
+        const isValid = await verifyWebhookSignature(payload, signature, env.WEBHOOK_SECRET);
+        if (!isValid) {
+          console.log('Invalid webhook signature received');
+          return new Response('Invalid signature', { status: 401 });
+        }
+
+        const data = JSON.parse(payload);
+        const postId = data.id || data.post_id;
+
+        if (!postId) {
+          return new Response('Missing post ID', { status: 400 });
+        }
+
+        console.log(`Webhook received: syncing post ${postId}`);
+
+        // Sync the post in background
+        ctx.waitUntil(syncSinglePost(env, postId));
+
+        // Trigger site rebuild (debounced)
+        ctx.waitUntil(triggerSiteRebuild(env));
+
+        return new Response(JSON.stringify({ success: true, postId, action: 'sync' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('Post webhook error:', error);
+        return new Response(JSON.stringify({ error: String(error) }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Webhook endpoint for blog post deletion
+    if (url.pathname === '/webhook/post-delete' && request.method === 'POST') {
+      try {
+        const signature = request.headers.get('X-WC-Webhook-Signature') || '';
+        const payload = await request.text();
+
+        // Verify HMAC-SHA256 signature
+        const isValid = await verifyWebhookSignature(payload, signature, env.WEBHOOK_SECRET);
+        if (!isValid) {
+          console.log('Invalid webhook signature received');
+          return new Response('Invalid signature', { status: 401 });
+        }
+
+        const data = JSON.parse(payload);
+        const postId = data.id || data.post_id;
+
+        if (!postId) {
+          return new Response('Missing post ID', { status: 400 });
+        }
+
+        console.log(`Webhook received: deleting post ${postId}`);
+
+        // Delete post from KV
+        await deletePost(env, postId);
+
+        // Trigger site rebuild (debounced)
+        ctx.waitUntil(triggerSiteRebuild(env));
+
+        return new Response(JSON.stringify({ success: true, postId, action: 'delete' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('Post webhook delete error:', error);
+        return new Response(JSON.stringify({ error: String(error) }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Manual sync trigger (protected) - supports batching with offset
+    // Use ?force_images=true to re-download all images (for upgrading image sizes)
     if (url.pathname === '/sync' && request.method === 'POST') {
       const authHeader = request.headers.get('Authorization');
       if (authHeader !== `Bearer ${env.WEBHOOK_SECRET}`) {
@@ -1203,7 +1610,8 @@ export default {
 
       // Get offset from query string for batch syncing
       const offset = parseInt(url.searchParams.get('offset') || '0', 10);
-      const result = await syncAllProducts(env, offset);
+      const forceImages = url.searchParams.get('force_images') === 'true';
+      const result = await syncAllProducts(env, offset, forceImages);
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -1217,6 +1625,19 @@ export default {
       }
 
       const result = await syncAllCategories(env);
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Manual blog posts sync trigger (protected)
+    if (url.pathname === '/sync-posts' && request.method === 'POST') {
+      const authHeader = request.headers.get('Authorization');
+      if (authHeader !== `Bearer ${env.WEBHOOK_SECRET}`) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+
+      const result = await syncAllPosts(env);
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -1284,13 +1705,84 @@ export default {
       });
     }
 
+    // ============================================
+    // BLOG POST API ENDPOINTS
+    // ============================================
+
+    // Get all blog posts (index)
+    if (url.pathname === '/posts') {
+      const index = await env.PRODUCTS_KV.get('post:index');
+      return new Response(index || '[]', {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get blog post by ID or slug
+    if (url.pathname.startsWith('/post/')) {
+      const identifier = url.pathname.replace('/post/', '');
+
+      let postStr: string | null = null;
+      if (/^\d+$/.test(identifier)) {
+        postStr = await env.PRODUCTS_KV.get(`post:${identifier}`);
+      } else {
+        postStr = await env.PRODUCTS_KV.get(`post:slug:${identifier}`);
+      }
+
+      if (!postStr) {
+        return new Response('Post not found', { status: 404 });
+      }
+
+      return new Response(postStr, {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Serve cached blog post featured images
+    if (url.pathname.startsWith('/post-image/')) {
+      const slug = url.pathname.replace('/post-image/', '');
+
+      if (!slug) {
+        return new Response('Missing post slug', { status: 400 });
+      }
+
+      // Get image from KV with metadata (post images are stored with 'post:' prefix)
+      const { value: base64Image, metadata } = await env.PRODUCTS_KV.getWithMetadata<{
+        contentType: string;
+        originalUrl: string;
+        syncedAt: string;
+      }>(`image:post:${slug}`);
+
+      if (!base64Image) {
+        // Image not cached - return 404
+        return new Response('Post image not found', { status: 404 });
+      }
+
+      // Decode base64 to binary
+      const binaryString = atob(base64Image);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      // Return image with caching headers
+      return new Response(bytes, {
+        headers: {
+          'Content-Type': metadata?.contentType || 'image/jpeg',
+          'Cache-Control': 'public, max-age=86400', // Cache for 1 day
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+
     // Get sync status
     if (url.pathname === '/status') {
       const lastSync = await env.PRODUCTS_KV.get('last_sync');
+      const lastPostSync = await env.PRODUCTS_KV.get('last_post_sync');
       const lastRebuild = await env.PRODUCTS_KV.get('last_rebuild');
       const hasGithubToken = !!env.GITHUB_TOKEN;
       return new Response(JSON.stringify({
         last_sync: lastSync,
+        last_post_sync: lastPostSync,
         last_rebuild: lastRebuild,
         last_rebuild_date: lastRebuild ? new Date(parseInt(lastRebuild)).toISOString() : null,
         github_token_configured: hasGithubToken,
@@ -1499,7 +1991,7 @@ export default {
             id: product.id,
             title: product.name,
             slug: product.slug,
-            url: `/produkt/${product.slug}`,
+            url: `/produkte/${product.slug}`,
             price: priceDisplay,
             minPrice,
             maxPrice,
@@ -1529,6 +2021,11 @@ export default {
     const categoryResult = await syncAllCategories(env);
     console.log(`Categories synced: ${categoryResult.synced}, errors: ${categoryResult.errors.length}`);
 
+    // Sync blog posts (smaller, no batching needed)
+    console.log('Syncing blog posts...');
+    const postResult = await syncAllPosts(env);
+    console.log(`Posts synced: ${postResult.synced}, errors: ${postResult.errors.length}`);
+
     // Sync products in batches
     console.log('Syncing products...');
     let offset = 0;
@@ -1546,10 +2043,10 @@ export default {
       }
     }
 
-    console.log(`Scheduled sync complete. Products: ${totalSynced}, Categories: ${categoryResult.synced}`);
+    console.log(`Scheduled sync complete. Products: ${totalSynced}, Categories: ${categoryResult.synced}, Posts: ${postResult.synced}`);
 
     // Trigger site rebuild after full sync (force rebuild, ignore debounce for scheduled sync)
-    if (totalSynced > 0 || categoryResult.synced > 0) {
+    if (totalSynced > 0 || categoryResult.synced > 0 || postResult.synced > 0) {
       // Clear the debounce timestamp to force a rebuild after scheduled sync
       await env.PRODUCTS_KV.delete('last_rebuild');
       const rebuildResult = await triggerSiteRebuild(env);

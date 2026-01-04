@@ -673,6 +673,55 @@ WordPress mu-plugins/
 
 ## Session History
 
+### Session 2026-01-04 (Product Configurator Quantity Step Fix)
+**Task:** Fix quantity step not showing in Astro product configurator and match WordPress styling
+
+**Changes Made:**
+
+1. **Quantity Step Visibility Fixed** (`src/components/ProductConfigurator.tsx`):
+   - Changed condition from `{matchedVariation && (` to `{(matchedVariation || config.variations?.length > 0) && (`
+   - Added fallback pricing data: `matchedVariation?.conditional_prices || config.variations?.[0]?.conditional_prices || []`
+   - Quantity step now shows even before all attributes are selected
+   - Uses first variation's pricing as fallback when no specific variation is matched
+
+2. **Quantity Range Calculation Updated:**
+   ```tsx
+   const prices = matchedVariation?.conditional_prices || config?.variations?.[0]?.conditional_prices;
+   ```
+
+3. **Product Page Layout Fixes** (`src/pages/produkte/[slug].astro`):
+   - Product title moved inside gallery box with border-bottom separator
+   - Created `main-image-container` for proper badge positioning
+   - Removed wishlist button from product page
+   - Removed background from main image container
+
+4. **Steps CSS** (`src/styles/steps.css`):
+   - Pearl WC Steps styling matching WordPress
+   - Step indicator: Jost 15px weight 500, uppercase
+   - Collapsed steps with green background (#E0F9F3) when selected
+   - Radio options with custom checkbox styling (blue border, rounded corners)
+   - Quantity controls with round buttons and range slider
+   - Action buttons with pill shape (border-radius: 83px)
+
+**Product Configurator Structure:**
+- Step 1: Format auswählen (attribute selector)
+- Step 2: Farben auswählen (attribute selector)
+- Step 3: Wählen Sie Ihre Menge (quantity with pricing tiers)
+- Summary: Ihr Angebot (shows after quantity selected)
+
+**Files Modified:**
+- `src/components/ProductConfigurator.tsx` - Quantity step condition fix
+- `src/pages/produkte/[slug].astro` - Layout fixes
+- `src/styles/steps.css` - Configurator styling
+
+**Deployed:**
+- Preview: https://52599794.hercules-astro.pages.dev
+- Production: https://hercules-astro.pages.dev
+
+**Git Commit:** `3d3968c` - Add product detail pages with configurator, wishlist, and newsletter
+
+---
+
 ### Session 2026-01-04 (Product Detail Page Thumbnail Gallery)
 **Task:** Match Astro product page thumbnail gallery styling to WordPress exactly
 

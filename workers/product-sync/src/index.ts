@@ -24,7 +24,7 @@ const GITHUB_REPO = 'kamindu01/hercules-astro';
 const GITHUB_WORKFLOW = 'deploy.yml';
 
 // Worker base URL for image serving
-const WORKER_URL = 'https://hercules-product-sync.kamindudushmantha.workers.dev';
+const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
 interface WCProduct {
   id: number;
@@ -42,6 +42,7 @@ interface WCProduct {
   sale_price: string;
   on_sale: boolean;
   stock_status: string;
+  menu_order: number;  // Product sort order in WordPress
   categories: Array<{ id: number; name: string; slug: string }>;
   tags: Array<{ id: number; name: string; slug: string }>;
   images: Array<{ id: number; src: string; alt: string }>;
@@ -63,6 +64,8 @@ interface WCProduct {
   }>;
   allowed_addon_ids?: number[];
   estimated_delivery_date?: string;
+  // Per-category positions exposed by our REST API filter (from _cat_pos_* meta)
+  category_positions?: Record<string, number>;
 }
 
 interface WCVariation {
@@ -139,6 +142,11 @@ interface SyncedProduct {
   green_product: boolean;
   // USP (Unique Selling Points) for card display
   card_features: string[];
+  // Product sort order (from WordPress menu_order)
+  menu_order: number;
+  // Per-category positions (from _cat_pos_{term_id} meta fields)
+  // Key is category term_id, value is position within that category
+  category_positions: Record<string, number>;
   synced_at: string;
 }
 
@@ -599,6 +607,10 @@ async function transformProduct(
     }
   }
 
+  // Per-category positions (from _cat_pos_{term_id} meta fields)
+  // These are now exposed as a top-level field by our REST API filter
+  const categoryPositions: Record<string, number> = product.category_positions || {};
+
   return {
     id: product.id,
     name: product.name,
@@ -628,6 +640,10 @@ async function transformProduct(
     green_product: greenProduct === '1' || greenProduct === 1 || greenProduct === true,
     // USP features for card display
     card_features: cardFeatures,
+    // Product sort order (from WordPress menu_order)
+    menu_order: product.menu_order || 0,
+    // Per-category positions
+    category_positions: categoryPositions,
     synced_at: new Date().toISOString(),
   };
 }
@@ -736,6 +752,7 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
         slug: p.slug,
         featured: p.featured,
         categories: p.categories.map(c => c.slug),
+        menu_order: p.menu_order || 0,
       }));
       await env.PRODUCTS_KV.put('product:index', JSON.stringify(productIndex));
     }
@@ -837,6 +854,7 @@ async function syncSingleProduct(env: Env, productId: number): Promise<SyncedPro
       slug: product.slug,
       featured: product.featured,
       categories: product.categories.map(c => c.slug),
+      menu_order: product.menu_order || 0,
     };
 
     if (existingIndex >= 0) {
@@ -1677,6 +1695,59 @@ export default {
       });
     }
 
+    // Get product configuration for steps form (Pearl WC Steps data)
+    // This endpoint fetches from WordPress and caches in KV
+    if (url.pathname.startsWith('/product-config/')) {
+      const identifier = url.pathname.replace('/product-config/', '');
+
+      // Try to get from cache first
+      let configStr = await env.PRODUCTS_KV.get(`product-config:${identifier}`);
+
+      if (!configStr) {
+        // Fetch from WordPress API
+        const wpUrl = identifier.match(/^\d+$/)
+          ? `${env.WC_STORE_URL}/wp-json/hercules/v1/product-config/${identifier}`
+          : `${env.WC_STORE_URL}/wp-json/hercules/v1/product-config-by-slug/${identifier}`;
+
+        try {
+          const response = await fetch(wpUrl, {
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (!response.ok) {
+            return new Response('Product config not found', { status: 404 });
+          }
+
+          const config = await response.json();
+
+          // Cache in KV for 1 hour (will be refreshed on product sync)
+          configStr = JSON.stringify(config);
+          await env.PRODUCTS_KV.put(`product-config:${identifier}`, configStr, {
+            expirationTtl: 3600, // 1 hour
+          });
+
+          // Also cache by ID and slug for easy lookup
+          if (config.product_id) {
+            await env.PRODUCTS_KV.put(`product-config:${config.product_id}`, configStr, {
+              expirationTtl: 3600,
+            });
+          }
+          if (config.product_slug) {
+            await env.PRODUCTS_KV.put(`product-config:${config.product_slug}`, configStr, {
+              expirationTtl: 3600,
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching product config:', error);
+          return new Response('Error fetching product config', { status: 500 });
+        }
+      }
+
+      return new Response(configStr, {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Get categories (new format with index)
     if (url.pathname === '/categories') {
       const index = await env.PRODUCTS_KV.get('category:index');
@@ -1753,7 +1824,12 @@ export default {
       }>(`image:post:${slug}`);
 
       if (!base64Image) {
-        // Image not cached - return 404
+        // Image not cached - try to get original URL from post data and redirect
+        const post = await env.PRODUCTS_KV.get<SyncedPost>(`post:slug:${slug}`, 'json');
+        if (post && post.featuredImage) {
+          // Redirect to original WordPress image
+          return Response.redirect(post.featuredImage, 302);
+        }
         return new Response('Post image not found', { status: 404 });
       }
 

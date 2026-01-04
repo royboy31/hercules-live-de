@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-const WORKER_URL = 'https://hercules-product-sync.kamindudushmantha.workers.dev';
+const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
 // Get the post slug from the URL
 const { slug } = Astro.params;
@@ -49,7 +49,7 @@ function formatDate(dateStr: string) {
 
 // Generate static paths for all posts
 export async function getStaticPaths() {
-  const WORKER_URL = 'https://hercules-product-sync.kamindudushmantha.workers.dev';
+  const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
   try {
     const res = await fetch(`${WORKER_URL}/posts`);
@@ -100,26 +100,17 @@ const metaDescription = post.excerpt?.substring(0, 160) || post.title;
         <h1>{post.title}</h1>
         <div class="meta">
           <time datetime={post.date}>{formatDate(post.date)}</time>
-          {post.author?.name && (
-            <>
-              <span class="meta-separator">|</span>
-              <span class="author">
-                {post.author.avatar && (
-                  <img src={post.author.avatar} alt={post.author.name} class="author-avatar" />
-                )}
-                {post.author.name}
-              </span>
-            </>
-          )}
+          <span class="meta-separator">|</span>
+          <span class="author">info@hercules-merchandise.de</span>
         </div>
       </div>
     </header>
 
     <!-- Featured Image -->
-    {post.localFeaturedImage && (
+    {(post.localFeaturedImage || post.featuredImage) && (
       <div class="featured-image">
         <div class="container">
-          <img src={post.localFeaturedImage} alt={post.title} />
+          <img src={post.localFeaturedImage || post.featuredImage} alt={post.title} />
         </div>
       </div>
     )}

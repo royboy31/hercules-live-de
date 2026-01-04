@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface CartItem {
   key: string;
@@ -6,6 +6,7 @@ interface CartItem {
   name: string;
   quantity: number;
   price: string;
+  line_total: string;
   thumbnail: string | null;
 }
 
@@ -39,12 +40,17 @@ const getApiUrl = () => {
 
   const hostname = window.location.hostname;
 
-  // If accessed through Edge Router, use same domain for cookies to work
-  if (hostname.includes('hercules-edge-router') || hostname.includes('hercules-merchandise.de')) {
+  // If accessed through Edge Router (any variant) or production domain, use relative URL for cookies
+  if (
+    hostname.includes('hercules-edge-router') ||
+    hostname.includes('hercules-merchandise.de') ||
+    hostname === 'localhost'
+  ) {
     return '/wp-json/hercules/v1/session';
   }
 
-  // For localhost dev or direct Cloudflare Pages access, use staging
+  // For direct Cloudflare Pages access, cookies won't work but we still try
+  // Note: Cart data won't sync correctly due to cross-origin cookie restrictions
   return 'https://staging.hercules-merchandise.de/wp-json/hercules/v1/session';
 };
 
@@ -52,6 +58,8 @@ export default function UserSession({ type }: UserSessionProps) {
   const [session, setSession] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCartDropdown, setShowCartDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchSession = useCallback(async (force = false) => {
     try {
@@ -126,12 +134,21 @@ export default function UserSession({ type }: UserSessionProps) {
       fetchSession(true);
     };
 
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCartDropdown(false);
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('hercules:cart-updated', handleCartUpdate);
+    document.addEventListener('mousedown', handleClickOutside);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('hercules:cart-updated', handleCartUpdate);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [fetchSession]);
 
@@ -154,10 +171,17 @@ export default function UserSession({ type }: UserSessionProps) {
     );
   }
 
-  // Full cart icon with badge
+  // Full cart icon with badge and dropdown
   if (type === 'cart') {
     const count = session?.cart?.count || 0;
-    const cartUrl = '/cart/';
+    const items = session?.cart?.items || [];
+    const subtotal = session?.cart?.subtotal || '€0,00';
+
+    // Container styles
+    const containerStyle: React.CSSProperties = {
+      position: 'relative',
+      display: 'inline-block',
+    };
 
     // Full icon styles to match WordPress exactly
     const iconStyle: React.CSSProperties = {
@@ -173,6 +197,7 @@ export default function UserSession({ type }: UserSessionProps) {
       transition: 'all 0.3s',
       position: 'relative',
       textDecoration: 'none',
+      cursor: 'pointer',
     };
 
     // Cart count badge styles
@@ -195,17 +220,224 @@ export default function UserSession({ type }: UserSessionProps) {
       lineHeight: 1,
     };
 
+    // Dropdown styles matching WordPress
+    const dropdownStyle: React.CSSProperties = {
+      position: 'absolute',
+      top: '100%',
+      right: '0',
+      marginTop: '10px',
+      background: '#fff',
+      border: '1px solid #ccc',
+      borderRadius: '8px',
+      padding: '15px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      zIndex: 9999,
+      minWidth: '280px',
+      fontFamily: "'Jost', sans-serif",
+      fontSize: '14px',
+      color: '#253461',
+    };
+
+    const emptyCartStyle: React.CSSProperties = {
+      textAlign: 'center',
+      padding: '20px 10px',
+      color: '#666',
+    };
+
+    const itemListStyle: React.CSSProperties = {
+      listStyle: 'none',
+      margin: '0 0 15px 0',
+      padding: 0,
+      maxHeight: '200px',
+      overflowY: 'auto',
+    };
+
+    const itemStyle: React.CSSProperties = {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      padding: '8px 0',
+      borderBottom: '1px solid #f0f0f0',
+    };
+
+    const itemImageStyle: React.CSSProperties = {
+      width: '50px',
+      height: '50px',
+      objectFit: 'cover',
+      borderRadius: '5px',
+      background: '#f5f5f5',
+    };
+
+    const itemInfoStyle: React.CSSProperties = {
+      flex: 1,
+      minWidth: 0,
+    };
+
+    const itemNameStyle: React.CSSProperties = {
+      fontSize: '13px',
+      fontWeight: 500,
+      color: '#253461',
+      margin: '0 0 4px 0',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    };
+
+    const itemPriceStyle: React.CSSProperties = {
+      fontSize: '12px',
+      color: '#666',
+    };
+
+    const subtotalRowStyle: React.CSSProperties = {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '10px 0',
+      borderTop: '1px solid #e0e0e0',
+      marginBottom: '15px',
+      fontWeight: 500,
+    };
+
+    const buttonsContainerStyle: React.CSSProperties = {
+      display: 'flex',
+      gap: '8px',
+    };
+
+    const viewCartBtnStyle: React.CSSProperties = {
+      flex: 1,
+      display: 'inline-flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '12px 15px',
+      fontSize: '12px',
+      fontWeight: 500,
+      fontFamily: "'Jost', sans-serif",
+      textTransform: 'uppercase',
+      textDecoration: 'none',
+      borderRadius: '83px',
+      color: '#469adc',
+      background: 'transparent',
+      border: '1px solid #469adc',
+      cursor: 'pointer',
+      transition: 'all 0.2s',
+    };
+
+    const checkoutBtnStyle: React.CSSProperties = {
+      flex: 1,
+      display: 'inline-flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '12px 15px',
+      fontSize: '12px',
+      fontWeight: 500,
+      fontFamily: "'Jost', sans-serif",
+      textTransform: 'uppercase',
+      textDecoration: 'none',
+      borderRadius: '83px',
+      color: '#fff',
+      background: '#10c99e',
+      border: '1px solid #10c99e',
+      cursor: 'pointer',
+      transition: 'all 0.2s',
+    };
+
+    const handleCartClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setShowCartDropdown(!showCartDropdown);
+    };
+
     return (
-      <a href={cartUrl} className="header-icon cart-icon" aria-label="Warenkorb" style={iconStyle}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 31 31" fill="none">
-          <path d="M12.5938 26.1562C12.5938 26.5395 12.4801 26.914 12.2672 27.2327C12.0543 27.5513 11.7517 27.7996 11.3977 27.9463C11.0437 28.0929 10.6541 28.1313 10.2783 28.0565C9.90242 27.9818 9.5572 27.7972 9.28623 27.5263C9.01527 27.2553 8.83074 26.9101 8.75598 26.5342C8.68122 26.1584 8.71959 25.7688 8.86623 25.4148C9.01288 25.0608 9.26121 24.7582 9.57983 24.5453C9.89845 24.3324 10.273 24.2188 10.6562 24.2188C11.1701 24.2188 11.6629 24.4229 12.0263 24.7862C12.3896 25.1496 12.5938 25.6424 12.5938 26.1562ZM23.25 24.2188C22.8668 24.2188 22.4922 24.3324 22.1736 24.5453C21.855 24.7582 21.6066 25.0608 21.46 25.4148C21.3133 25.7688 21.275 26.1584 21.3497 26.5342C21.4245 26.9101 21.609 27.2553 21.88 27.5263C22.1509 27.7972 22.4962 27.9818 22.872 28.0565C23.2479 28.1313 23.6374 28.0929 23.9914 27.9463C24.3455 27.7996 24.6481 27.5513 24.861 27.2327C25.0739 26.914 25.1875 26.5395 25.1875 26.1562C25.1875 25.6424 24.9834 25.1496 24.62 24.7862C24.2567 24.4229 23.7639 24.2188 23.25 24.2188ZM29.0274 8.97789L25.9225 20.1524C25.7518 20.7628 25.3867 21.3009 24.8826 21.6851C24.3784 22.0693 23.7627 22.2786 23.1289 22.2812H11.16C10.5243 22.281 9.90613 22.0728 9.39978 21.6884C8.89343 21.3041 8.52668 20.7646 8.35547 20.1524L4.1075 4.84375H1.9375C1.68057 4.84375 1.43417 4.74169 1.25249 4.56001C1.07081 4.37833 0.96875 4.13193 0.96875 3.875C0.96875 3.61807 1.07081 3.37167 1.25249 3.18999C1.43417 3.00831 1.68057 2.90625 1.9375 2.90625H4.84375C5.05554 2.90621 5.26152 2.97558 5.43014 3.10374C5.59875 3.2319 5.72073 3.41178 5.77738 3.61586L6.92535 7.75H28.0938C28.2431 7.74997 28.3904 7.78447 28.5242 7.85081C28.658 7.91714 28.7747 8.01352 28.8651 8.1324C28.9555 8.25129 29.0172 8.38946 29.0453 8.53613C29.0735 8.6828 29.0673 8.83399 29.0274 8.97789ZM26.8186 9.6875H7.46422L10.2264 19.6341C10.283 19.8382 10.405 20.0181 10.5736 20.1463C10.7422 20.2744 10.9482 20.3438 11.16 20.3438H23.1289C23.3407 20.3438 23.5467 20.2744 23.7153 20.1463C23.8839 20.0181 24.0059 19.8382 24.0625 19.6341L26.8186 9.6875Z" fill="#253461"></path>
-        </svg>
-        {!loading && count > 0 && (
-          <span style={badgeStyle}>
-            {count > 99 ? '99+' : count}
-          </span>
+      <div style={containerStyle} ref={dropdownRef}>
+        <button
+          onClick={handleCartClick}
+          className="header-icon cart-icon"
+          aria-label="Warenkorb"
+          aria-expanded={showCartDropdown}
+          style={iconStyle}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 31 31" fill="none">
+            <path d="M12.5938 26.1562C12.5938 26.5395 12.4801 26.914 12.2672 27.2327C12.0543 27.5513 11.7517 27.7996 11.3977 27.9463C11.0437 28.0929 10.6541 28.1313 10.2783 28.0565C9.90242 27.9818 9.5572 27.7972 9.28623 27.5263C9.01527 27.2553 8.83074 26.9101 8.75598 26.5342C8.68122 26.1584 8.71959 25.7688 8.86623 25.4148C9.01288 25.0608 9.26121 24.7582 9.57983 24.5453C9.89845 24.3324 10.273 24.2188 10.6562 24.2188C11.1701 24.2188 11.6629 24.4229 12.0263 24.7862C12.3896 25.1496 12.5938 25.6424 12.5938 26.1562ZM23.25 24.2188C22.8668 24.2188 22.4922 24.3324 22.1736 24.5453C21.855 24.7582 21.6066 25.0608 21.46 25.4148C21.3133 25.7688 21.275 26.1584 21.3497 26.5342C21.4245 26.9101 21.609 27.2553 21.88 27.5263C22.1509 27.7972 22.4962 27.9818 22.872 28.0565C23.2479 28.1313 23.6374 28.0929 23.9914 27.9463C24.3455 27.7996 24.6481 27.5513 24.861 27.2327C25.0739 26.914 25.1875 26.5395 25.1875 26.1562C25.1875 25.6424 24.9834 25.1496 24.62 24.7862C24.2567 24.4229 23.7639 24.2188 23.25 24.2188ZM29.0274 8.97789L25.9225 20.1524C25.7518 20.7628 25.3867 21.3009 24.8826 21.6851C24.3784 22.0693 23.7627 22.2786 23.1289 22.2812H11.16C10.5243 22.281 9.90613 22.0728 9.39978 21.6884C8.89343 21.3041 8.52668 20.7646 8.35547 20.1524L4.1075 4.84375H1.9375C1.68057 4.84375 1.43417 4.74169 1.25249 4.56001C1.07081 4.37833 0.96875 4.13193 0.96875 3.875C0.96875 3.61807 1.07081 3.37167 1.25249 3.18999C1.43417 3.00831 1.68057 2.90625 1.9375 2.90625H4.84375C5.05554 2.90621 5.26152 2.97558 5.43014 3.10374C5.59875 3.2319 5.72073 3.41178 5.77738 3.61586L6.92535 7.75H28.0938C28.2431 7.74997 28.3904 7.78447 28.5242 7.85081C28.658 7.91714 28.7747 8.01352 28.8651 8.1324C28.9555 8.25129 29.0172 8.38946 29.0453 8.53613C29.0735 8.6828 29.0673 8.83399 29.0274 8.97789ZM26.8186 9.6875H7.46422L10.2264 19.6341C10.283 19.8382 10.405 20.0181 10.5736 20.1463C10.7422 20.2744 10.9482 20.3438 11.16 20.3438H23.1289C23.3407 20.3438 23.5467 20.2744 23.7153 20.1463C23.8839 20.0181 24.0059 19.8382 24.0625 19.6341L26.8186 9.6875Z" fill="#253461"></path>
+          </svg>
+          {!loading && count > 0 && (
+            <span style={badgeStyle}>
+              {count > 99 ? '99+' : count}
+            </span>
+          )}
+        </button>
+
+        {/* Cart Dropdown */}
+        {showCartDropdown && (
+          <div style={dropdownStyle} className="cart-dropdown">
+            {count === 0 ? (
+              <div style={emptyCartStyle}>
+                <p style={{ margin: 0 }}>Ihr Warenkorb ist leer.</p>
+              </div>
+            ) : (
+              <>
+                {/* Cart Items */}
+                <ul style={itemListStyle}>
+                  {items.map((item) => (
+                    <li key={item.key} style={itemStyle}>
+                      {item.thumbnail && (
+                        <img
+                          src={item.thumbnail}
+                          alt={item.name}
+                          style={itemImageStyle}
+                        />
+                      )}
+                      <div style={itemInfoStyle}>
+                        <p style={itemNameStyle}>{item.name}</p>
+                        <p style={itemPriceStyle}>
+                          {item.quantity} x {item.price}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Subtotal */}
+                <div style={subtotalRowStyle}>
+                  <span>Zwischensumme:</span>
+                  <strong>{subtotal}</strong>
+                </div>
+
+                {/* Buttons */}
+                <div style={buttonsContainerStyle}>
+                  <a
+                    href="/cart/"
+                    style={viewCartBtnStyle}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#469adc';
+                      e.currentTarget.style.color = '#fff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = '#469adc';
+                    }}
+                  >
+                    Warenkorb
+                  </a>
+                  <a
+                    href="/checkout/"
+                    style={checkoutBtnStyle}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.color = '#10c99e';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#10c99e';
+                      e.currentTarget.style.color = '#fff';
+                    }}
+                  >
+                    Zur Kasse
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
         )}
-      </a>
+      </div>
     );
   }
 

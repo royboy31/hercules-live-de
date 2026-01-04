@@ -1,0 +1,978 @@
+---
+/**
+ * Product Detail Page - /produkte/[slug]
+ * Fetches product data from Worker API and renders the product page
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductConfigurator from '../../components/ProductConfigurator.tsx';
+import '../../styles/steps.css';
+
+const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
+
+// Get product slug from URL
+const { slug } = Astro.params;
+
+// Fetch product data
+let product = null;
+let error = null;
+
+try {
+  const response = await fetch(`${WORKER_URL}/product/${slug}`);
+  if (response.ok) {
+    product = await response.json();
+  } else {
+    error = `Product not found: ${slug}`;
+  }
+} catch (e) {
+  error = `Failed to load product: ${e instanceof Error ? e.message : 'Unknown error'}`;
+}
+
+// Helper to format price
+const formatPrice = (price: number | string) => {
+  const num = typeof price === 'string' ? parseFloat(price) : price;
+  return `€${num.toFixed(2).replace('.', ',')}`;
+};
+
+// Get conditional prices for display (use first variation with prices)
+const getConditionalPrices = () => {
+  if (!product?.variations?.length) return [];
+  const variation = product.variations.find((v: any) => v.conditional_prices?.length);
+  return variation?.conditional_prices || [];
+};
+
+// Get price range from all variations
+const getPriceRange = () => {
+  if (!product?.variations?.length) return null;
+
+  let minPrice = Infinity;
+  let maxPrice = 0;
+
+  for (const variation of product.variations) {
+    if (variation.conditional_prices?.length) {
+      for (const cp of variation.conditional_prices) {
+        if (cp.price < minPrice) minPrice = cp.price;
+        if (cp.price > maxPrice) maxPrice = cp.price;
+      }
+    }
+  }
+
+  if (minPrice === Infinity) return null;
+  return { min: minPrice, max: maxPrice };
+};
+
+const conditionalPrices = getConditionalPrices();
+const priceRange = getPriceRange();
+
+// Get gallery images - full size for main, WordPress thumbnails for gallery
+const getGalleryImages = () => {
+  if (!product?.images?.length) return [];
+  return product.images.map((img: any, index: number) => {
+    const fullSrc = img.src || img.local_src;
+    // Generate thumbnail URL from WordPress (use -100x100 version like WooCommerce)
+    const thumbSrc = fullSrc?.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '-100x100.$1') || fullSrc;
+    return {
+      src: fullSrc,
+      alt: img.alt || product.name,
+      thumbnail: thumbSrc,
+    };
+  });
+};
+
+const galleryImages = getGalleryImages();
+
+// Generate static paths for all products
+export async function getStaticPaths() {
+  const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
+
+  try {
+    const response = await fetch(`${WORKER_URL}/products`);
+    const products = await response.json();
+
+    return products
+      .filter((p: any) => p.slug)
+      .map((product: any) => ({
+        params: { slug: product.slug },
+      }));
+  } catch (e) {
+    console.error('Failed to fetch products for static paths:', e);
+    return [];
+  }
+}
+---
+
+<BaseLayout title={product?.name || 'Produkt'}>
+  <div class="product-page">
+    {error ? (
+      <div class="error-container">
+        <h1>Produkt nicht gefunden</h1>
+        <p>{error}</p>
+        <a href="/" class="back-link">Zurück zur Startseite</a>
+      </div>
+    ) : (
+      <>
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+          <div class="container">
+            <a href="/">Startseite</a>
+            <span class="separator">/</span>
+            {product.categories?.[0] && (
+              <>
+                <a href={`/collections/${product.categories[0].slug}/`}>{product.categories[0].name}</a>
+                <span class="separator">/</span>
+              </>
+            )}
+            <span class="current">{product.name}</span>
+          </div>
+        </nav>
+
+        <!-- Product Section -->
+        <section class="product-section">
+          <div class="container">
+            <div class="product-grid">
+              <!-- Left Column: Gallery -->
+              <div class="product-gallery">
+                <!-- Product Title inside gallery like WordPress -->
+                <h1 class="product-title">{product.name}</h1>
+
+                <!-- Main Image Container (badges positioned inside) -->
+                <div class="main-image-container">
+                  <!-- Badges inside image container -->
+                  <div class="product-badges">
+                    {product.green_product && (
+                      <img src="/images/badges/green-option.svg" alt="Umweltfreundlich" class="badge" />
+                    )}
+                    {product.made_in_europe && (
+                      <img src="/images/badges/made-in-europe.svg" alt="Made in Europe" class="badge" />
+                    )}
+                  </div>
+
+                  <!-- Main Image -->
+                  <div class="main-image">
+                  <img
+                    id="main-product-image"
+                    src={galleryImages[0]?.src || '/images/placeholder.png'}
+                    alt={product.name}
+                    loading="eager"
+                  />
+                  </div>
+                </div>
+
+                <!-- Thumbnails Gallery with Pagination -->
+                {galleryImages.length > 1 && (
+                  <div class="thumbnail-gallery" id="thumbnail-gallery">
+                    <ul class="thumbnail-list">
+                      {galleryImages.map((img, index) => (
+                        <li class={`thumbnail-item ${index === 0 ? 'active' : ''}`} style={index >= 20 ? 'display: none;' : ''}>
+                          <img
+                            src={img.thumbnail}
+                            alt={img.alt}
+                            loading={index < 20 ? 'eager' : 'lazy'}
+                            data-full-src={img.src}
+                            data-index={index}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                    <!-- Pagination Controls -->
+                    {galleryImages.length > 20 && (
+                      <div class="thumbnail-controls">
+                        <button class="kd-go-back-btn" id="thumb-back" style="display: none;">Zurück</button>
+                        <button class="kd-show-more-btn" id="thumb-more">Mehr anzeigen</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <!-- Right Column: Product Configurator Only -->
+              <div class="product-info">
+                <!-- Product Configurator (Pearl WC Steps) -->
+                <ProductConfigurator
+                  productSlug={slug as string}
+                  workerUrl={WORKER_URL}
+                  client:load
+                />
+
+                <!-- Short Description / Features -->
+                {product.card_features?.length > 0 && (
+                  <div class="product-features">
+                    <ul>
+                      {product.card_features.map((feature: string) => (
+                        <li>{feature}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <!-- SKU and Categories -->
+                <div class="product-meta">
+                  {product.sku && (
+                    <p><strong>Artikelnummer:</strong> {product.sku}</p>
+                  )}
+                  {product.categories?.length > 0 && (
+                    <p>
+                      <strong>Kategorien:</strong>{' '}
+                      {product.categories.map((cat: any, i: number) => (
+                        <><a href={`/collections/${cat.slug}/`}>{cat.name}</a>{i < product.categories.length - 1 ? ', ' : ''}</>
+                      ))}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <!-- Product Description Tab -->
+            <div class="product-description">
+              <h2>Produktbeschreibung</h2>
+              <div class="description-content" set:html={product.description} />
+            </div>
+          </div>
+        </section>
+
+        <!-- Lightbox Modal -->
+        <div id="lightbox" class="lightbox" aria-hidden="true">
+          <div class="lightbox-backdrop"></div>
+          <div class="lightbox-content">
+            <button class="lightbox-close" aria-label="Schließen">&times;</button>
+            <button class="lightbox-nav lightbox-prev" aria-label="Vorheriges Bild">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <div class="lightbox-image-container">
+              <img id="lightbox-image" src="" alt="" />
+            </div>
+            <button class="lightbox-nav lightbox-next" aria-label="Nächstes Bild">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+            <div class="lightbox-counter">
+              <span id="lightbox-current">1</span> / <span id="lightbox-total">{galleryImages.length}</span>
+            </div>
+          </div>
+        </div>
+      </>
+    )}
+  </div>
+</BaseLayout>
+
+<style>
+  .product-page {
+    background: #fff;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .error-container {
+    text-align: center;
+    padding: 100px 20px;
+  }
+
+  .error-container h1 {
+    color: #253461;
+    margin-bottom: 15px;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 30px;
+    background: #469ADC;
+    color: white;
+    text-decoration: none;
+    border-radius: 50px;
+  }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    background: #f5f5f5;
+    padding: 15px 0;
+  }
+
+  .breadcrumb .container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+  }
+
+  .breadcrumb a {
+    color: #253461;
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    color: #469ADC;
+  }
+
+  .breadcrumb .separator {
+    color: #999;
+  }
+
+  .breadcrumb .current {
+    color: #469ADC;
+  }
+
+  /* Product Section */
+  .product-section {
+    padding: 40px 0;
+  }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+  }
+
+  @media (max-width: 900px) {
+    .product-grid {
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+  }
+
+  /* Gallery - WordPress kd-white-container style */
+  .product-gallery {
+    min-width: 0; /* Prevent grid blowout from thumbnail gallery */
+    max-width: 100%;
+    overflow: hidden;
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid #DCDCDC;
+  }
+
+  /* Main image container - holds image and badges */
+  .main-image-container {
+    position: relative;
+  }
+
+  .product-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .product-badges .badge {
+    width: 50px;
+    height: auto;
+  }
+
+  .main-image {
+    background: transparent;
+    border-radius: 15px;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .main-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* Thumbnail Gallery - WordPress/WooCommerce style */
+  .thumbnail-gallery {
+    margin-top: 1em;
+    padding-top: 1em;
+    overflow: hidden;
+    max-width: 100%;
+  }
+
+  .thumbnail-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .thumbnail-item {
+    width: calc(18.5% - 8px);
+    float: left;
+    margin: 0;
+    padding: 5px;
+    list-style: none;
+    background: #e6e6e6;
+    border-radius: 15px;
+    box-sizing: border-box;
+  }
+
+  .thumbnail-item img {
+    width: 94px;
+    height: 94px;
+    display: block;
+    margin: 0;
+    cursor: pointer;
+    filter: blur(1px);
+    opacity: 0.7;
+    transition: filter 0.2s, opacity 0.2s;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .thumbnail-item:hover img,
+  .thumbnail-item.active img {
+    filter: blur(0);
+    opacity: 1;
+  }
+
+  /* Active thumbnail border - WordPress kd-active style */
+  .thumbnail-item.active {
+    border: 2px solid #469ADC;
+  }
+
+  /* Mobile responsive - WordPress uses 22.5% on mobile (max-width: 768px) */
+  @media only screen and (max-width: 768px) {
+    .thumbnail-item {
+      width: calc(22.5% - 8px);
+    }
+
+    .thumbnail-item img {
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  /* Pagination Controls - WordPress style */
+  .thumbnail-controls {
+    margin-top: 10px;
+    overflow: hidden;
+  }
+
+  .thumbnail-controls::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+
+  .kd-show-more-btn,
+  .kd-go-back-btn {
+    margin: 10px;
+    color: #253461;
+    padding: 0;
+    border: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    background: transparent;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .kd-show-more-btn {
+    float: right;
+  }
+
+  .kd-go-back-btn {
+    float: left;
+  }
+
+  .kd-show-more-btn:hover,
+  .kd-go-back-btn:hover,
+  .kd-show-more-btn:focus,
+  .kd-go-back-btn:focus {
+    color: #469ADC;
+    background: transparent;
+  }
+
+  /* Product Info - Right column for configurator only */
+  .product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0; /* Prevent grid blowout */
+    height: fit-content;
+  }
+
+  /* Product Title - Inside gallery box */
+  .product-title {
+    font-family: 'Jost', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: #253461;
+    margin: 0;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e6e6e6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  @media (max-width: 768px) {
+    .product-title {
+      font-size: 16px;
+    }
+  }
+
+  /* ProductConfigurator component handles variations and add-to-cart via steps.css */
+
+  /* Product Features */
+  .product-features ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .product-features li {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 10px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .product-features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #10C99E;
+    font-weight: bold;
+  }
+
+  /* Product Meta */
+  .product-meta {
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #666;
+  }
+
+  .product-meta p {
+    margin: 5px 0;
+  }
+
+  .product-meta a {
+    color: #469ADC;
+    text-decoration: none;
+  }
+
+  .product-meta a:hover {
+    text-decoration: underline;
+  }
+
+  /* Product Description */
+  .product-description {
+    margin-top: 50px;
+    padding-top: 40px;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .product-description h2 {
+    font-family: 'Jost', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: #253461;
+    margin: 0 0 25px 0;
+    text-transform: uppercase;
+  }
+
+  .description-content {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #555;
+  }
+
+  .description-content h2,
+  .description-content h3 {
+    font-family: 'Jost', sans-serif;
+    color: #253461;
+    margin: 25px 0 15px 0;
+  }
+
+  .description-content ul {
+    padding-left: 20px;
+  }
+
+  .description-content li {
+    margin-bottom: 8px;
+  }
+
+  .description-content a {
+    color: #469ADC;
+  }
+
+  /* Lightbox */
+  .lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+
+  .lightbox.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .lightbox-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+  }
+
+  .lightbox-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lightbox-image-container {
+    max-width: 90%;
+    max-height: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lightbox-image-container img {
+    max-width: 100%;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+  }
+
+  .lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .lightbox-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+
+  .lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .lightbox-nav:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .lightbox-prev {
+    left: 20px;
+  }
+
+  .lightbox-next {
+    right: 20px;
+  }
+
+  .lightbox-counter {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 20px;
+    border-radius: 20px;
+  }
+
+  /* Make main image clickable */
+  .main-image {
+    cursor: zoom-in;
+  }
+
+  @media (max-width: 768px) {
+    .lightbox-nav {
+      width: 40px;
+      height: 40px;
+    }
+
+    .lightbox-prev {
+      left: 10px;
+    }
+
+    .lightbox-next {
+      right: 10px;
+    }
+
+    .lightbox-close {
+      top: 10px;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      font-size: 24px;
+    }
+  }
+</style>
+
+<script>
+  // Thumbnail Gallery Pagination (WordPress style)
+  const PAGE_SIZE = 20;
+  let currentPage = 0;
+  const thumbnailItems = document.querySelectorAll('.thumbnail-item');
+  const totalThumbnails = thumbnailItems.length;
+  const showMoreBtn = document.getElementById('thumb-more');
+  const goBackBtn = document.getElementById('thumb-back');
+
+  function showPage(page: number) {
+    const start = page * PAGE_SIZE;
+    const end = Math.min(start + PAGE_SIZE, totalThumbnails);
+
+    thumbnailItems.forEach((item, index) => {
+      const li = item as HTMLElement;
+      if (index >= start && index < end) {
+        li.style.display = 'inline-block';
+        // Lazy load images on this page
+        const img = li.querySelector('img');
+        if (img && img.loading === 'lazy') {
+          img.loading = 'eager';
+        }
+      } else {
+        li.style.display = 'none';
+      }
+    });
+  }
+
+  function updateControls() {
+    if (!showMoreBtn || !goBackBtn) return;
+
+    const end = Math.min((currentPage + 1) * PAGE_SIZE, totalThumbnails);
+    const hasMorePages = end < totalThumbnails;
+    const hasPreviousPages = currentPage > 0;
+
+    showMoreBtn.style.display = hasMorePages ? 'inline-block' : 'none';
+    goBackBtn.style.display = hasPreviousPages ? 'inline-block' : 'none';
+  }
+
+  // Initialize pagination
+  if (totalThumbnails > PAGE_SIZE) {
+    showPage(0);
+    updateControls();
+
+    if (showMoreBtn) {
+      showMoreBtn.addEventListener('click', () => {
+        if ((currentPage + 1) * PAGE_SIZE < totalThumbnails) {
+          currentPage++;
+          showPage(currentPage);
+          updateControls();
+        }
+      });
+    }
+
+    if (goBackBtn) {
+      goBackBtn.addEventListener('click', () => {
+        if (currentPage > 0) {
+          currentPage--;
+          showPage(currentPage);
+          updateControls();
+        }
+      });
+    }
+  }
+
+  // Gallery images data for lightbox
+  const galleryImages: { src: string; alt: string }[] = [];
+  document.querySelectorAll('.thumbnail-item img').forEach(img => {
+    const imgEl = img as HTMLImageElement;
+    const fullSrc = imgEl.dataset.fullSrc;
+    if (fullSrc) {
+      galleryImages.push({
+        src: fullSrc,
+        alt: imgEl.alt || ''
+      });
+    }
+  });
+
+  // If no thumbnails, get from main image
+  if (galleryImages.length === 0) {
+    const mainImg = document.getElementById('main-product-image') as HTMLImageElement;
+    if (mainImg) {
+      galleryImages.push({
+        src: mainImg.src,
+        alt: mainImg.alt
+      });
+    }
+  }
+
+  let currentLightboxIndex = 0;
+
+  // Lightbox elements
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImage = document.getElementById('lightbox-image') as HTMLImageElement;
+  const lightboxCurrent = document.getElementById('lightbox-current');
+  const lightboxClose = document.querySelector('.lightbox-close');
+  const lightboxBackdrop = document.querySelector('.lightbox-backdrop');
+  const lightboxPrev = document.querySelector('.lightbox-prev');
+  const lightboxNext = document.querySelector('.lightbox-next');
+
+  // Open lightbox
+  function openLightbox(index: number) {
+    if (!lightbox || !lightboxImage || galleryImages.length === 0) return;
+
+    currentLightboxIndex = index;
+    updateLightboxImage();
+    lightbox.classList.add('active');
+    lightbox.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  // Close lightbox
+  function closeLightbox() {
+    if (!lightbox) return;
+
+    lightbox.classList.remove('active');
+    lightbox.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  // Update lightbox image
+  function updateLightboxImage() {
+    if (!lightboxImage || !lightboxCurrent) return;
+
+    const image = galleryImages[currentLightboxIndex];
+    lightboxImage.src = image.src;
+    lightboxImage.alt = image.alt;
+    lightboxCurrent.textContent = String(currentLightboxIndex + 1);
+  }
+
+  // Navigate lightbox
+  function navigateLightbox(direction: number) {
+    currentLightboxIndex += direction;
+
+    // Loop around
+    if (currentLightboxIndex < 0) {
+      currentLightboxIndex = galleryImages.length - 1;
+    } else if (currentLightboxIndex >= galleryImages.length) {
+      currentLightboxIndex = 0;
+    }
+
+    updateLightboxImage();
+  }
+
+  // Main image click opens lightbox
+  const mainImageContainer = document.querySelector('.main-image');
+  if (mainImageContainer) {
+    mainImageContainer.addEventListener('click', () => {
+      // Find current active thumbnail index
+      const activeItem = document.querySelector('.thumbnail-item.active img');
+      const index = activeItem ? parseInt((activeItem as HTMLElement).dataset.index || '0') : 0;
+      openLightbox(index);
+    });
+  }
+
+  // Thumbnail gallery interaction - click on li or img to swap main image
+  document.querySelectorAll('.thumbnail-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const mainImg = document.getElementById('main-product-image') as HTMLImageElement;
+      const img = item.querySelector('img') as HTMLImageElement;
+      const fullSrc = img?.dataset.fullSrc;
+
+      if (mainImg && fullSrc) {
+        mainImg.src = fullSrc;
+
+        // Update active state on li elements
+        document.querySelectorAll('.thumbnail-item').forEach(t => t.classList.remove('active'));
+        item.classList.add('active');
+      }
+    });
+
+    // Double-click thumbnail opens lightbox at that image
+    item.addEventListener('dblclick', () => {
+      const img = item.querySelector('img') as HTMLImageElement;
+      const index = parseInt(img?.dataset.index || '0');
+      openLightbox(index);
+    });
+  });
+
+  // Lightbox controls
+  if (lightboxClose) {
+    lightboxClose.addEventListener('click', closeLightbox);
+  }
+
+  if (lightboxBackdrop) {
+    lightboxBackdrop.addEventListener('click', closeLightbox);
+  }
+
+  if (lightboxPrev) {
+    lightboxPrev.addEventListener('click', () => navigateLightbox(-1));
+  }
+
+  if (lightboxNext) {
+    lightboxNext.addEventListener('click', () => navigateLightbox(1));
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (!lightbox?.classList.contains('active')) return;
+
+    switch (e.key) {
+      case 'Escape':
+        closeLightbox();
+        break;
+      case 'ArrowLeft':
+        navigateLightbox(-1);
+        break;
+      case 'ArrowRight':
+        navigateLightbox(1);
+        break;
+    }
+  });
+
+  // Product configurator handles all quantity and add-to-cart functionality via React component
+</script>

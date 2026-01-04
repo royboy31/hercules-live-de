@@ -4,6 +4,7 @@
  * Matches WordPress WooCommerce styling from staging.hercules-merchandise.de
  */
 import 'swiper/css';
+import WishlistButton from './WishlistButton.tsx';
 
 interface Props {
   product: {
@@ -28,7 +29,7 @@ interface Props {
 
 const { product } = Astro.props;
 
-const WORKER_URL = 'https://hercules-product-sync.kamindudushmantha.workers.dev';
+const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
 // Get all gallery images from Worker KV cache (no WordPress access at runtime)
 const galleryImages = (product.images || []).map((img, index) => {
@@ -64,6 +65,11 @@ const cardFeatures = product.card_features || [];
 ---
 
 <li class="product">
+  <!-- Wishlist Button - positioned top-right -->
+  <div class="kd-wishlist-wrapper">
+    <WishlistButton productId={product.id} size={18} client:idle />
+  </div>
+
   <a href={`/produkte/${product.slug}`} class="woocommerce-LoopProduct-link">
     <!-- Badges - positioned top-left like WordPress -->
     {(isMadeInEurope || isSustainable) && (
@@ -165,6 +171,14 @@ const cardFeatures = product.card_features || [];
     color: inherit;
     position: relative;
     min-width: 0;
+  }
+
+  /* Wishlist button - positioned top-right */
+  .kd-wishlist-wrapper {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 15;
   }
 
   /* Badges - positioned top-left like WordPress */

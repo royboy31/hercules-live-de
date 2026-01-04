@@ -1,5 +1,6 @@
 ---
 // Hercules Merchandise - About Section
+import ContactFormPopup from './ContactFormPopup.tsx';
 ---
 
 <section class="hercules-section">
@@ -15,9 +16,13 @@
         <p>Wir bieten <strong>schnelle Bearbeitungszeiten</strong> und zuverlässige Lieferung in ganz Europa, um sicherzustellen, dass Sie das bekommen, was Sie brauchen, wann Sie es brauchen.</p>
         <p>Wenn Sie Ihr Projekt besprechen oder ein Angebot einholen möchten, <strong>freuen wir uns darauf, von Ihnen zu hören</strong>.</p>
       </div>
-      <a href="/kontakt" class="cta-button">
-        Kontaktieren Sie uns jetzt
-      </a>
+      <div class="cta-wrapper">
+        <ContactFormPopup
+          client:load
+          triggerType="button"
+          triggerText="Kontaktieren Sie uns jetzt"
+        />
+      </div>
     </div>
 
     <!-- Image Column -->
@@ -103,9 +108,34 @@
     border-radius: 100px;
     transition: all 0.3s ease;
     align-self: flex-start;
+    cursor: pointer;
   }
 
   .cta-button:hover {
+    background-color: transparent;
+    color: #10C99E;
+  }
+
+  .cta-wrapper {
+    align-self: flex-start;
+  }
+
+  .cta-wrapper :global(.contact-trigger-button) {
+    display: inline-block;
+    background-color: #10C99E;
+    color: #FFFFFF;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    padding: 15px 50px;
+    border: 1px solid #10C99E;
+    border-radius: 100px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .cta-wrapper :global(.contact-trigger-button:hover) {
     background-color: transparent;
     color: #10C99E;
   }

@@ -4,7 +4,7 @@ import CategoryProductCard from '../../components/CategoryProductCard.astro';
 import TrustLogos from '../../components/TrustLogos.astro';
 import CustomerReviews from '../../components/CustomerReviews.astro';
 
-const WORKER_URL = 'https://hercules-product-sync.kamindudushmantha.workers.dev';
+const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
 // Get the category slug from the URL
 const { slug } = Astro.params;
@@ -55,8 +55,15 @@ const fullProducts = await Promise.all(
   })
 );
 
-// Filter out any null results and products without images
-const validProducts = fullProducts.filter((p: any) => p && p.images?.length > 0);
+// Filter out any null results and products without images, then sort by category position
+// Uses per-category position (from _cat_pos_{term_id} meta), falls back to menu_order
+const validProducts = fullProducts
+  .filter((p: any) => p && p.images?.length > 0)
+  .sort((a: any, b: any) => {
+    const posA = a.category_positions?.[category.id] ?? a.menu_order ?? 999;
+    const posB = b.category_positions?.[category.id] ?? b.menu_order ?? 999;
+    return posA - posB;
+  });
 
 // Fetch related products (products NOT in this category) for "Andere Kunden mochten" section
 let relatedProducts: any[] = [];
@@ -78,7 +85,7 @@ try {
 
 // Generate static paths for all categories
 export async function getStaticPaths() {
-  const WORKER_URL = 'https://hercules-product-sync.kamindudushmantha.workers.dev';
+  const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
   try {
     const res = await fetch(`${WORKER_URL}/categories`);
@@ -160,7 +167,7 @@ export async function getStaticPaths() {
               <li class="related-product-item">
                 <a href={`/produkte/${product.slug}`} class="related-product-link">
                   <img
-                    src={`https://hercules-product-sync.kamindudushmantha.workers.dev/image/${product.slug}/0`}
+                    src={`https://hercules-product-sync.gilles-86d.workers.dev/image/${product.slug}/0`}
                     alt={product.name}
                     loading="lazy"
                     width="1000"
@@ -188,6 +195,7 @@ export async function getStaticPaths() {
     width: 100%;
     padding: 0 0 0 0;
     background: #FAFAFA;
+    overflow-x: hidden;
   }
 
   .category-container {

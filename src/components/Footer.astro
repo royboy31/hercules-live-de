@@ -9,7 +9,7 @@ import ContactFormPopup from './ContactFormPopup.tsx';
     <div class="newsletter-container">
       <div class="newsletter-content">
         <h2 class="newsletter-heading">Interesse?</h2>
-        <form class="newsletter-form" action="/api/newsletter" method="POST">
+        <form class="newsletter-form" id="newsletter-form" action="/api/newsletter" method="POST">
           <div class="form-row">
             <input
               type="email"
@@ -17,9 +17,11 @@ import ContactFormPopup from './ContactFormPopup.tsx';
               placeholder="Newsletter abonnieren"
               required
               class="newsletter-input"
+              id="newsletter-email"
             />
-            <button type="submit" class="newsletter-button">Senden</button>
+            <button type="submit" class="newsletter-button" id="newsletter-submit">Senden</button>
           </div>
+          <div class="newsletter-message" id="newsletter-message"></div>
         </form>
         <p class="newsletter-description">
           Seien Sie der Erste, der unsere neuesten Sportartikel sieht – Abonnieren Sie unseren Newsletter!
@@ -237,6 +239,28 @@ import ContactFormPopup from './ContactFormPopup.tsx';
   .newsletter-button:hover {
     background-color: transparent;
     color: #FFFFFF;
+  }
+
+  .newsletter-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .newsletter-message {
+    margin-top: 10px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    display: none;
+  }
+
+  .newsletter-message.success {
+    display: block;
+    color: #10C99E;
+  }
+
+  .newsletter-message.error {
+    display: block;
+    color: #ff6b6b;
   }
 
   .newsletter-description {
@@ -627,3 +651,52 @@ import ContactFormPopup from './ContactFormPopup.tsx';
     }
   }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('newsletter-form') as HTMLFormElement;
+    const emailInput = document.getElementById('newsletter-email') as HTMLInputElement;
+    const submitBtn = document.getElementById('newsletter-submit') as HTMLButtonElement;
+    const messageDiv = document.getElementById('newsletter-message') as HTMLDivElement;
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = emailInput.value.trim();
+        if (!email) return;
+
+        // Disable button and show loading state
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Wird gesendet...';
+        messageDiv.className = 'newsletter-message';
+        messageDiv.textContent = '';
+
+        try {
+          const formData = new FormData();
+          formData.append('email', email);
+
+          const response = await fetch('/api/newsletter', {
+            method: 'POST',
+            body: formData,
+          });
+
+          // Check if redirected (success) or got JSON response
+          if (response.redirected || response.ok) {
+            messageDiv.className = 'newsletter-message success';
+            messageDiv.textContent = 'Vielen Dank! Sie haben sich erfolgreich angemeldet.';
+            emailInput.value = '';
+          } else {
+            throw new Error('Subscription failed');
+          }
+        } catch (error) {
+          messageDiv.className = 'newsletter-message error';
+          messageDiv.textContent = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Senden';
+        }
+      });
+    }
+  });
+</script>

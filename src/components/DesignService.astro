@@ -1,5 +1,6 @@
 ---
 // Design Service Section - "Erwecke deine Vision zum Leben"
+import ContactFormPopup from './ContactFormPopup.tsx';
 ---
 
 <section class="design-service-section">
@@ -31,9 +32,13 @@
         <p>Benötigen Sie personalisierte Sportartikel oder Mannschaftsbekleidung? Unser Team aus echten Designern verwandelt Ihre Idee in ein einzigartiges, professionelles Design – völlig kostenlos. Egal, ob für eine Sportmannschaft, einen Verein oder ein Unternehmen, wir kreieren etwas, das zu Ihrem Stil passt, von Fußballtrikots bis hin zu Schals und mehr.</p>
         <p>Sagen Sie uns einfach, was Sie suchen, und wir kümmern uns darum.</p>
       </div>
-      <a href="/angebot-anfragen" class="cta-button">
-        Kostenloses Design anfordern
-      </a>
+      <div class="cta-wrapper">
+        <ContactFormPopup
+          client:load
+          triggerType="button"
+          triggerText="Kostenloses Design anfordern"
+        />
+      </div>
     </div>
   </div>
 </section>
@@ -135,6 +140,31 @@
     border-radius: 100px;
     transition: all 0.3s ease;
     align-self: flex-start;
+    cursor: pointer;
+  }
+
+  .cta-wrapper {
+    align-self: flex-start;
+  }
+
+  .cta-wrapper :global(.contact-trigger-button) {
+    display: inline-block;
+    background-color: #10C99E;
+    color: #FFFFFF;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    padding: 15px 50px;
+    border: 1px solid #10C99E;
+    border-radius: 100px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .cta-wrapper :global(.contact-trigger-button:hover) {
+    background-color: transparent;
+    color: #10C99E;
   }
 
   .cta-button:hover {

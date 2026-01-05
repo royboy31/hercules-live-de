@@ -259,8 +259,23 @@ input[type="range"]::-ms-thumb {
 }
 
 .kd-radio-meta .save {
-    color: #007bff;
-    font-weight: 600;
+    font-family: Jost;
+    font-weight: 400;
+    font-size: 12px;
+    color: rgb(120, 120, 120);
+    margin-bottom: 2px;
+    margin-right: 80px;
+    width: 100px;
+}
+
+/* Contact option - align button to right */
+.kd-contact-option {
+    justify-content: space-between;
+}
+
+.kd-contact-meta {
+    justify-content: flex-end !important;
+    width: auto !important;
 }
 
 .pearl-step .range-wrapper {
@@ -530,7 +545,7 @@ input[type="range"]::-ms-thumb {
 
 /* Action buttons wrapper */
 .kd-action-btns-wrapper {
-    padding: 0 20px;
+    padding: 20px 20px 0 20px;
     display: flex;
     column-gap: 12px;
     justify-content: center;

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import QuantityRequestPopup from './QuantityRequestPopup';
 
 // Types matching the API response
 interface TermInfo {
@@ -142,6 +143,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
   const [selectedAddons, setSelectedAddons] = useState<Record<number, string | string[]>>({});
   const [quantitySelected, setQuantitySelected] = useState(0);
   const [tempQuantity, setTempQuantity] = useState(50);
+  const [showQuantityPopup, setShowQuantityPopup] = useState(false);
 
   // Fetch product config on mount
   useEffect(() => {
@@ -328,7 +330,13 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     );
   }
 
-  const currencySymbol = config.currency_symbol || '\u20AC';
+  // Decode HTML entities like &euro; to actual symbols
+  const decodeHtmlEntity = (str: string) => {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = str;
+    return textarea.value;
+  };
+  const currencySymbol = decodeHtmlEntity(config.currency_symbol) || '€';
   const totalSteps = attributeKeys.length + visibleAddons.length + 1; // +1 for quantity
   const quantityStepIndex = attributeKeys.length + visibleAddons.length;
   const minQuantity = parseInt(config.minimum_quantity || '50', 10);
@@ -627,7 +635,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
               })}
 
               {/* 500+ Contact option */}
-              <label className="kd-radio-option">
+              <label className="kd-radio-option kd-contact-option">
                 <div>
                   <input
                     type="radio"
@@ -637,8 +645,8 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                   />
                   <span>500+</span>
                 </div>
-                <div className="kd-radio-meta">
-                  <button type="button" className="step-contact" onClick={() => window.location.href = '/kontakt/'}>
+                <div className="kd-radio-meta kd-contact-meta">
+                  <button type="button" className="step-contact" onClick={() => setShowQuantityPopup(true)}>
                     KONTAKTIEREN SIE UNS
                   </button>
                 </div>
@@ -755,6 +763,17 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
           </button>
         </div>
       </div>
+
+      {/* Quantity Request Popup */}
+      <QuantityRequestPopup
+        isOpen={showQuantityPopup}
+        onClose={() => setShowQuantityPopup(false)}
+        productId={config.product_id}
+        productName={config.product_name}
+        selectedAttributes={selectedAttributes}
+        selectedAddons={selectedAddons}
+        maxQuantity={quantityRange.max}
+      />
     </div>
   );
 }

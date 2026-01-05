@@ -19,6 +19,7 @@ const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
 // Sheet names
 const CONTACT_SHEET_NAME = 'Kontaktanfragen';
 const NEWSLETTER_SHEET_NAME = 'Newsletter';
+const QUANTITY_REQUEST_SHEET_NAME = 'Mengenanfragen';
 
 function doGet(e) {
   return handleRequest(e);
@@ -31,13 +32,17 @@ function doPost(e) {
 function handleRequest(e) {
   try {
     const params = e.parameter;
-    const type = params.type || 'contact';
+    // Check both 'type' (newsletter) and 'formType' (contact/quantity)
+    const type = params.type || params.formType || 'contact';
 
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
 
     if (type === 'newsletter') {
       // Handle newsletter subscription
       return handleNewsletter(spreadsheet, params);
+    } else if (type === 'quantity_request') {
+      // Handle quantity request form (with product info)
+      return handleQuantityRequest(spreadsheet, params);
     } else {
       // Handle contact form (default)
       return handleContact(spreadsheet, params);
@@ -130,5 +135,70 @@ function handleNewsletter(spreadsheet, params) {
 
   return ContentService
     .createTextOutput(JSON.stringify({ success: true, message: 'Data saved to Newsletter' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleQuantityRequest(spreadsheet, params) {
+  // Get or create the quantity request sheet
+  let sheet = spreadsheet.getSheetByName(QUANTITY_REQUEST_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(QUANTITY_REQUEST_SHEET_NAME);
+    // Add headers matching WordPress quantity request format
+    sheet.appendRow([
+      'Datum',
+      'Uhrzeit',
+      'Vorname',
+      'Nachname',
+      'Email',
+      'Telefon',
+      'Produkt ID',
+      'Produktname',
+      'Menge',
+      'Attribute',
+      'Addons',
+      'Nachricht',
+      'Dateien',
+      'Seiten-URL',
+      'Zeitstempel'
+    ]);
+    // Format headers
+    sheet.getRange(1, 1, 1, 15).setFontWeight('bold');
+    // Set column widths for better readability
+    sheet.setColumnWidth(10, 200); // Attribute column wider
+    sheet.setColumnWidth(11, 200); // Addons column wider
+    sheet.setColumnWidth(12, 300); // Message column wider
+  }
+
+  // Parse name into first/last if provided as single field
+  let firstName = params.firstName || '';
+  let lastName = params.lastName || '';
+  if (!firstName && !lastName && params.name) {
+    const nameParts = params.name.split(' ');
+    firstName = nameParts[0] || '';
+    lastName = nameParts.slice(1).join(' ') || '';
+  }
+
+  // Add the quantity request data
+  sheet.appendRow([
+    params.date || new Date().toLocaleDateString('de-DE'),
+    params.time || new Date().toLocaleTimeString('de-DE'),
+    firstName,
+    lastName,
+    params.email || '',
+    params.phone || '',
+    params.productId || '',
+    params.productName || '',
+    params.quantity || '',
+    params.attributes || '',
+    params.addons || '',
+    params.message || '',
+    params.files || '',
+    params.pageUrl || '',
+    new Date().toISOString()
+  ]);
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ success: true, message: 'Data saved to Mengenanfragen' }))
     .setMimeType(ContentService.MimeType.JSON);
 }

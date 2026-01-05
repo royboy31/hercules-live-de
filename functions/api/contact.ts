@@ -15,6 +15,12 @@ interface ContactFormData {
   pageTitle: string;
   pageUrl: string;
   files: string;
+  formType: string;
+  productName: string;
+  productId: string;
+  quantity: string;
+  attributes: string;
+  addons: string;
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -39,8 +45,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }
     }
 
+    // Check form type - handle quantity request form differently
+    const formType = formData.get('formType') as string || 'contact';
+    const firstName = formData.get('firstName') as string || '';
+    const lastName = formData.get('lastName') as string || '';
+
+    // Build name from firstName + lastName if provided (quantity form)
+    const name = firstName && lastName
+      ? `${firstName} ${lastName}`
+      : formData.get('name') as string || '';
+
     const contactData: ContactFormData = {
-      name: formData.get('name') as string || '',
+      name: name,
       email: formData.get('email') as string || '',
       phone: formData.get('phone') as string || '',
       message: formData.get('message') as string || '',
@@ -48,7 +64,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       time: formData.get('time') as string || new Date().toLocaleTimeString('de-DE'),
       pageTitle: formData.get('pageTitle') as string || 'Unknown',
       pageUrl: formData.get('pageUrl') as string || 'Unknown',
-      files: fileNames.join(', ')
+      files: fileNames.join(', '),
+      formType: formType,
+      productName: formData.get('productName') as string || '',
+      productId: formData.get('productId') as string || '',
+      quantity: formData.get('quantity') as string || '',
+      attributes: formData.get('attributes') as string || '',
+      addons: formData.get('addons') as string || ''
     };
 
     // Validate required fields
@@ -92,7 +114,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       time: contactData.time,
       pageTitle: contactData.pageTitle,
       pageUrl: contactData.pageUrl,
-      files: contactData.files
+      files: contactData.files,
+      formType: contactData.formType,
+      productName: contactData.productName,
+      productId: contactData.productId,
+      quantity: contactData.quantity,
+      attributes: contactData.attributes,
+      addons: contactData.addons
     });
 
     const urlWithParams = `${googleAppsScriptUrl}?${params.toString()}`;
@@ -119,14 +147,29 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     } else {
       console.error('Google Apps Script response:', responseText);
-      throw new Error('Unexpected response from Google Apps Script');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Google Apps Script error',
+          details: responseText.substring(0, 500)
+        }),
+        {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
+        }
+      );
     }
   } catch (error) {
     console.error('Contact form error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({
         success: false,
-        error: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.'
+        error: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
+        debug: errorMessage
       }),
       {
         status: 500,

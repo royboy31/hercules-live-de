@@ -5,10 +5,12 @@ import Header from '../components/Header.astro';
 import StickyHeader from '../components/StickyHeader.astro';
 import Footer from '../components/Footer.astro';
 import CookieConsent from '../components/CookieConsent.tsx';
+import { DOMAINS, getHreflangUrls, type Locale } from '../data/hreflang-mappings';
 
 interface Props {
   title: string;
   description?: string;
+  pageType?: 'page' | 'collection' | 'product' | 'blog';
   hreflangUrls?: {
     de?: string;
     en?: string;
@@ -16,27 +18,32 @@ interface Props {
   };
 }
 
-const { title, description = 'Hercules Merchandise - Hochwertige Werbeartikel mit Ihrem Logo', hreflangUrls } = Astro.props;
-
-// Base domains for each language
-const domains = {
-  de: 'https://www.hercules-merchandise.de',
-  en: 'https://www.hercules-trophy.com',
-  fr: 'https://www.hercules-merchandising.fr'
-};
+const {
+  title,
+  description = 'Hercules Merchandise - Hochwertige Werbeartikel mit Ihrem Logo',
+  pageType = 'page',
+  hreflangUrls: customHreflangUrls
+} = Astro.props;
 
 // Get current path
 const currentPath = Astro.url.pathname;
 
-// Build hreflang URLs - use provided custom URLs or fallback to same path on each domain
-const hreflangs = {
-  de: hreflangUrls?.de || `${domains.de}${currentPath}`,
-  en: hreflangUrls?.en || `${domains.en}${currentPath}`,
-  fr: hreflangUrls?.fr || `${domains.fr}${currentPath}`
-};
+// Build hreflang URLs - use provided custom URLs or get from mapping
+let hreflangs: Record<Locale, string>;
+
+if (customHreflangUrls?.de || customHreflangUrls?.en || customHreflangUrls?.fr) {
+  const defaultHreflangs = getHreflangUrls(currentPath, pageType);
+  hreflangs = {
+    de: customHreflangUrls.de || defaultHreflangs.de,
+    en: customHreflangUrls.en || defaultHreflangs.en,
+    fr: customHreflangUrls.fr || defaultHreflangs.fr
+  };
+} else {
+  hreflangs = getHreflangUrls(currentPath, pageType);
+}
 
 // Canonical URL (current DE page)
-const canonicalUrl = `${domains.de}${currentPath}`;
+const canonicalUrl = `${DOMAINS.de}${currentPath}`;
 ---
 
 <!DOCTYPE html>

@@ -100,7 +100,7 @@ export async function getStaticPaths() {
 }
 ---
 
-<BaseLayout title={product?.name || 'Produkt'}>
+<BaseLayout title={product?.name || 'Produkt'} pageType="product">
   <div class="product-page">
     {error ? (
       <div class="error-container">

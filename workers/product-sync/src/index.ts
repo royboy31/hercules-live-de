@@ -665,11 +665,12 @@ async function transformProduct(
 
 // Batch size for product sync (to stay under subrequest limit)
 // With fallback logic, each image can use up to 3 subrequests (kv.get, fetch, fallback fetch)
-const BATCH_SIZE = 2;
+// Reduced batch size to allow more images per product
+const BATCH_SIZE = 1;
 
 // Max gallery images to cache per product (to stay within 50 subrequest limit)
-// 2 products × 5 images × 3 subrequests = 30 (leaving room for API + KV ops)
-const MAX_GALLERY_IMAGES = 5;
+// 1 product × 10 images × 2 subrequests = 20 (leaving room for API + KV ops)
+const MAX_GALLERY_IMAGES = 10;
 
 // Main sync function with batching support
 // forceImageRefresh: if true, re-download all images even if already cached (for upgrading image sizes)

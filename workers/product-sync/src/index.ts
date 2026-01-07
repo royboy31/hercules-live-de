@@ -66,6 +66,11 @@ interface WCProduct {
   estimated_delivery_date?: string;
   // Per-category positions exposed by our REST API filter (from _cat_pos_* meta)
   category_positions?: Record<string, number>;
+  // ACF PDF fields for Design Box section (exposed by our REST API filter)
+  pdf_url?: string | null;
+  pdf_2_url?: string | null;
+  // FAQ fields (exposed by our REST API filter)
+  faq?: Array<{ question: string; answer: string }>;
 }
 
 interface WCVariation {
@@ -147,6 +152,11 @@ interface SyncedProduct {
   // Per-category positions (from _cat_pos_{term_id} meta fields)
   // Key is category term_id, value is position within that category
   category_positions: Record<string, number>;
+  // ACF PDF fields for Design Box section
+  pdf_url: string | null;
+  pdf_2_url: string | null;
+  // FAQ items
+  faq: Array<{ question: string; answer: string }>;
   synced_at: string;
 }
 
@@ -644,6 +654,11 @@ async function transformProduct(
     menu_order: product.menu_order || 0,
     // Per-category positions
     category_positions: categoryPositions,
+    // ACF PDF fields for Design Box section
+    pdf_url: product.pdf_url || null,
+    pdf_2_url: product.pdf_2_url || null,
+    // FAQ items from ACF fields
+    faq: product.faq || [],
     synced_at: new Date().toISOString(),
   };
 }

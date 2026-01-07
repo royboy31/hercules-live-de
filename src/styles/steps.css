@@ -129,6 +129,14 @@
     align-items: center;
     padding: 0 !important;
     cursor: pointer;
+    font-size: 18px;
+    font-weight: 500;
+    font-family: 'Jost', sans-serif;
+    line-height: 1;
+}
+
+.kd-round-btn:hover {
+    background-color: rgb(70, 154, 220);
 }
 
 /* Range slider thumb */
@@ -268,9 +276,10 @@ input[type="range"]::-ms-thumb {
     width: 100px;
 }
 
-/* Contact option - align button to right */
+/* Contact option - align button to right, no border after */
 .kd-contact-option {
     justify-content: space-between;
+    border-bottom: none !important;
 }
 
 .kd-contact-meta {
@@ -279,6 +288,7 @@ input[type="range"]::-ms-thumb {
 }
 
 .pearl-step .range-wrapper {
+    margin-top: 30px;
     margin-bottom: 20px;
 }
 
@@ -412,11 +422,25 @@ input[type="range"]::-ms-thumb {
     width: 50%;
 }
 
+/* Quantity step title - inline layout */
+.kd-qty-title-wrapper {
+    flex-flow: row !important;
+    align-items: center !important;
+}
+
+.kd-qty-title-wrapper span {
+    display: inline;
+}
+
+.kd-qty-title-wrapper small {
+    display: inline;
+    margin-left: 5px;
+    width: auto !important;
+}
+
 .pearl-step h3 small {
-    width: 50%;
     font-family: Jost;
     font-weight: 400;
-    font-style: Regular;
     font-size: 14px;
     line-height: 100%;
     letter-spacing: 0%;
@@ -545,7 +569,7 @@ input[type="range"]::-ms-thumb {
 
 /* Action buttons wrapper */
 .kd-action-btns-wrapper {
-    padding: 20px 20px 0 20px;
+    padding: 20px 20px 26px 20px;
     display: flex;
     column-gap: 12px;
     justify-content: center;
@@ -626,6 +650,19 @@ input[type="range"]::-ms-thumb {
 .kd-action-btns-wrapper .kd-single-action-btn {
     width: 48%;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Helper text under buttons */
+.kd-action-btns-wrapper .kd-single-action-btn small {
+    font-family: Jost;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 100%;
+    color: #787878;
+    margin-top: 8px;
 }
 
 .kd-action-btns-wrapper button {
@@ -711,12 +748,31 @@ input[type="range"]::-webkit-slider-runnable-track {
 }
 
 .kd-qty-input {
-    width: 140px;
-    padding: 8px;
-    border-radius: 15px;
+    width: 140px !important;
+    padding: 10px 8px !important;
+    border-radius: 15px !important;
     text-align: center;
     font-family: 'Jost', sans-serif;
-    border: 1px solid #ddd;
+    font-size: 16px;
+    font-weight: 500;
+    color: #253461;
+    border: 1px solid #ddd !important;
+    outline: none;
+}
+
+.kd-qty-input:focus {
+    border-color: #469ADC;
+}
+
+/* Remove spinner arrows from number input */
+.kd-qty-input::-webkit-outer-spin-button,
+.kd-qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.kd-qty-input[type=number] {
+    -moz-appearance: textfield;
 }
 
 /* Summary table values */
@@ -730,6 +786,84 @@ input[type="range"]::-webkit-slider-runnable-track {
 
 .kd-total-value {
     font-weight: bold;
+}
+
+/* Lieferzeit tooltip */
+.kd-lieferzeit-cell {
+    position: relative;
+}
+
+.offer-table .kd-tooltip-trigger {
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 14px !important;
+    height: 14px !important;
+    min-width: 14px !important;
+    min-height: 14px !important;
+    border-radius: 50% !important;
+    background: #253461 !important;
+    color: #fff !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    margin-left: 6px !important;
+    position: relative !important;
+    vertical-align: super !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+}
+
+.offer-table .kd-tooltip-trigger:hover {
+    background: #469ADC !important;
+}
+
+.offer-table .kd-tooltip-content {
+    position: absolute !important;
+    left: 24px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 1000 !important;
+    padding: 12px 15px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+    white-space: normal !important;
+    width: 280px !important;
+    background: #253461 !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+.offer-table .kd-tooltip-content::before {
+    content: '' !important;
+    position: absolute !important;
+    left: -6px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    border-width: 6px !important;
+    border-style: solid !important;
+    border-color: transparent #253461 transparent transparent !important;
+}
+
+/* Express delivery link */
+.offer-table .kd-express-link {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    color: #469ADC !important;
+    text-decoration: underline !important;
+    cursor: pointer !important;
+    font-family: 'Jost', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    display: block !important;
+}
+
+.offer-table .kd-express-link:hover {
+    color: #253461 !important;
 }
 
 /* Change button positioning */
@@ -771,6 +905,165 @@ input[type="range"]::-webkit-slider-runnable-track {
     }
 
     .kd-qty-input {
-        width: 100px;
+        width: 120px !important;
+    }
+}
+
+/* ==========================================
+   Question Box - Hast du eine Frage?
+   (Separate box with same styling as steps)
+   ========================================== */
+.kd-question-box {
+    border: 1px solid #DCDCDC;
+    border-radius: 20px;
+    background-color: white;
+    padding: 30px 20px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.kd-question-box h3 {
+    font-family: 'Jost', sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+    color: #253461;
+    margin: 0 0 20px 0;
+    text-transform: uppercase;
+}
+
+.kd-question-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.kd-btn-contact,
+.kd-btn-faq {
+    font-family: 'Jost', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 12px 30px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.kd-btn-contact {
+    background-color: #10C99E;
+    color: white;
+    border: 1px solid #10C99E;
+}
+
+.kd-btn-contact:hover {
+    background-color: transparent;
+    color: #10C99E;
+}
+
+.kd-btn-faq {
+    background-color: transparent;
+    color: #253461;
+    border: 1px solid #253461;
+}
+
+.kd-btn-faq:hover {
+    background-color: #253461;
+    color: white;
+}
+
+/* ==========================================
+   Vision Section - Verwirklichen Sie Ihre Vision
+   ========================================== */
+.kd-vision-section {
+    background-color: #253461;
+    border-radius: 20px;
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.kd-vision-images {
+    flex: 0 0 45%;
+    max-width: 45%;
+}
+
+.kd-vision-images img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.kd-vision-content {
+    flex: 1;
+    text-align: left;
+}
+
+.kd-vision-content h3 {
+    font-family: 'Jost', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    line-height: 1.2;
+    color: white;
+    margin: 0 0 25px 0;
+    text-transform: uppercase;
+}
+
+.kd-btn-design {
+    font-family: 'Jost', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 15px 35px;
+    border-radius: 50px;
+    background-color: #10C99E;
+    color: white;
+    border: 1px solid #10C99E;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.kd-btn-design:hover {
+    background-color: transparent;
+    color: #10C99E;
+}
+
+/* Mobile responsive for new sections */
+@media (max-width: 767px) {
+    .kd-question-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .kd-btn-contact,
+    .kd-btn-faq {
+        width: 100%;
+        max-width: 280px;
+        text-align: center;
+    }
+
+    .kd-vision-section {
+        flex-direction: column;
+        padding: 30px 20px;
+        text-align: center;
+    }
+
+    .kd-vision-images {
+        flex: none;
+        max-width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .kd-vision-content {
+        text-align: center;
+    }
+
+    .kd-vision-content h3 {
+        font-size: 22px;
     }
 }

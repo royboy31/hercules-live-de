@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import QuantityRequestPopup from './QuantityRequestPopup';
+import ExpressDeliveryPopup from './ExpressDeliveryPopup';
 
 // Types matching the API response
 interface TermInfo {
@@ -105,7 +106,7 @@ function getInterpolatedPrice(conditionalPrices: Array<{ qty: number | string; p
   return sorted[0]?.price || 0;
 }
 
-// Get addon price for a given quantity
+// Get addon price for a given quantity (with interpolation, matching WordPress)
 function getAddonPriceForQty(addon: AddonData, selectedValue: string | string[], quantity: number): number {
   if (!selectedValue) return 0;
 
@@ -116,17 +117,37 @@ function getAddonPriceForQty(addon: AddonData, selectedValue: string | string[],
     const option = addon.options.find(o => o.name === name);
     if (!option || !option.price_table || option.price_table.length === 0) continue;
 
-    const sorted = [...option.price_table].sort((a, b) => a.qty - b.qty);
-    let price = 0;
+    const sorted = [...option.price_table]
+      .map(p => ({ qty: parseFloatSafe(p.qty), price: parseFloatSafe(p.price) }))
+      .sort((a, b) => a.qty - b.qty);
 
-    for (let i = sorted.length - 1; i >= 0; i--) {
-      if (quantity >= sorted[i].qty) {
-        price = sorted[i].price;
-        break;
-      }
+    // Exact match
+    const exact = sorted.find(t => t.qty === quantity);
+    if (exact) {
+      total += exact.price;
+      continue;
     }
 
-    total += price;
+    // Interpolation (matching base price calculation)
+    let below: { qty: number; price: number } | null = null;
+    let above: { qty: number; price: number } | null = null;
+
+    for (const t of sorted) {
+      if (t.qty < quantity) below = t;
+      if (t.qty > quantity && !above) above = t;
+    }
+
+    if (below && above && above.qty !== below.qty) {
+      const pA = below.price, pB = above.price;
+      const qA = below.qty, qB = above.qty;
+      total += pA + ((pB - pA) * (quantity - qA)) / (qB - qA);
+    } else if (below) {
+      total += below.price;
+    } else if (above) {
+      total += above.price;
+    } else if (sorted.length > 0) {
+      total += sorted[0].price;
+    }
   }
 
   return total;
@@ -144,6 +165,10 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
   const [quantitySelected, setQuantitySelected] = useState(0);
   const [tempQuantity, setTempQuantity] = useState(50);
   const [showQuantityPopup, setShowQuantityPopup] = useState(false);
+  const [showExpressPopup, setShowExpressPopup] = useState(false);
+  const [showDeliveryTooltip, setShowDeliveryTooltip] = useState(false);
+  const [addToCartLoading, setAddToCartLoading] = useState(false);
+  const [addToCartError, setAddToCartError] = useState<string | null>(null);
 
   // Fetch product config on mount
   useEffect(() => {
@@ -169,6 +194,31 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
         // Set initial temp quantity from minimum
         const minQty = parseInt(data.minimum_quantity || '50', 10);
         setTempQuantity(minQty > 0 ? minQty : 50);
+
+        // Auto-select default attributes and set initial step
+        const allAttrKeys = Object.keys(data.attributes);
+        const autoSelectedAttrs: Record<string, string> = {};
+        let hasVisibleAttributes = false;
+
+        allAttrKeys.forEach(key => {
+          const attr = data.attributes[key];
+          if (attr.terms.length === 1 && attr.terms[0].slug === 'default') {
+            // Auto-select single default option
+            autoSelectedAttrs[key] = 'default';
+          } else {
+            hasVisibleAttributes = true;
+          }
+        });
+
+        if (Object.keys(autoSelectedAttrs).length > 0) {
+          setSelectedAttributes(autoSelectedAttrs);
+        }
+
+        // If no visible attributes (all are defaults), expand quantity step immediately
+        if (!hasVisibleAttributes) {
+          // Set maxVisibleStep to quantity step index (which is 0 when no visible attributes)
+          setMaxVisibleStep(0);
+        }
       } catch (err) {
         console.error('[ProductConfigurator] Error:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -184,6 +234,16 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     if (!config) return [];
     return Object.keys(config.attributes);
   }, [config]);
+
+  // Get visible attribute keys (exclude single "default" attributes)
+  const visibleAttributeKeys = useMemo(() => {
+    if (!config) return [];
+    return attributeKeys.filter(key => {
+      const attr = config.attributes[key];
+      // Hide attributes that only have a single "default" option
+      return !(attr.terms.length === 1 && attr.terms[0].slug === 'default');
+    });
+  }, [config, attributeKeys]);
 
   // Check if an attribute should be visible based on enabled_if conditions
   const isAttributeVisible = (attrKey: string, index: number): boolean => {
@@ -298,11 +358,96 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     setMaxVisibleStep(stepIndex + 1);
   };
 
-  // Handle quantity confirmation
+  // Handle quantity confirmation - confirms quantity and advances to next step
   const handleQuantityConfirm = () => {
     if (tempQuantity >= quantityRange.min && tempQuantity <= quantityRange.max) {
       setQuantitySelected(tempQuantity);
-      setMaxVisibleStep(attributeKeys.length + visibleAddons.length + 1);
+      setMaxVisibleStep(visibleAttributeKeys.length + visibleAddons.length + 1);
+    }
+  };
+
+  // Calculate addon price per piece for the current quantity
+  const getAddonPricePerPiece = (): number => {
+    let total = 0;
+    for (const addon of visibleAddons) {
+      const selectedValue = selectedAddons[addon.id];
+      if (selectedValue) {
+        total += getAddonPriceForQty(addon, selectedValue, quantitySelected);
+      }
+    }
+    return total;
+  };
+
+  // Add to cart function - calls WordPress AJAX endpoint
+  const handleAddToCart = async (redirectTo: 'cart' | 'quote') => {
+    if (!matchedVariation || !config || quantitySelected <= 0) return;
+
+    setAddToCartLoading(true);
+    setAddToCartError(null);
+
+    try {
+      // Calculate prices
+      const basePrice = getInterpolatedPrice(matchedVariation.conditional_prices, quantitySelected);
+      const addonPricePerPiece = getAddonPricePerPiece();
+      const finalPricePerPiece = basePrice + addonPricePerPiece;
+
+      // Prepare form data for WordPress AJAX
+      const params = new URLSearchParams();
+      params.append('action', 'pearl_wc_add_to_cart_custom');
+      params.append('product_id', String(config.product_id));
+      params.append('variation_id', String(matchedVariation.variation_id));
+      params.append('quantity', String(quantitySelected));
+      params.append('price_num', String(finalPricePerPiece));
+      params.append('addons', JSON.stringify(selectedAddons));
+      params.append('addonsPricePerpiece', String(addonPricePerPiece));
+      params.append('minQty', String(quantityRange.min));
+
+      // Call WordPress AJAX endpoint
+      const response = await fetch('/wp-admin/admin-ajax.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString(),
+        credentials: 'include', // Important for session cookies
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Fetch updated session to get new cart data
+        try {
+          const sessionRes = await fetch('/wp-json/hercules/v1/session', {
+            credentials: 'include',
+          });
+          const sessionData = await sessionRes.json();
+
+          // Dispatch event with new cart data for immediate UI update
+          window.dispatchEvent(new CustomEvent('hercules:cart-updated', {
+            detail: { cart: sessionData.cart }
+          }));
+        } catch (e) {
+          // Fallback: dispatch event without data, UserSession will refetch
+          window.dispatchEvent(new CustomEvent('hercules:cart-updated'));
+        }
+
+        // Small delay to let user see the cart update, then redirect
+        setTimeout(() => {
+          if (redirectTo === 'quote') {
+            window.location.href = '/quote-generator/';
+          } else {
+            window.location.href = '/cart/';
+          }
+        }, 500);
+      } else {
+        const errorMsg = result.data || 'Ein Fehler ist aufgetreten';
+        setAddToCartError(typeof errorMsg === 'string' ? errorMsg : 'Ein Fehler ist aufgetreten');
+        setAddToCartLoading(false);
+      }
+    } catch (error) {
+      console.error('[ProductConfigurator] Add to cart error:', error);
+      setAddToCartError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
+      setAddToCartLoading(false);
     }
   };
 
@@ -337,8 +482,9 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     return textarea.value;
   };
   const currencySymbol = decodeHtmlEntity(config.currency_symbol) || '€';
-  const totalSteps = attributeKeys.length + visibleAddons.length + 1; // +1 for quantity
-  const quantityStepIndex = attributeKeys.length + visibleAddons.length;
+  // Use visibleAttributeKeys for step counting (excludes hidden default attributes)
+  const totalSteps = visibleAttributeKeys.length + visibleAddons.length + 1; // +1 for quantity
+  const quantityStepIndex = visibleAttributeKeys.length + visibleAddons.length;
   const minQuantity = parseInt(config.minimum_quantity || '50', 10);
 
   // Check if all selections are complete for add to cart
@@ -350,6 +496,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
   const currentStepNum = Math.min(maxVisibleStep + 1, totalSteps);
 
   return (
+    <>
     <div id="pearl-wc-steps-form" className="pearl-wc-steps-form">
       {/* Step indicator - matches WordPress exactly */}
       <div className="pearl-step-indicator">
@@ -357,42 +504,34 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
         <span>AB {minQuantity} STÜCKE</span>
       </div>
 
-      {/* Attribute Steps */}
-      {attributeKeys.map((attrKey, index) => {
-        if (!isAttributeVisible(attrKey, index)) return null;
+      {/* Attribute Steps - Only render visible attributes (excludes single default options) */}
+      {visibleAttributeKeys.map((attrKey, visibleIndex) => {
+        if (!isAttributeVisible(attrKey, visibleIndex)) return null;
 
         const attr = config.attributes[attrKey];
-        const isExpanded = maxVisibleStep === index;
+        const isExpanded = maxVisibleStep === visibleIndex;
         const selectedValue = selectedAttributes[attrKey];
         const isCompleted = !!selectedValue;
 
-        // Check if this is a hidden default attribute
-        if (attr.terms.length === 1 && attr.terms[0].slug === 'default') {
-          // Auto-select default and skip
-          if (!selectedAttributes[attrKey]) {
-            setSelectedAttributes(prev => ({ ...prev, [attrKey]: 'default' }));
-          }
-          return null;
-        }
-
         const stepClass = `pearl-step ${isExpanded ? '' : 'collapsed'} ${isCompleted && !isExpanded ? 'selected' : ''}`.trim();
+        const stepNumber = visibleIndex + 1;
 
         return (
-          <div key={attrKey} className={stepClass} onClick={!isExpanded && isCompleted ? () => setMaxVisibleStep(index) : undefined}>
+          <div key={attrKey} className={stepClass} onClick={!isExpanded && isCompleted ? () => setMaxVisibleStep(visibleIndex) : undefined}>
             <h3>
               {!isExpanded && isCompleted ? (
                 <>
                   <div className="kd-prod-attribute-title-wrapper">
-                    <span>{index + 1}: {attr.display_title || attrKey.replace('pa_', '')}</span>
+                    <span>{stepNumber}: {attr.display_title || attrKey.replace('pa_', '')}</span>
                   </div>
                   <span className="kd-selected-val">{attr.terms.find(t => t.slug === selectedValue)?.name || selectedValue}</span>
-                  <button type="button" className="kd-selected-chng-btn" onClick={(e) => { e.stopPropagation(); setMaxVisibleStep(index); }}>
+                  <button type="button" className="kd-selected-chng-btn" onClick={(e) => { e.stopPropagation(); setMaxVisibleStep(visibleIndex); }}>
                     Ändern
                   </button>
                 </>
               ) : (
                 <div className="kd-prod-attribute-title-wrapper">
-                  <span>{index + 1}: {attr.display_title || attrKey.replace('pa_', '')}</span>
+                  <span>{stepNumber}: {attr.display_title || attrKey.replace('pa_', '')}</span>
                 </div>
               )}
             </h3>
@@ -408,7 +547,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                       <div
                         key={term.slug}
                         className="kd-image-selector-col"
-                        onClick={() => handleAttributeSelect(attrKey, term.slug, index)}
+                        onClick={() => handleAttributeSelect(attrKey, term.slug, visibleIndex)}
                         style={{
                           border: selectedValue === term.slug ? '2px solid #469ADC' : '1px solid #ccc',
                           background: selectedValue === term.slug ? '#e6f0fa' : '#fff',
@@ -439,7 +578,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                 {attr.display_type === 'dropdown' && (
                   <select
                     value={selectedValue || ''}
-                    onChange={e => handleAttributeSelect(attrKey, e.target.value, index)}
+                    onChange={e => handleAttributeSelect(attrKey, e.target.value, visibleIndex)}
                     style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #ddd' }}
                   >
                     <option value="">Wählen Sie eine Option</option>
@@ -456,7 +595,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                       <div
                         key={term.slug}
                         className="box-selector-item"
-                        onClick={() => handleAttributeSelect(attrKey, term.slug, index)}
+                        onClick={() => handleAttributeSelect(attrKey, term.slug, visibleIndex)}
                         style={{
                           cursor: 'pointer',
                           border: selectedValue === term.slug ? '2px solid #469ADC' : '1px solid #ddd',
@@ -480,7 +619,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
 
       {/* Addon Steps */}
       {visibleAddons.map((addon, addonIndex) => {
-        const stepIndex = attributeKeys.length + addonIndex;
+        const stepIndex = visibleAttributeKeys.length + addonIndex;
         const isExpanded = maxVisibleStep === stepIndex;
         const selectedValue = selectedAddons[addon.id];
         const isCompleted = !!selectedValue;
@@ -569,20 +708,14 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
           <h3>
             {maxVisibleStep !== quantityStepIndex && quantitySelected > 0 ? (
               <>
-                <div className="kd-prod-attribute-title-wrapper">
-                  <span>{quantityStepIndex + 1}: Wählen Sie Ihre Menge</span>
-                  <small>(Die angezeigten Preise sind netto)</small>
-                </div>
+                <span>{quantityStepIndex + 1}: Wählen Sie Ihre Menge (Die angezeigten Preise sind netto)</span>
                 <span className="kd-selected-val">{quantitySelected}</span>
                 <button type="button" className="kd-selected-chng-btn" onClick={(e) => { e.stopPropagation(); setMaxVisibleStep(quantityStepIndex); }}>
                   Ändern
                 </button>
               </>
             ) : (
-              <div className="kd-prod-attribute-title-wrapper">
-                <span>{quantityStepIndex + 1}: Wählen Sie Ihre Menge</span>
-                <small>(Die angezeigten Preise sind netto)</small>
-              </div>
+              <span>{quantityStepIndex + 1}: Wählen Sie Ihre Menge (Die angezeigten Preise sind netto)</span>
             )}
           </h3>
 
@@ -634,7 +767,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                 );
               })}
 
-              {/* 500+ Contact option */}
+              {/* Max quantity+ Contact option */}
               <label className="kd-radio-option kd-contact-option">
                 <div>
                   <input
@@ -643,7 +776,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                     checked={false}
                     onChange={() => {}}
                   />
-                  <span>500+</span>
+                  <span>{quantityRange.max}+</span>
                 </div>
                 <div className="kd-radio-meta kd-contact-meta">
                   <button type="button" className="step-contact" onClick={() => setShowQuantityPopup(true)}>
@@ -727,10 +860,31 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                 <td>{currencySymbol}{priceInfo.totalInclVat.toFixed(2).replace('.', ',')}</td>
               </tr>
               <tr>
-                <td>Lieferzeit</td>
+                <td className="kd-lieferzeit-cell">
+                  Lieferzeit
+                  <span
+                    className="kd-tooltip-trigger"
+                    onMouseEnter={() => setShowDeliveryTooltip(true)}
+                    onMouseLeave={() => setShowDeliveryTooltip(false)}
+                  >
+                    ?
+                    {showDeliveryTooltip && (
+                      <span className="kd-tooltip-content">
+                        Die Lieferzeit beginnt nach Freigabe des Designs und Zahlungseingang. Bei Expresslieferung kontaktieren Sie uns bitte.
+                      </span>
+                    )}
+                  </span>
+                </td>
                 <td>
                   {config.estimated_delivery_date && <div>{config.estimated_delivery_date}</div>}
                   <div>{priceInfo.leadTime}</div>
+                  <button
+                    type="button"
+                    onClick={() => setShowExpressPopup(true)}
+                    className="kd-express-link"
+                  >
+                    Ich benötige eine Expresslieferung
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -740,27 +894,40 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
 
       {/* Action Buttons */}
       <div className="kd-action-btns-wrapper">
+        {addToCartError && (
+          <div className="kd-error-message" style={{
+            width: '100%',
+            padding: '12px 16px',
+            marginBottom: '15px',
+            backgroundColor: '#fee2e2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            color: '#dc2626',
+            fontSize: '14px',
+            textAlign: 'center'
+          }}>
+            {addToCartError}
+          </div>
+        )}
         <div className="kd-single-action-btn">
           <button
             type="button"
-            disabled={!canAddToCart}
-            onClick={() => window.location.href = `/quote-generator/`}
+            disabled={!canAddToCart || addToCartLoading}
+            onClick={() => handleAddToCart('quote')}
           >
-            Erstellen Sie Ihr Angebot
+            {addToCartLoading ? 'Wird verarbeitet...' : 'Erstellen Sie Ihr Angebot'}
           </button>
+          <small>Wir senden Ihnen ein PDF zu</small>
         </div>
         <div className="kd-single-action-btn">
           <button
             type="button"
-            disabled={!canAddToCart}
-            onClick={() => {
-              // Add to cart logic - will need to call WooCommerce API
-              const cartUrl = `/kaufen/${productSlug}/`;
-              window.location.href = cartUrl;
-            }}
+            disabled={!canAddToCart || addToCartLoading}
+            onClick={() => handleAddToCart('cart')}
           >
-            In den Warenkorb
+            {addToCartLoading ? 'Wird verarbeitet...' : 'In den Warenkorb'}
           </button>
+          <small>Wenn Sie bereit sind zu bestellen</small>
         </div>
       </div>
 
@@ -772,8 +939,45 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
         productName={config.product_name}
         selectedAttributes={selectedAttributes}
         selectedAddons={selectedAddons}
-        maxQuantity={quantityRange.max}
+        maxQuantity={quantitySelected || tempQuantity}
       />
+
+      {/* Express Delivery Popup */}
+      {showExpressPopup && (
+        <ExpressDeliveryPopup
+          isOpen={showExpressPopup}
+          onClose={() => setShowExpressPopup(false)}
+          productId={config.product_id}
+          productName={config.product_name}
+          selectedAttributes={selectedAttributes}
+          selectedAddons={selectedAddons}
+          quantity={quantitySelected || tempQuantity}
+          pricePerPiece={priceInfo?.pricePerPiece || 0}
+          currentLeadTime={priceInfo?.leadTime || ''}
+          config={config}
+        />
+      )}
     </div>
+
+    {/* Question Section - Hast du eine Frage? (Separate box) */}
+    <div className="kd-question-box">
+      <h3>HAST DU EINE FRAGE?</h3>
+      <div className="kd-question-buttons">
+        <a href="/kontakt/" className="kd-btn-contact">KONTAKTIEREN SIE UNS</a>
+        <a href="/faq/" className="kd-btn-faq">SIEHE FAQ</a>
+      </div>
+    </div>
+
+    {/* Vision Section - Verwirklichen Sie Ihre Vision */}
+    <div className="kd-vision-section">
+      <div className="kd-vision-images">
+        <img src="/images/design/design-mockup.png" alt="Custom merchandise design" />
+      </div>
+      <div className="kd-vision-content">
+        <h3>VERWIRKLICHEN SIE IHRE VISION ERHALTEN SIE EIN INDIVIDUELLES DESIGN!</h3>
+        <a href="/design-service/" className="kd-btn-design">GEHEN SIE ZUM DESIGN-BEREICH</a>
+      </div>
+    </div>
+    </>
   );
 }

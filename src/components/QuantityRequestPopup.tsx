@@ -145,7 +145,7 @@ export default function QuantityRequestPopup({
       submitData.append('pageUrl', window.location.href);
       submitData.append('productId', String(productId));
       submitData.append('productName', productName);
-      submitData.append('quantity', `${maxQuantity}+`);
+      submitData.append('quantity', String(maxQuantity));
       submitData.append('attributes', JSON.stringify(selectedAttributes));
       submitData.append('addons', JSON.stringify(selectedAddons));
       submitData.append('formType', 'quantity_request');
@@ -343,10 +343,9 @@ export default function QuantityRequestPopup({
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               </div>
-              <h4>Vielen Dank für Ihre Anfrage!</h4>
+              <h4>Vielen Dank, dass Sie sich an uns gewendet haben!</h4>
               <p>
-                Wir haben Ihre Anfrage für eine individuelle Menge erhalten.
-                Einer unserer Mitarbeiter wird sich so schnell wie möglich bei Ihnen melden.
+                Ihre Anfrage wurde erfolgreich übermittelt. Einer unserer Mitarbeiter wird sich so schnell wie möglich bei Ihnen melden.
               </p>
               <button
                 type="button"

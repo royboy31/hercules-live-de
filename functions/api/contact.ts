@@ -19,6 +19,8 @@ interface ContactFormData {
   productName: string;
   productId: string;
   quantity: string;
+  pricePerPiece: string;
+  desiredDate: string;
   attributes: string;
   addons: string;
 }
@@ -64,11 +66,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       time: formData.get('time') as string || new Date().toLocaleTimeString('de-DE'),
       pageTitle: formData.get('pageTitle') as string || 'Unknown',
       pageUrl: formData.get('pageUrl') as string || 'Unknown',
-      files: fileNames.join(', '),
+      files: fileNames.length > 0 ? fileNames.join(', ') : (formData.get('files') as string || ''),
       formType: formType,
       productName: formData.get('productName') as string || '',
       productId: formData.get('productId') as string || '',
       quantity: formData.get('quantity') as string || '',
+      pricePerPiece: formData.get('pricePerPiece') as string || '',
+      desiredDate: formData.get('desiredDate') as string || '',
       attributes: formData.get('attributes') as string || '',
       addons: formData.get('addons') as string || ''
     };
@@ -119,6 +123,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       productName: contactData.productName,
       productId: contactData.productId,
       quantity: contactData.quantity,
+      pricePerPiece: contactData.pricePerPiece,
+      desiredDate: contactData.desiredDate,
       attributes: contactData.attributes,
       addons: contactData.addons
     });

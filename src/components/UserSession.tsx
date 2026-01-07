@@ -130,8 +130,27 @@ export default function UserSession({ type }: UserSessionProps) {
     };
 
     // Listen for custom cart update events
-    const handleCartUpdate = () => {
-      fetchSession(true);
+    const handleCartUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      // If cart data is passed in the event, update immediately
+      if (customEvent.detail?.cart) {
+        setSession(prev => prev ? { ...prev, cart: customEvent.detail.cart } : null);
+        // Also update localStorage cache
+        try {
+          const cached = localStorage.getItem('hercules_session');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            parsed.data.cart = customEvent.detail.cart;
+            parsed.timestamp = Date.now();
+            localStorage.setItem('hercules_session', JSON.stringify(parsed));
+          }
+        } catch (e) {
+          // Ignore localStorage errors
+        }
+      } else {
+        // Fallback: fetch fresh data
+        fetchSession(true);
+      }
     };
 
     // Close dropdown when clicking outside

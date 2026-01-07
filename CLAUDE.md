@@ -3,6 +3,21 @@
 ## Project Overview
 Migrating WordPress/WooCommerce Hercules Merchandise site (staging.hercules-merchandise.de) to a headless Astro + React architecture with pixel-perfect header matching.
 
+---
+## IMPORTANT: SSH Access to Combell Server
+**ALWAYS use this for WordPress file access:**
+```bash
+ssh combel
+```
+- **Host:** 136.144.235.35
+- **User:** kamindu-de
+- **Working Directory:** `/var/www/vhosts/hercules-merchandise.de`
+- **Staging Site:** `staging.hercules-merchandise.de/`
+- **Production Site:** `httpdocs/`
+
+This is the ONLY server for WordPress files. Use `ssh combel` for all file operations.
+---
+
 ## Quick Reference
 
 ### URLs
@@ -12,12 +27,6 @@ Migrating WordPress/WooCommerce Hercules Merchandise site (staging.hercules-merc
 - **WordPress Staging:** https://staging.hercules-merchandise.de
 - **WordPress Admin:** https://staging.hercules-merchandise.de/wp-admin/
 - **Staging via Edge Router:** https://staging.hercules-merchandise.de (routes through Edge Router)
-
-### SSH Access
-```bash
-ssh combel  # Connects to 136.144.235.35 as kamindu-de
-cd staging.hercules-merchandise.de
-```
 
 ### WooCommerce API (in .env)
 ```
@@ -119,7 +128,7 @@ CLOUDFLARE_API_TOKEN="ZN0wjGH08jqnYCOvlpNH5Y-z--3FeL-63fnLndQp" CLOUDFLARE_ACCOU
 2. **Slide 2:** "HEBEN SIE SICH AB IN IHREN FARBEN MIT STOLZ." → /collections/personalisierte-fanschals/
 3. **Slide 3:** "Umkleidekabinen-Komfort, Streetstyle-Stolz." → /product/personalisierte-badeschlappen/
 
-## Current Status (Last Updated: 2026-01-04)
+## Current Status (Last Updated: 2026-01-06)
 
 ### Completed
 - ✅ Homepage fully replicated from WordPress
@@ -153,12 +162,15 @@ CLOUDFLARE_API_TOKEN="ZN0wjGH08jqnYCOvlpNH5Y-z--3FeL-63fnLndQp" CLOUDFLARE_ACCOU
 - ✅ **Wishlist Functionality** - Heart button on product cards with YITH WooCommerce Wishlist integration
 - ✅ **Blog Author** - All blog posts show `info@hercules-merchandise.de` as author
 - ✅ **Homepage CTA Popups** - "Kostenloses Design anfordern" and "Kontaktieren Sie uns jetzt" buttons open contact form popup
+- ✅ **Product Detail Pages** - `/produkte/[slug]` with gallery, configurator, description, and design section
+- ✅ **Product Configurator** - Pearl WC Steps style with attribute selection and quantity tiers
+- ✅ **Dynamic Design Section** - "Wie bekommt man ein Design?" with product-specific PDF downloads from ACF fields
 
 ### Next Steps
-1. Create product detail pages (`/produkt/[slug]`)
-2. Implement cart functionality (add to cart from Astro pages)
-3. Add to cart with custom pricing (matching Pearl plugin)
-4. Checkout integration
+1. Implement cart functionality (add to cart from Astro pages)
+2. Add to cart with custom pricing (matching Pearl plugin)
+3. Checkout integration
+4. Test all product pages for PDF download functionality
 
 ---
 
@@ -672,6 +684,70 @@ WordPress mu-plugins/
 ```
 
 ## Session History
+
+### Session 2026-01-06 (Dynamic Design Section with Product-Specific PDFs)
+**Task:** Fix "Wie bekommt man ein Design?" section to use product-specific PDF downloads from WordPress ACF fields
+
+**Problem:**
+- Design section had hardcoded static PDF URLs
+- WordPress has product-specific PDFs stored in ACF fields (`pdf` and `pdf_2`)
+- Section content didn't match WordPress (wrong box text, missing 3rd box)
+
+**Solution Implemented:**
+
+1. **WordPress REST API Filter Updated** (`wp-content/mu-plugins/pearl-rest-api-meta.php` v1.2):
+   - Added `pdf_url` and `pdf_2_url` fields to WooCommerce REST API product response
+   - Converts ACF attachment IDs to full URLs using `wp_get_attachment_url()`
+   ```php
+   $pdf_id = get_post_meta($product_id, 'pdf', true);
+   $pdf_2_id = get_post_meta($product_id, 'pdf_2', true);
+   $data['pdf_url'] = $pdf_id ? wp_get_attachment_url($pdf_id) : null;
+   $data['pdf_2_url'] = $pdf_2_id ? wp_get_attachment_url($pdf_2_id) : null;
+   ```
+
+2. **Product Sync Worker Updated** (`workers/product-sync/src/index.ts`):
+   - Added `pdf_url` and `pdf_2_url` to `WCProduct` interface
+   - Added fields to `SyncedProduct` interface
+   - Updated `transformProduct()` to include PDF URLs
+   - Worker deployed: Version `a2da176c-ae3a-45cb-92d2-d79af23f6c1f`
+
+3. **Astro Product Page Updated** (`src/pages/produkte/[slug].astro`):
+   - Design section now uses dynamic PDF URLs from product data
+   - **Box 1** (Examples PDF): Only renders if `product.pdf_url` exists
+     - Heading: "Wählen Sie bis zu 4 Optionen aus unserer Auswahl"
+     - Button: "PDF mit Beispielen herunterladen"
+   - **Box 2** (Template PDF): Only renders if `product.pdf_2_url` exists
+     - Heading: "Möchten Sie lieber Ihr eigenes Design erstellen?"
+     - Button: "PDF mit den Vorlagen herunterladen"
+   - **Box 3** (Contact): Always renders
+     - Heading: "Senden Sie uns Ihr Design oder Ihre Designanfrage"
+     - Button: ContactFormPopup "Kontaktieren Sie uns"
+   - CSS grid adapts to show 1-3 columns based on number of boxes
+
+**Test Results:**
+- Products with both PDFs (e.g., `personalisierter-fussballschal`): Shows 3 boxes ✓
+- Products with only `pdf_2_url` (e.g., `personalisiertes-laufshirt`): Shows 2 boxes ✓
+- Products without PDFs: Shows only contact box ✓
+
+**PDF URLs for Reference (personalisierter-fussballschal):**
+- `pdf_url`: `https://staging.hercules-merchandise.de/wp-content/uploads/2025/06/1.-Hercules-Merchandise-Schal-DE.pdf`
+- `pdf_2_url`: `https://staging.hercules-merchandise.de/wp-content/uploads/2025/06/1.-Hercules-Merchandise-Template-Schal-DE.pdf`
+
+**Files Modified:**
+- `wp-content/mu-plugins/pearl-rest-api-meta.php` - Added PDF URL fields to REST API
+- `workers/product-sync/src/index.ts` - Added PDF fields to sync
+- `src/pages/produkte/[slug].astro` - Dynamic design section with conditional rendering
+
+**Deployed:**
+- Preview: https://2dfe39c5.hercules-astro.pages.dev
+- Production: https://hercules-astro.pages.dev (after merge)
+
+**Product Statistics:**
+- Products with `pdf_url`: 18 products
+- Products with `pdf_2_url`: 18 products (same products)
+- Products without PDFs: 97 products (shows only contact box)
+
+---
 
 ### Session 2026-01-04 (Product Configurator Quantity Step Fix)
 **Task:** Fix quantity step not showing in Astro product configurator and match WordPress styling

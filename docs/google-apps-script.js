@@ -20,6 +20,7 @@ const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
 const CONTACT_SHEET_NAME = 'Kontaktanfragen';
 const NEWSLETTER_SHEET_NAME = 'Newsletter';
 const QUANTITY_REQUEST_SHEET_NAME = 'Mengenanfragen';
+const EXPRESS_DELIVERY_SHEET_NAME = 'Expresslieferung';
 
 function doGet(e) {
   return handleRequest(e);
@@ -43,6 +44,9 @@ function handleRequest(e) {
     } else if (type === 'quantity_request') {
       // Handle quantity request form (with product info)
       return handleQuantityRequest(spreadsheet, params);
+    } else if (type === 'expressdelivery') {
+      // Handle express delivery request
+      return handleExpressDelivery(spreadsheet, params);
     } else {
       // Handle contact form (default)
       return handleContact(spreadsheet, params);
@@ -200,5 +204,65 @@ function handleQuantityRequest(spreadsheet, params) {
 
   return ContentService
     .createTextOutput(JSON.stringify({ success: true, message: 'Data saved to Mengenanfragen' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function handleExpressDelivery(spreadsheet, params) {
+  // Get or create the express delivery sheet
+  let sheet = spreadsheet.getSheetByName(EXPRESS_DELIVERY_SHEET_NAME);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(EXPRESS_DELIVERY_SHEET_NAME);
+    // Add headers matching express delivery form fields
+    sheet.appendRow([
+      'Datum',
+      'Uhrzeit',
+      'Name',
+      'Email',
+      'Telefon',
+      'Gewünschtes Lieferdatum',
+      'Produkt ID',
+      'Produktname',
+      'Menge',
+      'Preis pro Stück',
+      'Attribute',
+      'Addons',
+      'Nachricht',
+      'Dateien',
+      'Seiten-URL',
+      'Zeitstempel'
+    ]);
+    // Format headers
+    sheet.getRange(1, 1, 1, 16).setFontWeight('bold');
+    // Set column widths for better readability
+    sheet.setColumnWidth(6, 150);  // Gewünschtes Lieferdatum wider
+    sheet.setColumnWidth(8, 200);  // Produktname wider
+    sheet.setColumnWidth(11, 200); // Attribute column wider
+    sheet.setColumnWidth(12, 200); // Addons column wider
+    sheet.setColumnWidth(13, 300); // Message column wider
+  }
+
+  // Add the express delivery request data
+  sheet.appendRow([
+    params.date || new Date().toLocaleDateString('de-DE'),
+    params.time || new Date().toLocaleTimeString('de-DE'),
+    params.name || '',
+    params.email || '',
+    params.phone || '',
+    params.desiredDate || '',
+    params.productId || '',
+    params.productName || '',
+    params.quantity || '',
+    params.pricePerPiece || '',
+    params.attributes || '',
+    params.addons || '',
+    params.message || '',
+    params.files || '',
+    params.pageUrl || '',
+    new Date().toISOString()
+  ]);
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ success: true, message: 'Data saved to Expresslieferung' }))
     .setMimeType(ContentService.MimeType.JSON);
 }

@@ -374,10 +374,10 @@ export default function ContactFormPopup({
                   </svg>
                 </div>
                 <h2 className="contact-success-title">
-                  Danke, dass Sie<br />uns kontaktiert haben!
+                  Vielen Dank, dass Sie sich<br />an uns gewendet haben!
                 </h2>
                 <p className="contact-success-text">
-                  Ihre Anfrage war erfolgreich. Einer unserer Mitarbeitenden wird sich so bald wie möglich bei Ihnen melden.
+                  Ihre Anfrage wurde erfolgreich übermittelt. Einer unserer Mitarbeiter wird sich so schnell wie möglich bei Ihnen melden.
                 </p>
                 {submittedData && (
                   <div className="contact-success-details">

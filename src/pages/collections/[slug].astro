@@ -105,6 +105,7 @@ export async function getStaticPaths() {
 <BaseLayout
   title={category.name}
   description={category.description?.replace(/<[^>]*>/g, '') || `Entdecken Sie unsere ${category.name} Kollektion`}
+  pageType="collection"
 >
   <section class="category-page">
     <div class="category-container">

@@ -173,8 +173,6 @@ interface WCCategory {
   count: number;
   // Custom meta exposed by our REST API filter
   second_description?: string;
-  // FAQ items from category custom fields
-  faq?: Array<{ question: string; answer: string }>;
 }
 
 // WordPress Post from REST API
@@ -232,8 +230,6 @@ interface SyncedCategory {
   parent: number;
   description: string;
   second_description: string | null;
-  // FAQ items from category custom fields
-  faq: Array<{ question: string; answer: string }>;
   image: string | null;
   localImage: string | null;
   productCount: number;
@@ -356,8 +352,6 @@ class WooCommerceClient {
       menu_order: 0,
       count: cat.count,
       second_description: cat.second_description,
-      // FAQ items from category custom fields
-      faq: cat.faq || [],
     }));
   }
 
@@ -900,8 +894,6 @@ function transformCategory(category: WCCategory): SyncedCategory {
     parent: category.parent,
     description: category.description,
     second_description: category.second_description || null,
-    // FAQ items from category custom fields
-    faq: category.faq || [],
     image: category.image?.src || null,
     localImage: category.slug ? `${WORKER_URL}/category-image/${category.slug}` : null,
     productCount: category.count,

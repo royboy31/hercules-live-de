@@ -196,9 +196,12 @@ jsonLdSchemas.push(getBreadcrumbSchema([
         </section>
       )}
 
-      <!-- FAQ Section - Card style like product description -->
-      {category.faq && category.faq.length > 0 && (
-        <section class="faq-section">
+    </div>
+
+    <!-- FAQ Section - Full width white background -->
+    {category.faq && category.faq.length > 0 && (
+      <section id="faq" class="faq-section">
+        <div class="container">
           <div class="faq-card">
             <div class="faq-header">
               <!-- Stacked layers icon from WordPress -->
@@ -228,12 +231,14 @@ jsonLdSchemas.push(getBreadcrumbSchema([
               ))}
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
+    )}
 
-      <!-- Related Products Section - "Andere Kunden mochten diese Produkte ebenfalls" -->
-      {relatedProducts.length > 0 && (
-        <section class="related-products-section">
+    <!-- Related Products Section - "Andere Kunden mochten diese Produkte ebenfalls" -->
+    {relatedProducts.length > 0 && (
+      <section class="related-products-section">
+        <div class="container">
           <h2 class="related-heading">
             Andere Kunden mochten <span class="highlight">diese Produkte ebenfalls</span>
           </h2>
@@ -253,9 +258,9 @@ jsonLdSchemas.push(getBreadcrumbSchema([
               </li>
             ))}
           </ul>
-        </section>
-      )}
-    </div>
+        </div>
+      </section>
+    )}
   </section>
 
   <!-- Trust Logos Section - "Sie vertrauen uns" -->
@@ -522,12 +527,14 @@ jsonLdSchemas.push(getBreadcrumbSchema([
   /* Related Products Section - "Andere Kunden mochten diese Produkte ebenfalls" */
   /* Matching Elementor container styles exactly */
   .related-products-section {
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
-    margin-top: 60px;
-    padding: 50px 50px;
+    padding: 50px 0;
     background: #FAFAFA;
-    box-sizing: border-box;
+  }
+
+  .related-products-section .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 50px;
   }
 
   .related-heading {
@@ -598,8 +605,8 @@ jsonLdSchemas.push(getBreadcrumbSchema([
 
   /* Tablet: 4 columns */
   @media (max-width: 1024px) {
-    .related-products-section {
-      padding: 40px 30px;
+    .related-products-section .container {
+      padding: 0 30px;
     }
 
     .related-products {
@@ -616,8 +623,11 @@ jsonLdSchemas.push(getBreadcrumbSchema([
   /* Mobile: 1 column (matching elementor-grid-mobile-1) */
   @media (max-width: 767px) {
     .related-products-section {
-      margin-top: 40px;
-      padding: 30px 15px;
+      padding: 30px 0;
+    }
+
+    .related-products-section .container {
+      padding: 0 15px;
     }
 
     .related-products {
@@ -642,9 +652,14 @@ jsonLdSchemas.push(getBreadcrumbSchema([
 
   /* FAQ Section Styles - Card style matching product description */
   .faq-section {
-    margin-top: 60px;
     padding: 40px 0;
     background: #ffffff;
+  }
+
+  .faq-section .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0;
   }
 
   .faq-card {
@@ -707,14 +722,13 @@ jsonLdSchemas.push(getBreadcrumbSchema([
     cursor: pointer;
     text-align: left;
     font-family: 'Jost', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 25px;
+    font-weight: 400;
     color: #253461;
-    transition: color 0.3s ease;
   }
 
   .faq-question:hover {
-    color: #469ADC;
+    color: #253461;
   }
 
   .faq-question span {
@@ -737,10 +751,6 @@ jsonLdSchemas.push(getBreadcrumbSchema([
 
   .faq-item.active .faq-icon-minus {
     display: block;
-  }
-
-  .faq-item.active .faq-question {
-    color: #469ADC;
   }
 
   .faq-answer {
@@ -771,8 +781,11 @@ jsonLdSchemas.push(getBreadcrumbSchema([
 
   @media (max-width: 768px) {
     .faq-section {
-      margin-top: 40px;
       padding: 30px 0;
+    }
+
+    .faq-section .container {
+      padding: 0 15px;
     }
 
     .faq-card {

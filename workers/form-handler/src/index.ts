@@ -871,16 +871,49 @@ async function handleStatus(env: Env): Promise<Response> {
   return new Response(
     JSON.stringify({
       status: 'ok',
-      version: '1.0.0',
+      version: '1.1.0',
       config: {
         brevoConfigured: !!env.BREVO_API_KEY,
         googleSheetsConfigured: !!env.GOOGLE_APPS_SCRIPT_URL,
+        r2Configured: !!env.FORM_UPLOADS,
         senderEmail: env.SENDER_EMAIL,
         companyEmail: env.COMPANY_EMAIL,
       },
     }),
     { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
   );
+}
+
+/**
+ * Serve files from R2 bucket publicly
+ * URL format: /files/YYYY/MM/DD/timestamp-randomid-filename
+ */
+async function handleFileServe(request: Request, env: Env, key: string): Promise<Response> {
+  if (!env.FORM_UPLOADS) {
+    return new Response('File storage not configured', { status: 503 });
+  }
+
+  try {
+    const object = await env.FORM_UPLOADS.get(key);
+
+    if (!object) {
+      return new Response('File not found', { status: 404 });
+    }
+
+    const headers = new Headers();
+    headers.set('Content-Type', object.httpMetadata?.contentType || 'application/octet-stream');
+    headers.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    headers.set('Access-Control-Allow-Origin', '*');
+
+    // Get original filename from metadata for Content-Disposition
+    const originalName = object.customMetadata?.originalName || key.split('/').pop() || 'file';
+    headers.set('Content-Disposition', `inline; filename="${originalName}"`);
+
+    return new Response(object.body, { headers });
+  } catch (error) {
+    console.error('File serve error:', error);
+    return new Response('Error serving file', { status: 500 });
+  }
 }
 
 // ============================================================================
@@ -910,9 +943,15 @@ export default {
       return handleStatus(env);
     }
 
+    // Serve files from R2 - URL format: /files/YYYY/MM/DD/timestamp-randomid-filename
+    if (path.startsWith('/files/') && request.method === 'GET') {
+      const key = path.substring(7); // Remove '/files/' prefix
+      return handleFileServe(request, env, key);
+    }
+
     // 404 for unknown routes
     return new Response(
-      JSON.stringify({ error: 'Not found', availableEndpoints: ['/contact', '/newsletter', '/status'] }),
+      JSON.stringify({ error: 'Not found', availableEndpoints: ['/contact', '/newsletter', '/status', '/files/*'] }),
       { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   },

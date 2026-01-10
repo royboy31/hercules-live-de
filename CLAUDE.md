@@ -718,28 +718,43 @@ WordPress mu-plugins/
 - `workers/form-handler/wrangler.toml` - R2 bucket configuration
 
 **Deployed:**
-- Form Handler Worker: `https://hercules-form-handler.gilles-86d.workers.dev` (Version: cb6f6329)
-- Astro Site: `https://a1c36e59.hercules-astro.pages.dev`
+- Form Handler Worker: `https://hercules-form-handler.gilles-86d.workers.dev` (Version: 26e08093)
+- Astro Site: `https://6124aac2.hercules-astro.pages.dev`
 
-**Pending - Enable R2:**
-R2 object storage is not yet enabled in the Cloudflare account. To activate file uploads:
-1. Go to Cloudflare Dashboard → R2 → Enable R2 (requires payment method)
-2. Create bucket: `hercules-form-uploads`
-3. Enable public access or configure custom domain
-4. Uncomment R2 binding in `workers/form-handler/wrangler.toml`:
-   ```toml
-   [[r2_buckets]]
-   binding = "FORM_UPLOADS"
-   bucket_name = "hercules-form-uploads"
-   ```
-5. Update `R2_PUBLIC_URL` to match bucket's public URL
-6. Redeploy worker: `npx wrangler deploy --config workers/form-handler/wrangler.toml`
+**R2 Status: ✅ ENABLED AND WORKING**
 
-**Current Behavior (Without R2):**
-- Forms work normally, files received but not stored
-- Emails show file names (not clickable URLs)
-- Google Sheets shows file names (not URLs)
-- Graceful fallback - no errors shown to users
+4. **R2 Bucket Configuration (Completed 2026-01-10):**
+   - Created R2 bucket: `hercules-form-uploads` (APAC region)
+   - Enabled R2 binding in `workers/form-handler/wrangler.toml`
+   - Added `/files/*` endpoint to serve uploaded files publicly through worker
+   - Files stored in format: `YYYY/MM/DD/timestamp-randomid-filename`
+
+5. **Added File Serving Endpoint:**
+   - `GET /files/{key}` - Serves files from R2 with proper Content-Type headers
+   - 1-year cache headers for optimal CDN caching
+   - Original filename preserved in Content-Disposition header
+
+**R2 Configuration:**
+```toml
+[[r2_buckets]]
+binding = "FORM_UPLOADS"
+bucket_name = "hercules-form-uploads"
+
+[vars]
+R2_PUBLIC_URL = "https://hercules-form-handler.gilles-86d.workers.dev/files"
+```
+
+**Current Behavior (With R2):**
+- ✅ Files uploaded to R2 bucket during form submission
+- ✅ Emails contain clickable file URLs with 📎 icon and file sizes
+- ✅ Google Sheets contains file URLs (format: `filename: url`)
+- ✅ Files publicly accessible via worker URL
+
+**Test File Access:**
+```bash
+# Example uploaded file URL:
+https://hercules-form-handler.gilles-86d.workers.dev/files/2026/01/10/1768028477631-1nt5z5-test-file.txt
+```
 
 ---
 

@@ -3,13 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
 # R2 Bucket for storing form file uploads
-# Uncomment after enabling R2 in Cloudflare Dashboard:
-# 1. Go to https://dash.cloudflare.com > R2 > Enable R2
-# 2. Create bucket named "hercules-form-uploads"
-# 3. Uncomment the lines below and redeploy
-# [[r2_buckets]]
-# binding = "FORM_UPLOADS"
-# bucket_name = "hercules-form-uploads"
+[[r2_buckets]]
+binding = "FORM_UPLOADS"
+bucket_name = "hercules-form-uploads"
 
 # KV Namespace for storing form submissions (optional backup)
 # [[kv_namespaces]]
@@ -25,5 +21,5 @@ compatibility_date = "2024-12-01"
 SENDER_EMAIL = "info@hercules-merchandise.de"
 SENDER_NAME = "Hercules Merchandise"
 COMPANY_EMAIL = "kamindudushmantha@gmail.com"
-# Public URL for R2 bucket (via custom domain or Cloudflare R2 public URL)
-R2_PUBLIC_URL = "https://pub-hercules-form-uploads.r2.dev"
+# Public URL for R2 bucket (served via this worker's /files/ endpoint)
+R2_PUBLIC_URL = "https://hercules-form-handler.gilles-86d.workers.dev/files"

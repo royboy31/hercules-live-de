@@ -197,9 +197,10 @@ export default function ExpressDeliveryPopup({
       submitData.append('attributes', attributesStr);
       submitData.append('addons', addonsStr);
 
-      if (formData.files.length > 0) {
-        submitData.append('files', formData.files.map(f => f.name).join(', '));
-      }
+      // Add files for R2 upload (using file_${index} pattern)
+      formData.files.forEach((file, index) => {
+        submitData.append(`file_${index}`, file);
+      });
 
       const response = await fetch('/api/contact', {
         method: 'POST',

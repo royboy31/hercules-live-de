@@ -136,7 +136,7 @@ const mobileMenuItems = {
         <div class="submenu-content">
           {menu.items.map((item) => (
             <a href={item.href} class="submenu-item">
-              <img src={`/images/menu/${item.icon}`} alt="" class="submenu-icon" />
+              <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kategorie Icon`} class="submenu-icon" />
               <span>{item.label}</span>
             </a>
           ))}

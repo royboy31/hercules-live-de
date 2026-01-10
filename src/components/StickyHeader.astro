@@ -79,7 +79,7 @@ const themen = [
                 {sportarten.map((item) => (
                   <li>
                     <a href={item.href}>
-                      <img src={`/images/menu/${item.icon}`} alt="" width="36" height="36" loading="lazy" />
+                      <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kategorie Icon`} width="36" height="36" loading="lazy" />
                       <span>{item.label}</span>
                     </a>
                   </li>
@@ -95,7 +95,7 @@ const themen = [
                 {produkte.map((item) => (
                   <li>
                     <a href={item.href}>
-                      <img src={`/images/menu/${item.icon}`} alt="" width="36" height="36" loading="lazy" />
+                      <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kategorie Icon`} width="36" height="36" loading="lazy" />
                       <span>{item.label}</span>
                     </a>
                   </li>
@@ -111,7 +111,7 @@ const themen = [
                 {themen.map((item) => (
                   <li>
                     <a href={item.href}>
-                      <img src={`/images/menu/${item.icon}`} alt="" width="36" height="36" loading="lazy" />
+                      <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kollektion Icon`} width="36" height="36" loading="lazy" />
                       <span>{item.label}</span>
                     </a>
                   </li>

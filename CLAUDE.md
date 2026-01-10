@@ -688,6 +688,94 @@ WordPress mu-plugins/
 
 ## Session History
 
+### Session 2026-01-11 (Product Sync Fix & Deployment Configuration)
+**Task:** Fix product sync not updating frontend after WordPress product changes.
+
+**Problem Identified:**
+1. Scheduled 3 AM cron was timing out before completing full product sync (97 products at 1-per-batch exceeds 30s Worker CPU limit)
+2. Last full product sync was January 8th - products hadn't synced for 2 days
+3. GitHub Actions was deploying to wrong Cloudflare Pages project (`herculesde` instead of `hercules-astro`)
+4. GitHub secrets were pointing to Kamindu's Cloudflare account instead of Gilles's
+
+**Fixes Applied:**
+
+1. **Manual Full Product Sync:**
+   - Triggered manual sync of all 97 products via Worker API
+   - Each product synced individually to KV storage
+   - Verified product data including PDFs (pdf_url, pdf_2_url)
+
+2. **GitHub Actions Workflow Fixed** (`.github/workflows/deploy.yml`):
+   - Changed `--project-name=herculesde` to `--project-name=hercules-astro`
+   - Updated output message to show correct URL
+
+3. **GitHub Secrets Updated:**
+   - `CLOUDFLARE_API_TOKEN` → Gilles's account token
+   - `CLOUDFLARE_ACCOUNT_ID` → `86dfa0e10ca766f79d5042548fc2776f` (Gilles)
+
+4. **Triggered Site Rebuild:**
+   - Fresh build fetched updated product data from Worker API
+   - Deployed to `hercules-astro.pages.dev` (Gilles's account)
+
+5. **Merged Updates to `dinukshi` Branch:**
+   - Merged main into dinukshi to include deployment fixes
+   - Both branches now deploy to Gilles's account
+
+**Verified Working:**
+- Product "Jacquard-Webhandtuch 1" shows updated title
+- PDF download links appear in design section
+- Both `hercules-astro.pages.dev` and `staging.hercules-merchandise.de` show correct data
+
+**Files Modified:**
+- `.github/workflows/deploy.yml` - Deploy target changed to hercules-astro
+
+**Git Commits:**
+- `e8840b3` - Fix: Deploy to hercules-astro Pages project
+- `253354c` - Update form handling with R2 support and email improvements
+- `4e2fd7a` - Merge main into dinukshi branch
+
+**Auto-Rebuild Flow (Now Working):**
+```
+WooCommerce Product Update
+         ↓
+Webhook → hercules-product-sync.gilles-86d.workers.dev
+         ↓
+Sync to KV + Trigger GitHub Actions (5-min debounce)
+         ↓
+GitHub Actions builds with Gilles's credentials
+         ↓
+Deploy to hercules-astro.pages.dev
+         ↓
+Live at staging.hercules-merchandise.de (via Edge Router)
+```
+
+**Manual Sync/Rebuild Commands:**
+```bash
+# Trigger rebuild (clears debounce)
+curl -X POST "https://hercules-product-sync.gilles-86d.workers.dev/trigger-rebuild" \
+  -H "Authorization: Bearer hercules-webhook-secret-2024"
+
+# Check sync status
+curl "https://hercules-product-sync.gilles-86d.workers.dev/status"
+
+# Manual product sync (all products in batches)
+offset=0
+while true; do
+  result=$(curl -s -X POST "https://hercules-product-sync.gilles-86d.workers.dev/sync?offset=$offset" \
+    -H "Authorization: Bearer hercules-webhook-secret-2024")
+  hasMore=$(echo "$result" | grep -o '"hasMore":[a-z]*' | cut -d: -f2)
+  [ "$hasMore" = "false" ] && break
+  offset=$(echo "$result" | grep -o '"nextOffset":[0-9]*' | cut -d: -f2)
+done
+```
+
+**Known Issue - Cron Timeout:**
+The scheduled 3 AM sync times out before completing all products. Individual webhook syncs work fine. Future fix options:
+1. Store sync progress in KV and resume on next cron
+2. Use Durable Objects for longer execution
+3. Increase batch size (risk hitting subrequest limits)
+
+---
+
 ### Session 2026-01-10 (R2 File Upload for Contact Forms)
 **Task:** Implement R2 bucket file uploads for contact forms - files should upload to R2 and URLs saved to emails/Google Sheets.
 

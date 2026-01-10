@@ -1,118 +1,57 @@
-// Cloudflare Pages Function for Newsletter → Google Sheets sync
+// Cloudflare Pages Function - Proxies to Form Handler Worker
 
 interface Env {
-  GOOGLE_APPS_SCRIPT_URL?: string;
+  FORM_HANDLER_URL?: string;
 }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
+const FORM_HANDLER_URL = 'https://hercules-form-handler.gilles-86d.workers.dev';
 
-  // CORS headers
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
-  };
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+export const onRequestPost: PagesFunction<Env> = async (context) => {
+  const { request } = context;
 
   try {
-    // Parse form data
+    // Parse form data and convert to JSON
     const formData = await request.formData();
     const email = formData.get('email') as string || '';
+    const source = request.headers.get('Referer') || 'Unknown';
 
-    // Validate email
-    if (!email || !email.includes('@')) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Bitte geben Sie eine gültige E-Mail-Adresse ein' }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      );
-    }
-
-    // Get current date/time in German format
-    const now = new Date();
-    const date = now.toLocaleDateString('de-DE');
-    const time = now.toLocaleTimeString('de-DE');
-
-    // Check if Google Apps Script URL is configured
-    const googleAppsScriptUrl = env.GOOGLE_APPS_SCRIPT_URL;
-
-    if (!googleAppsScriptUrl) {
-      console.log('Google Apps Script not configured, logging newsletter subscription:', email);
-      return new Response(
-        JSON.stringify({ success: true, message: 'Newsletter subscription received (Google Sheets not configured)' }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      );
-    }
-
-    // Build URL with query parameters
-    const params = new URLSearchParams({
-      type: 'newsletter',  // This tells Google Apps Script which sheet to use
-      email: email,
-      date: date,
-      time: time,
-      source: request.headers.get('Referer') || 'Unknown'
+    // Forward to Form Handler Worker
+    const response = await fetch(`${FORM_HANDLER_URL}/newsletter`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, source }),
     });
 
-    const urlWithParams = `${googleAppsScriptUrl}?${params.toString()}`;
+    const result = await response.json();
 
-    // Send to Google Apps Script
-    const response = await fetch(urlWithParams, {
-      method: 'GET',
-      redirect: 'follow'
+    return new Response(JSON.stringify(result), {
+      status: response.status,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
     });
-
-    const responseText = await response.text();
-
-    // Log the response for debugging
-    console.log('Google Apps Script response:', responseText);
-
-    // Check if response indicates success
-    if (responseText.includes('success') || responseText.includes('Data saved') || response.ok) {
-      // Return JSON response for AJAX calls
-      return new Response(
-        JSON.stringify({ success: true, message: 'Newsletter subscription successful', debug: responseText }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      );
-    } else {
-      console.error('Google Apps Script response:', responseText);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Script error', debug: responseText }),
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      );
-    }
   } catch (error) {
-    console.error('Newsletter form error:', error);
+    console.error('Newsletter proxy error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }),
       {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
-          ...corsHeaders
-        }
+          ...corsHeaders,
+        },
       }
     );
   }
@@ -121,10 +60,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 export const onRequestOptions: PagesFunction = async () => {
   return new Response(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
+    headers: corsHeaders,
   });
 };

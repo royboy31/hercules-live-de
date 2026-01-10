@@ -3,6 +3,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import CategoryProductCard from '../../components/CategoryProductCard.astro';
 import TrustLogos from '../../components/TrustLogos.astro';
 import CustomerReviews from '../../components/CustomerReviews.astro';
+import {
+  siteConfig,
+  getCollectionPageSchema,
+  getBreadcrumbSchema,
+  truncateDescription,
+  stripHtml
+} from '../../config/seo';
 
 const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
@@ -100,12 +107,44 @@ export async function getStaticPaths() {
     return [];
   }
 }
+
+// Generate SEO meta description
+const categoryDescription = category?.description
+  ? truncateDescription(stripHtml(category.description))
+  : `Entdecken Sie unsere ${category?.name || 'Produkte'} Kollektion bei Hercules Merchandise. Personalisierte Sportbekleidung und Fanartikel made in Europe.`;
+
+// Generate canonical URL
+const canonicalUrl = `${siteConfig.siteUrl}/collections/${slug}/`;
+
+// Get category image for OG
+const categoryImage = category?.image
+  ? `${WORKER_URL}/category-image/${slug}`
+  : `${siteConfig.siteUrl}${siteConfig.defaultImage}`;
+
+// Generate JSON-LD schemas
+const jsonLdSchemas = [];
+
+// CollectionPage schema
+jsonLdSchemas.push(getCollectionPageSchema({
+  name: category?.name || 'Kollektion',
+  description: categoryDescription,
+  url: canonicalUrl,
+  image: categoryImage
+}));
+
+// Breadcrumb schema
+jsonLdSchemas.push(getBreadcrumbSchema([
+  { name: 'Home', url: siteConfig.siteUrl },
+  { name: category?.name || 'Kollektion', url: canonicalUrl }
+]));
 ---
 
 <BaseLayout
   title={category.name}
-  description={category.description?.replace(/<[^>]*>/g, '') || `Entdecken Sie unsere ${category.name} Kollektion`}
+  description={categoryDescription}
   pageType="collection"
+  ogImage={categoryImage}
+  jsonLd={jsonLdSchemas}
 >
   <section class="category-page">
     <div class="category-container">

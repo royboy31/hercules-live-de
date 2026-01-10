@@ -8,14 +8,21 @@ import HerculesMerchandise from '../components/HerculesMerchandise.astro';
 import TrustLogos from '../components/TrustLogos.astro';
 import CustomerReviews from '../components/CustomerReviews.astro';
 import homepageData from '../data/homepage-products.json';
+import { siteConfig } from '../config/seo';
 
 const products = homepageData.products;
+
+// SEO configuration for homepage
+const pageTitle = 'Individuelle Fußballschals und personalisierte Merchandise-Artikel';
+const pageDescription = 'Ihr Spezialist seit mehr als 15 Jahren: Individuelle Fußball- und Fanschals, individuelle Mützen und Fußball-Merchandise-Artikel. Hergestellt in Europa. Bestellen Sie jetzt kleine Mengen.';
+const ogImage = `${siteConfig.siteUrl}${siteConfig.defaultImage}`;
 ---
 
 <BaseLayout
-  title="Individuelle Fußballschals und personalisierte Merchandise-Artikel"
-  description="Ihr Spezialist seit mehr als 15 Jahren: Individuelle Fußball- und Fanschals, individuelle Mützen und Fußball-Merchandise-Artikel. Hergestellt in Europa. Bestellen Sie jetzt kleine Mengen."
+  title={pageTitle}
+  description={pageDescription}
   pageType="page"
+  ogImage={ogImage}
 >
   <!-- Hero Slider Section -->
   <Slider />

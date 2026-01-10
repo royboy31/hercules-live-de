@@ -24,6 +24,8 @@ interface Props {
     green_product?: boolean;
     // USP features for card display
     card_features?: string[];
+    // Number of images cached in KV (from Worker sync)
+    cached_image_count?: number;
   };
 }
 
@@ -32,9 +34,10 @@ const { product } = Astro.props;
 const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
 // Get gallery images from Worker KV cache (no WordPress access at runtime)
-// Limit to 10 images as Worker caches MAX_GALLERY_IMAGES = 10
-const MAX_THUMBNAILS = 10;
-const galleryImages = (product.images || []).slice(0, MAX_THUMBNAILS).map((img, index) => {
+// Use cached_image_count from product data to know exactly how many images are available
+// Fall back to images array length with a max of 10 if cached_image_count not set
+const imageCount = product.cached_image_count ?? Math.min(product.images?.length || 0, 10);
+const galleryImages = (product.images || []).slice(0, imageCount).map((img, index) => {
   // Worker URL format: /image/{slug} for index 0, /image/{slug}/{index} for gallery
   const mainSrc = index === 0
     ? `${WORKER_URL}/image/${product.slug}`
@@ -69,7 +72,15 @@ const cardFeatures = product.card_features || [];
 <li class="product">
   <!-- Wishlist Button - positioned top-right -->
   <div class="kd-wishlist-wrapper">
-    <WishlistButton productId={product.id} size={18} client:idle />
+    <WishlistButton
+      productId={product.id}
+      productName={product.name}
+      productSlug={product.slug}
+      productPrice={priceDisplay}
+      productThumbnail={workerImageUrl}
+      size={18}
+      client:idle
+    />
   </div>
 
   <a href={`/produkte/${product.slug}`} class="woocommerce-LoopProduct-link">

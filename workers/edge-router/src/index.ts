@@ -18,8 +18,6 @@ const NO_CACHE_PATHS = [
   '/kasse',
   '/my-account',
   '/mein-konto',
-  '/wishlist',
-  '/wunschliste',
   '/quote-generator',  // Quote generator uses WC session - must not be cached
   '/angebot-anfragen', // German quote request page
   '/wp-admin',
@@ -39,8 +37,6 @@ const WORDPRESS_PATHS = [
   // Account
   '/my-account',
   '/mein-konto',
-  '/wishlist',
-  '/wunschliste',
 
   // WordPress Core
   '/wp-admin',
@@ -84,6 +80,7 @@ const ASTRO_PATHS = [
   '/collections',
   '/blogs',
   '/produkte',  // Product detail pages (Astro version)
+  '/wishlist',  // Wishlist page (localStorage-based, no WordPress)
 ];
 
 function shouldBypassCache(pathname: string, search: string): boolean {
@@ -264,6 +261,11 @@ export default {
             newHeaders.append('Set-Cookie', newCookie);
           }
 
+          // Security headers for redirects
+          newHeaders.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+          newHeaders.set('X-Frame-Options', 'SAMEORIGIN');
+          newHeaders.set('X-Content-Type-Options', 'nosniff');
+
           // Debug headers for redirects
           newHeaders.set('X-Edge-Router', 'hercules');
           newHeaders.set('X-Routed-To', isWordPress ? 'wordpress' : 'astro');
@@ -368,6 +370,13 @@ export default {
         }
         // Note: For cacheable WordPress pages, preserve their original Cache-Control
 
+        // Security headers for WCAG/PageSpeed compliance
+        newHeaders.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+        newHeaders.set('X-Frame-Options', 'SAMEORIGIN');
+        newHeaders.set('X-Content-Type-Options', 'nosniff');
+        newHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+        newHeaders.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+
         // Debug headers to confirm Edge Router is processing requests
         newHeaders.set('X-Edge-Router', 'hercules');
         newHeaders.set('X-Routed-To', isWordPress ? 'wordpress' : 'astro');
@@ -385,6 +394,13 @@ export default {
         newHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
         newHeaders.set('Pragma', 'no-cache');
       }
+
+      // Security headers for WCAG/PageSpeed compliance
+      newHeaders.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+      newHeaders.set('X-Frame-Options', 'SAMEORIGIN');
+      newHeaders.set('X-Content-Type-Options', 'nosniff');
+      newHeaders.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+      newHeaders.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
       // Debug headers to confirm Edge Router is processing requests
       newHeaders.set('X-Edge-Router', 'hercules');

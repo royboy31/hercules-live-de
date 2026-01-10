@@ -1,6 +1,6 @@
 ---
 // Sie vertrauen uns - Trust Logos Section
-// Using Swiper.js to match WordPress Elementor carousel exactly
+// Using bundled Swiper.js (not CDN) to match WordPress Elementor carousel exactly
 
 const logosRow1 = [
   { src: '/images/logos/Glasgow-Saints.png', alt: 'Glasgow Saints' },
@@ -90,9 +90,6 @@ const logosRow2 = [
   </div>
 </section>
 
-<!-- Swiper CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css" />
-
 <style>
   .trust-section {
     background-color: #F4F4F4;
@@ -165,14 +162,24 @@ const logosRow2 = [
       width: 140px;
     }
   }
+
+  /* Linear timing for continuous scroll */
+  :global(.trust-swiper-ltr .swiper-wrapper),
+  :global(.trust-swiper-rtl .swiper-wrapper) {
+    transition-timing-function: linear !important;
+  }
 </style>
 
-<!-- Swiper JS -->
-<script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
 <script>
+  // Use bundled Swiper instead of CDN to avoid duplicate loading
+  import Swiper from 'swiper';
+  import { Autoplay } from 'swiper/modules';
+  import 'swiper/css';
+
   document.addEventListener('DOMContentLoaded', function() {
     // Common Swiper settings matching WordPress Elementor
     const swiperSettings = {
+      modules: [Autoplay],
       slidesPerView: 8,
       spaceBetween: 20,
       loop: true,
@@ -200,23 +207,9 @@ const logosRow2 = [
     };
 
     // Initialize LTR carousel
-    const swiperLtr = new Swiper('.trust-swiper-ltr', {
-      ...swiperSettings,
-    });
+    new Swiper('.trust-swiper-ltr', swiperSettings);
 
     // Initialize RTL carousel
-    const swiperRtl = new Swiper('.trust-swiper-rtl', {
-      ...swiperSettings,
-    });
-
-    // Force linear timing for continuous scroll
-    const style = document.createElement('style');
-    style.textContent = `
-      .trust-swiper-ltr .swiper-wrapper,
-      .trust-swiper-rtl .swiper-wrapper {
-        transition-timing-function: linear !important;
-      }
-    `;
-    document.head.appendChild(style);
+    new Swiper('.trust-swiper-rtl', swiperSettings);
   });
 </script>

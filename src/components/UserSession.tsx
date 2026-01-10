@@ -59,7 +59,69 @@ export default function UserSession({ type }: UserSessionProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCartDropdown, setShowCartDropdown] = useState(false);
+  const [removingItem, setRemovingItem] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Remove item from cart
+  const removeFromCart = async (cartItemKey: string) => {
+    setRemovingItem(cartItemKey);
+    try {
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+      let baseUrl = '';
+
+      if (
+        hostname.includes('hercules-edge-router') ||
+        hostname.includes('hercules-merchandise.de') ||
+        hostname === 'localhost'
+      ) {
+        baseUrl = '';
+      } else {
+        baseUrl = 'https://staging.hercules-merchandise.de';
+      }
+
+      // Use custom Hercules API to remove item
+      const response = await fetch(`${baseUrl}/wp-json/hercules/v1/cart/remove`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ key: cartItemKey }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.cart) {
+          // Update session with new cart data directly
+          setSession(prev => prev ? { ...prev, cart: data.cart } : null);
+          // Update localStorage cache
+          try {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              parsed.data.cart = data.cart;
+              parsed.timestamp = Date.now();
+              localStorage.setItem(CACHE_KEY, JSON.stringify(parsed));
+            }
+          } catch (e) {
+            // Ignore localStorage errors
+          }
+          // Dispatch event so other components know cart was updated
+          window.dispatchEvent(new CustomEvent('hercules:cart-updated', { detail: { cart: data.cart } }));
+        } else {
+          // Fallback: refresh session
+          await fetchSession(true);
+          window.dispatchEvent(new CustomEvent('hercules:cart-updated'));
+        }
+      } else {
+        console.error('Failed to remove item from cart');
+      }
+    } catch (err) {
+      console.error('Error removing item from cart:', err);
+    } finally {
+      setRemovingItem(null);
+    }
+  };
 
   const fetchSession = useCallback(async (force = false) => {
     try {
@@ -251,7 +313,7 @@ export default function UserSession({ type }: UserSessionProps) {
       padding: '15px',
       boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
       zIndex: 9999,
-      minWidth: '280px',
+      minWidth: '375px',
       fontFamily: "'Jost', sans-serif",
       fontSize: '14px',
       color: '#253461',
@@ -305,6 +367,23 @@ export default function UserSession({ type }: UserSessionProps) {
     const itemPriceStyle: React.CSSProperties = {
       fontSize: '12px',
       color: '#666',
+      margin: 0,
+    };
+
+    const removeButtonStyle: React.CSSProperties = {
+      background: 'none',
+      border: 'none',
+      padding: '4px',
+      cursor: 'pointer',
+      color: '#999',
+      fontSize: '18px',
+      lineHeight: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: 'color 0.2s',
+      marginLeft: '8px',
+      flexShrink: 0,
     };
 
     const subtotalRowStyle: React.CSSProperties = {
@@ -339,6 +418,7 @@ export default function UserSession({ type }: UserSessionProps) {
       border: '1px solid #469adc',
       cursor: 'pointer',
       transition: 'all 0.2s',
+      lineHeight: 1,
     };
 
     const checkoutBtnStyle: React.CSSProperties = {
@@ -358,6 +438,7 @@ export default function UserSession({ type }: UserSessionProps) {
       border: '1px solid #10c99e',
       cursor: 'pointer',
       transition: 'all 0.2s',
+      lineHeight: 1,
     };
 
     const handleCartClick = (e: React.MouseEvent) => {
@@ -406,11 +487,34 @@ export default function UserSession({ type }: UserSessionProps) {
                         />
                       )}
                       <div style={itemInfoStyle}>
-                        <p style={itemNameStyle}>{item.name}</p>
+                        <p style={itemNameStyle}>{item.name.split(' - ')[0]}</p>
                         <p style={itemPriceStyle}>
                           {item.quantity} x {item.price}
                         </p>
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          removeFromCart(item.key);
+                        }}
+                        style={removeButtonStyle}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = '#e74c3c';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = '#999';
+                        }}
+                        disabled={removingItem === item.key}
+                        aria-label="Artikel entfernen"
+                        title="Entfernen"
+                      >
+                        {removingItem === item.key ? (
+                          <span style={{ fontSize: '12px' }}>...</span>
+                        ) : (
+                          '×'
+                        )}
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -424,7 +528,7 @@ export default function UserSession({ type }: UserSessionProps) {
                 {/* Buttons */}
                 <div style={buttonsContainerStyle}>
                   <a
-                    href="/cart/"
+                    href="/quote-generator/"
                     style={viewCartBtnStyle}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = '#469adc';
@@ -435,10 +539,10 @@ export default function UserSession({ type }: UserSessionProps) {
                       e.currentTarget.style.color = '#469adc';
                     }}
                   >
-                    Warenkorb
+                    Angebotsgenerator
                   </a>
                   <a
-                    href="/checkout/"
+                    href="/cart/"
                     style={checkoutBtnStyle}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = 'transparent';
@@ -449,7 +553,7 @@ export default function UserSession({ type }: UserSessionProps) {
                       e.currentTarget.style.color = '#fff';
                     }}
                   >
-                    Zur Kasse
+                    Warenkorb ansehen
                   </a>
                 </div>
               </>

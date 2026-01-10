@@ -1,188 +1,135 @@
-// Cloudflare Pages Function for Contact Form → Google Sheets sync
-// Uses Google Apps Script Web App
+// Cloudflare Pages Function - Proxies to Form Handler Worker
+// Handles contact form submissions including file uploads to R2
 
 interface Env {
-  GOOGLE_APPS_SCRIPT_URL?: string;
+  FORM_HANDLER_URL?: string;
 }
 
-interface ContactFormData {
+interface FileData {
   name: string;
-  email: string;
-  phone: string;
-  message: string;
-  date: string;
-  time: string;
-  pageTitle: string;
-  pageUrl: string;
-  files: string;
-  formType: string;
-  productName: string;
-  productId: string;
-  quantity: string;
-  pricePerPiece: string;
-  desiredDate: string;
-  attributes: string;
-  addons: string;
+  type: string;
+  size: number;
+  data: string; // base64 encoded
+}
+
+const FORM_HANDLER_URL = 'https://hercules-form-handler.gilles-86d.workers.dev';
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB max per file
+const MAX_TOTAL_SIZE = 25 * 1024 * 1024; // 25MB max total
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+// Convert ArrayBuffer to base64
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
-
-  // CORS headers
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
-  };
+  const { request } = context;
 
   try {
     // Parse form data
     const formData = await request.formData();
 
-    // Collect file names
-    const fileNames: string[] = [];
+    // Collect files with their data (base64 encoded)
+    const files: FileData[] = [];
+    let totalSize = 0;
+
     for (const [key, value] of formData.entries()) {
-      if (key.startsWith('file_') && value instanceof File) {
-        fileNames.push(value.name);
+      if (key.startsWith('file_') && value instanceof File && value.size > 0) {
+        // Validate file size
+        if (value.size > MAX_FILE_SIZE) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Datei "${value.name}" ist zu groß. Maximale Größe: 10MB`,
+            }),
+            {
+              status: 400,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
+        }
+
+        totalSize += value.size;
+        if (totalSize > MAX_TOTAL_SIZE) {
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: 'Gesamtgröße der Dateien überschreitet 25MB',
+            }),
+            {
+              status: 400,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
+        }
+
+        // Read file and convert to base64
+        const arrayBuffer = await value.arrayBuffer();
+        const base64Data = arrayBufferToBase64(arrayBuffer);
+
+        files.push({
+          name: value.name,
+          type: value.type || 'application/octet-stream',
+          size: value.size,
+          data: base64Data,
+        });
       }
     }
 
-    // Check form type - handle quantity request form differently
-    const formType = formData.get('formType') as string || 'contact';
-    const firstName = formData.get('firstName') as string || '';
-    const lastName = formData.get('lastName') as string || '';
-
-    // Build name from firstName + lastName if provided (quantity form)
-    const name = firstName && lastName
-      ? `${firstName} ${lastName}`
-      : formData.get('name') as string || '';
-
-    const contactData: ContactFormData = {
-      name: name,
-      email: formData.get('email') as string || '',
-      phone: formData.get('phone') as string || '',
-      message: formData.get('message') as string || '',
-      date: formData.get('date') as string || new Date().toLocaleDateString('de-DE'),
-      time: formData.get('time') as string || new Date().toLocaleTimeString('de-DE'),
-      pageTitle: formData.get('pageTitle') as string || 'Unknown',
-      pageUrl: formData.get('pageUrl') as string || 'Unknown',
-      files: fileNames.length > 0 ? fileNames.join(', ') : (formData.get('files') as string || ''),
-      formType: formType,
-      productName: formData.get('productName') as string || '',
-      productId: formData.get('productId') as string || '',
-      quantity: formData.get('quantity') as string || '',
-      pricePerPiece: formData.get('pricePerPiece') as string || '',
-      desiredDate: formData.get('desiredDate') as string || '',
-      attributes: formData.get('attributes') as string || '',
-      addons: formData.get('addons') as string || ''
-    };
-
-    // Validate required fields
-    if (!contactData.name || !contactData.email) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Name und Email sind erforderlich' }),
-        {
-          status: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      );
+    // Build JSON payload with text fields
+    const payload: Record<string, unknown> = {};
+    for (const [key, value] of formData.entries()) {
+      if (typeof value === 'string') {
+        payload[key] = value;
+      }
     }
 
-    // Check if Google Apps Script URL is configured
-    const googleAppsScriptUrl = env.GOOGLE_APPS_SCRIPT_URL;
-
-    if (!googleAppsScriptUrl) {
-      console.log('Google Apps Script not configured, logging form submission:', contactData);
-      return new Response(
-        JSON.stringify({ success: true, message: 'Form received (Google Sheets not configured)' }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      );
+    // Add files array to payload (will be processed by worker)
+    if (files.length > 0) {
+      payload.uploadFiles = files;
     }
 
-    // Build URL with query parameters (workaround for Google Apps Script POST issues)
-    const params = new URLSearchParams({
-      name: contactData.name,
-      email: contactData.email,
-      phone: contactData.phone,
-      message: contactData.message,
-      date: contactData.date,
-      time: contactData.time,
-      pageTitle: contactData.pageTitle,
-      pageUrl: contactData.pageUrl,
-      files: contactData.files,
-      formType: contactData.formType,
-      productName: contactData.productName,
-      productId: contactData.productId,
-      quantity: contactData.quantity,
-      pricePerPiece: contactData.pricePerPiece,
-      desiredDate: contactData.desiredDate,
-      attributes: contactData.attributes,
-      addons: contactData.addons
+    // Forward to Form Handler Worker
+    const response = await fetch(`${FORM_HANDLER_URL}/contact`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
     });
 
-    const urlWithParams = `${googleAppsScriptUrl}?${params.toString()}`;
+    const result = await response.json();
 
-    // Use GET request with parameters (more reliable with Google Apps Script)
-    const response = await fetch(urlWithParams, {
-      method: 'GET',
-      redirect: 'follow'
+    return new Response(JSON.stringify(result), {
+      status: response.status,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
     });
-
-    const responseText = await response.text();
-
-    // Check if response indicates success
-    if (responseText.includes('success') || responseText.includes('Data saved') || response.ok) {
-      return new Response(
-        JSON.stringify({ success: true, message: 'Nachricht erfolgreich gesendet' }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      );
-    } else {
-      console.error('Google Apps Script response:', responseText);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Google Apps Script error',
-          details: responseText.substring(0, 500)
-        }),
-        {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders
-          }
-        }
-      );
-    }
   } catch (error) {
-    console.error('Contact form error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Contact form proxy error:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
-        debug: errorMessage
+        error: error instanceof Error ? error.message : 'Unknown error',
       }),
       {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
-          ...corsHeaders
-        }
+          ...corsHeaders,
+        },
       }
     );
   }
@@ -191,10 +138,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 export const onRequestOptions: PagesFunction = async () => {
   return new Response(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
+    headers: corsHeaders,
   });
 };

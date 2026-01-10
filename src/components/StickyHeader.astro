@@ -3,6 +3,7 @@
 // Exact match to WordPress Elementor CSS from post-196.css
 import ProductSearch from './ProductSearch.tsx';
 import UserSession from './UserSession.tsx';
+import WishlistCount from './WishlistCount.tsx';
 
 // Navigation items for mobile dropdown
 const sportarten = [
@@ -144,13 +145,9 @@ const themen = [
       </div>
 
       <!-- Wishlist Icon - 80c9398 - view-framed -->
-      <a href="/wishlist/" class="elementor-icon-wrapper sticky-icon" aria-label="Wunschliste">
-        <span class="elementor-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="27" height="27" viewBox="0 0 27 27" fill="none">
-            <path d="M18.7734 4.21875C16.5955 4.21875 14.6886 5.15531 13.5 6.7384C12.3114 5.15531 10.4045 4.21875 8.22656 4.21875C6.4929 4.2207 4.83079 4.91027 3.60491 6.13616C2.37902 7.36204 1.68945 9.02415 1.6875 10.7578C1.6875 18.1406 12.6341 24.1165 13.1003 24.3633C13.2231 24.4294 13.3605 24.464 13.5 24.464C13.6395 24.464 13.7769 24.4294 13.8997 24.3633C14.3659 24.1165 25.3125 18.1406 25.3125 10.7578C25.3105 9.02415 24.621 7.36204 23.3951 6.13616C22.1692 4.91027 20.5071 4.2207 18.7734 4.21875ZM13.5 22.6547C11.5741 21.5325 3.375 16.4204 3.375 10.7578C3.37667 9.47161 3.88836 8.23857 4.79784 7.32909C5.70732 6.41961 6.94036 5.90792 8.22656 5.90625C10.2779 5.90625 12.0002 6.99891 12.7195 8.75391C12.7831 8.90866 12.8912 9.04102 13.0302 9.13417C13.1692 9.22732 13.3327 9.27706 13.5 9.27706C13.6673 9.27706 13.8308 9.22732 13.9698 9.13417C14.1088 9.04102 14.2169 8.90866 14.2805 8.75391C14.9998 6.99574 16.7221 5.90625 18.7734 5.90625C20.0596 5.90792 21.2927 6.41961 22.2022 7.32909C23.1116 8.23857 23.6233 9.47161 23.625 10.7578C23.625 16.412 15.4237 21.5314 13.5 22.6547Z" fill="#253461"/>
-          </svg>
-        </span>
-      </a>
+      <div class="sticky-wishlist-wrapper">
+        <WishlistCount client:load />
+      </div>
 
       <!-- Cart Icon - 0ab1fd6 - view-framed -->
       <div class="sticky-user-session sticky-cart-session">
@@ -162,6 +159,7 @@ const themen = [
 
 <style>
   /* Sticky Header - matching WordPress d92208c */
+  /* Mobile-first: hidden by default, shown on desktop */
   .sticky-header {
     display: none;
     position: fixed;
@@ -178,6 +176,13 @@ const themen = [
 
   .sticky-header.visible {
     transform: translateY(0);
+  }
+
+  /* Explicit mobile hiding for safety */
+  @media (max-width: 768px) {
+    .sticky-header {
+      display: none !important;
+    }
   }
 
   @media (min-width: 769px) {

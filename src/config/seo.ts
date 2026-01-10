@@ -1,0 +1,277 @@
+// SEO Configuration for Hercules Merchandise DE
+// Based on Rank Math settings export
+
+export const siteConfig = {
+  // Site Info
+  siteName: 'Hercules Merchandise DE',
+  siteUrl: 'https://hercules-merchandise.de',
+  titleSeparator: '-',
+  defaultDescription: 'Personalisierte Sportbekleidung, Fanschals und Merchandise für Vereine und Teams. Made in Europe.',
+  locale: 'de_DE',
+  language: 'de',
+
+  // Organization/Business Info
+  organization: {
+    name: 'Hercules Merchandise DE',
+    legalName: 'Hercules Merchandise',
+    type: 'Organization',
+    email: 'info@hercules-merchandise.de',
+    phone: '+49 8001833745',
+    address: {
+      streetAddress: '8 Northumberland Avenue',
+      postalCode: 'WC2N 5BY',
+      addressLocality: 'London',
+      addressCountry: 'UK'
+    },
+    openingHours: [
+      { day: 'Monday', time: '09:00-17:00' },
+      { day: 'Tuesday', time: '09:00-17:00' },
+      { day: 'Wednesday', time: '09:00-17:00' },
+      { day: 'Thursday', time: '09:00-17:00' },
+      { day: 'Friday', time: '09:00-17:00' },
+      { day: 'Saturday', time: '09:00-17:00' },
+      { day: 'Sunday', time: '09:00-17:00' }
+    ],
+    sameAs: [
+      // Add social media URLs here
+    ]
+  },
+
+  // Default Images
+  defaultImage: '/images/og-default.jpg',
+  logo: '/images/logo.png',
+
+  // Twitter/Social
+  twitter: {
+    cardType: 'summary_large_image',
+    site: '@HerculesMerch', // Update with actual Twitter handle
+  },
+
+  // Robots defaults
+  robots: {
+    index: true,
+    follow: true,
+    maxSnippet: -1,
+    maxVideoPreview: -1,
+    maxImagePreview: 'large' as const,
+  },
+
+  // Breadcrumb settings
+  breadcrumbs: {
+    separator: '»',
+    homeLabel: 'Home',
+  }
+};
+
+// Title templates for different page types
+export const titleTemplates = {
+  homepage: `${siteConfig.siteName} ${siteConfig.titleSeparator} ${siteConfig.defaultDescription.substring(0, 60)}`,
+  product: (title: string) => `${title} ${siteConfig.titleSeparator} ${siteConfig.siteName}`,
+  category: (term: string) => `${term} ${siteConfig.titleSeparator} ${siteConfig.siteName}`,
+  blogPost: (title: string) => `${title} ${siteConfig.titleSeparator} ${siteConfig.siteName}`,
+  blogArchive: (page?: number) => page && page > 1
+    ? `Blog Seite ${page} ${siteConfig.titleSeparator} ${siteConfig.siteName}`
+    : `Blog ${siteConfig.titleSeparator} ${siteConfig.siteName}`,
+  page: (title: string) => `${title} ${siteConfig.titleSeparator} ${siteConfig.siteName}`,
+  search: (query: string) => `Suche: ${query} ${siteConfig.titleSeparator} ${siteConfig.siteName}`,
+  notFound: `Seite nicht gefunden ${siteConfig.titleSeparator} ${siteConfig.siteName}`,
+};
+
+// Meta description templates
+export const descriptionTemplates = {
+  product: (excerpt: string) => excerpt || siteConfig.defaultDescription,
+  category: (description: string) => description || siteConfig.defaultDescription,
+  blogPost: (excerpt: string) => excerpt || siteConfig.defaultDescription,
+};
+
+// Robots meta for different page types
+export const robotsConfig = {
+  default: 'index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large',
+  noindex: 'noindex, follow',
+  nofollow: 'index, nofollow',
+  none: 'noindex, nofollow',
+};
+
+// Pages that should be noindex
+export const noindexPages = [
+  '/search',
+  '/cart',
+  '/checkout',
+  '/my-account',
+  '/warenkorb',
+  '/kasse',
+  '/mein-konto',
+];
+
+// Generate Organization JSON-LD
+export function getOrganizationSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: siteConfig.organization.name,
+    legalName: siteConfig.organization.legalName,
+    url: siteConfig.siteUrl,
+    logo: `${siteConfig.siteUrl}${siteConfig.logo}`,
+    email: siteConfig.organization.email,
+    telephone: siteConfig.organization.phone,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: siteConfig.organization.address.streetAddress,
+      postalCode: siteConfig.organization.address.postalCode,
+      addressLocality: siteConfig.organization.address.addressLocality,
+      addressCountry: siteConfig.organization.address.addressCountry,
+    },
+    sameAs: siteConfig.organization.sameAs,
+  };
+}
+
+// Generate WebSite JSON-LD
+export function getWebsiteSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: siteConfig.siteName,
+    url: siteConfig.siteUrl,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${siteConfig.siteUrl}/search?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+}
+
+// Generate Product JSON-LD
+export function getProductSchema(product: {
+  name: string;
+  description: string;
+  image: string;
+  url: string;
+  sku?: string;
+  brand?: string;
+  priceMin?: number;
+  priceMax?: number;
+  currency?: string;
+  availability?: 'InStock' | 'OutOfStock' | 'PreOrder';
+  condition?: 'NewCondition' | 'UsedCondition' | 'RefurbishedCondition';
+}) {
+  const schema: any = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: product.image,
+    url: product.url,
+    brand: {
+      '@type': 'Brand',
+      name: product.brand || siteConfig.siteName,
+    },
+  };
+
+  if (product.sku) {
+    schema.sku = product.sku;
+  }
+
+  if (product.priceMin !== undefined) {
+    schema.offers = {
+      '@type': 'AggregateOffer',
+      priceCurrency: product.currency || 'EUR',
+      lowPrice: product.priceMin,
+      highPrice: product.priceMax || product.priceMin,
+      availability: `https://schema.org/${product.availability || 'InStock'}`,
+      itemCondition: `https://schema.org/${product.condition || 'NewCondition'}`,
+    };
+  }
+
+  return schema;
+}
+
+// Generate Article/BlogPosting JSON-LD
+export function getArticleSchema(article: {
+  title: string;
+  description: string;
+  image: string;
+  url: string;
+  datePublished: string;
+  dateModified?: string;
+  author?: string;
+  type?: 'Article' | 'BlogPosting';
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': article.type || 'BlogPosting',
+    headline: article.title,
+    description: article.description,
+    image: article.image,
+    url: article.url,
+    datePublished: article.datePublished,
+    dateModified: article.dateModified || article.datePublished,
+    author: {
+      '@type': 'Organization',
+      name: article.author || siteConfig.siteName,
+      url: siteConfig.siteUrl,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: siteConfig.siteName,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteConfig.siteUrl}${siteConfig.logo}`,
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': article.url,
+    },
+  };
+}
+
+// Generate BreadcrumbList JSON-LD
+export function getBreadcrumbSchema(items: Array<{ name: string; url: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+// Generate CollectionPage JSON-LD (for category pages)
+export function getCollectionPageSchema(collection: {
+  name: string;
+  description: string;
+  url: string;
+  image?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: collection.name,
+    description: collection.description,
+    url: collection.url,
+    ...(collection.image && { image: collection.image }),
+    isPartOf: {
+      '@type': 'WebSite',
+      name: siteConfig.siteName,
+      url: siteConfig.siteUrl,
+    },
+  };
+}
+
+// Helper to strip HTML tags for meta descriptions
+export function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+// Helper to truncate text for meta descriptions (max 160 chars)
+export function truncateDescription(text: string, maxLength = 160): string {
+  const stripped = stripHtml(text);
+  if (stripped.length <= maxLength) return stripped;
+  return stripped.substring(0, maxLength - 3).trim() + '...';
+}

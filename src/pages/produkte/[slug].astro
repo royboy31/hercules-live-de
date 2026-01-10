@@ -7,6 +7,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProductConfigurator from '../../components/ProductConfigurator.tsx';
 import ContactFormPopup from '../../components/ContactFormPopup.tsx';
 import '../../styles/steps.css';
+import {
+  siteConfig,
+  getProductSchema,
+  getBreadcrumbSchema,
+  truncateDescription,
+  stripHtml
+} from '../../config/seo';
 
 const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
@@ -127,9 +134,72 @@ export async function getStaticPaths() {
     return [];
   }
 }
+
+// SEO Data
+const productUrl = `${siteConfig.siteUrl}/produkte/${slug}/`;
+const productDescription = product?.short_description
+  ? truncateDescription(stripHtml(product.short_description))
+  : product?.description
+    ? truncateDescription(stripHtml(product.description))
+    : siteConfig.defaultDescription;
+
+const productImage = galleryImages[0]?.src || `${siteConfig.siteUrl}${siteConfig.defaultImage}`;
+
+// Build breadcrumb schema
+const breadcrumbItems = [
+  { name: 'Home', url: siteConfig.siteUrl },
+];
+if (product?.categories?.[0]) {
+  const cat = product.categories[0];
+  const catName = typeof cat === 'string' ? cat : cat.name;
+  const catSlug = typeof cat === 'string' ? cat : cat.slug;
+  breadcrumbItems.push({
+    name: catName,
+    url: `${siteConfig.siteUrl}/collections/${catSlug}/`
+  });
+}
+if (product) {
+  breadcrumbItems.push({
+    name: product.name,
+    url: productUrl
+  });
+}
+
+// Build JSON-LD schemas
+const jsonLdSchemas: object[] = [];
+
+if (product) {
+  // Product schema
+  jsonLdSchemas.push(getProductSchema({
+    name: product.name,
+    description: productDescription,
+    image: productImage,
+    url: productUrl,
+    sku: product.sku || `HERC-${product.id}`,
+    brand: siteConfig.siteName,
+    priceMin: priceRange?.min,
+    priceMax: priceRange?.max,
+    currency: 'EUR',
+    availability: 'InStock',
+    condition: 'NewCondition'
+  }));
+
+  // Breadcrumb schema
+  jsonLdSchemas.push(getBreadcrumbSchema(breadcrumbItems));
+}
 ---
 
-<BaseLayout title={product?.name || 'Produkt'} pageType="product">
+<BaseLayout
+  title={product?.name || 'Produkt'}
+  description={productDescription}
+  pageType="product"
+  ogType="product"
+  ogImage={productImage}
+  productPrice={priceRange?.min?.toString()}
+  productCurrency="EUR"
+  productAvailability="InStock"
+  jsonLd={jsonLdSchemas}
+>
   <div class="product-page">
     {error ? (
       <div class="error-container">
@@ -308,7 +378,7 @@ export async function getStaticPaths() {
 
         <!-- FAQ Section - Card style like product description -->
         {product.faq && product.faq.length > 0 && (
-          <section class="faq-section">
+          <section id="faq" class="faq-section">
             <div class="container">
               <div class="faq-card">
                 <div class="faq-header">
@@ -418,7 +488,7 @@ export async function getStaticPaths() {
   .container {
     max-width: 1280px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0;
   }
 
   .error-container {
@@ -444,7 +514,7 @@ export async function getStaticPaths() {
   /* Breadcrumb - Matching WordPress EAEL styling */
   .breadcrumb {
     background: #FAFAFA;
-    padding: 20px 0;
+    padding: 10px 0;
   }
 
   .breadcrumb .container {
@@ -483,19 +553,23 @@ export async function getStaticPaths() {
 
   /* Product Section */
   .product-section {
-    padding: 40px 0;
+    padding: 20px 0;
   }
 
   .product-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 50px;
+    gap: 20px;
+    align-items: start; /* Prevent columns from stretching to match each other */
   }
 
   @media (max-width: 900px) {
+    .container {
+      padding: 0 15px;
+    }
     .product-grid {
       grid-template-columns: 1fr;
-      gap: 30px;
+      gap: 20px;
     }
   }
 
@@ -508,6 +582,8 @@ export async function getStaticPaths() {
     padding: 20px;
     border-radius: 20px;
     border: 1px solid #DCDCDC;
+    align-self: start; /* Don't stretch to match right column height */
+    height: fit-content; /* Force content-based height */
   }
 
   /* Main image container - holds image and badges */
@@ -1174,14 +1250,13 @@ export async function getStaticPaths() {
     cursor: pointer;
     text-align: left;
     font-family: 'Jost', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 25px;
+    font-weight: 400;
     color: #253461;
-    transition: color 0.3s ease;
   }
 
   .faq-question:hover {
-    color: #469ADC;
+    color: #253461;
   }
 
   .faq-question span {
@@ -1204,10 +1279,6 @@ export async function getStaticPaths() {
 
   .faq-item.active .faq-icon-minus {
     display: block;
-  }
-
-  .faq-item.active .faq-question {
-    color: #469ADC;
   }
 
   .faq-answer {

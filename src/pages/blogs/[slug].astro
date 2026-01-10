@@ -1,5 +1,12 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import {
+  siteConfig,
+  getArticleSchema,
+  getBreadcrumbSchema,
+  truncateDescription,
+  stripHtml
+} from '../../config/seo';
 
 const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
@@ -65,14 +72,51 @@ export async function getStaticPaths() {
   }
 }
 
-// Clean excerpt for meta description
-const metaDescription = post.excerpt?.substring(0, 160) || post.title;
+// SEO configuration
+const metaDescription = post.excerpt
+  ? truncateDescription(stripHtml(post.excerpt))
+  : truncateDescription(post.title);
+
+const canonicalUrl = `${siteConfig.siteUrl}/blogs/${slug}/`;
+const postImage = post.localFeaturedImage || post.featuredImage || `${siteConfig.siteUrl}${siteConfig.defaultImage}`;
+
+// Format dates for schema
+const publishedDate = post.date ? new Date(post.date).toISOString() : new Date().toISOString();
+const modifiedDate = post.modified ? new Date(post.modified).toISOString() : publishedDate;
+
+// Generate JSON-LD schemas
+const jsonLdSchemas = [];
+
+// Article/BlogPosting schema
+jsonLdSchemas.push(getArticleSchema({
+  title: post.title,
+  description: metaDescription,
+  image: postImage,
+  url: canonicalUrl,
+  datePublished: publishedDate,
+  dateModified: modifiedDate,
+  author: siteConfig.siteName,
+  type: 'BlogPosting'
+}));
+
+// Breadcrumb schema
+jsonLdSchemas.push(getBreadcrumbSchema([
+  { name: 'Home', url: siteConfig.siteUrl },
+  { name: 'Blog', url: `${siteConfig.siteUrl}/blogs/` },
+  { name: post.title, url: canonicalUrl }
+]));
 ---
 
 <BaseLayout
-  title={`${post.title} - Hercules Merchandise Blog`}
+  title={post.title}
   description={metaDescription}
   pageType="blog"
+  ogType="article"
+  ogImage={postImage}
+  publishedTime={publishedDate}
+  modifiedTime={modifiedDate}
+  author={siteConfig.siteName}
+  jsonLd={jsonLdSchemas}
 >
   <!-- Breadcrumb -->
   <div class="breadcrumb-section">

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import QuantityRequestPopup from './QuantityRequestPopup';
 import ExpressDeliveryPopup from './ExpressDeliveryPopup';
+import ContactFormPopup from './ContactFormPopup';
 
 // Types matching the API response
 interface TermInfo {
@@ -68,9 +69,12 @@ interface ProductConfiguratorProps {
   workerUrl?: string;
 }
 
-// Helper to parse float safely
+// Helper to parse float safely (handles German comma decimal separator)
 function parseFloatSafe(val: any): number {
-  const parsed = parseFloat(String(val));
+  if (val === null || val === undefined) return 0;
+  // Convert to string and replace comma with period for German number format
+  const str = String(val).replace(',', '.');
+  const parsed = parseFloat(str);
   return isNaN(parsed) ? 0 : parsed;
 }
 
@@ -106,14 +110,18 @@ function getInterpolatedPrice(conditionalPrices: Array<{ qty: number | string; p
   return sorted[0]?.price || 0;
 }
 
-// Get addon price for a given quantity (with interpolation, matching WordPress)
-function getAddonPriceForQty(addon: AddonData, selectedValue: string | string[], quantity: number): number {
+// Get addon price for a specific tier qty (floor-based matching)
+// Returns the addon price at a given tier quantity (not the custom quantity)
+function getAddonPriceAtTierQty(addon: AddonData, selectedValue: string | string[], tierQty: number): number {
   if (!selectedValue) return 0;
 
   const selectedNames = Array.isArray(selectedValue) ? selectedValue : [selectedValue];
   let total = 0;
 
   for (const name of selectedNames) {
+    // Skip "none" selection - it has no price
+    if (name === 'none') continue;
+
     const option = addon.options.find(o => o.name === name);
     if (!option || !option.price_table || option.price_table.length === 0) continue;
 
@@ -121,36 +129,72 @@ function getAddonPriceForQty(addon: AddonData, selectedValue: string | string[],
       .map(p => ({ qty: parseFloatSafe(p.qty), price: parseFloatSafe(p.price) }))
       .sort((a, b) => a.qty - b.qty);
 
-    // Exact match
-    const exact = sorted.find(t => t.qty === quantity);
-    if (exact) {
-      total += exact.price;
-      continue;
+    // Floor-based matching: find the highest qty threshold <= tierQty
+    let priceToUse: number | null = null;
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      if (tierQty >= sorted[i].qty) {
+        priceToUse = sorted[i].price;
+        break;
+      }
     }
 
-    // Interpolation (matching base price calculation)
-    let below: { qty: number; price: number } | null = null;
-    let above: { qty: number; price: number } | null = null;
-
-    for (const t of sorted) {
-      if (t.qty < quantity) below = t;
-      if (t.qty > quantity && !above) above = t;
-    }
-
-    if (below && above && above.qty !== below.qty) {
-      const pA = below.price, pB = above.price;
-      const qA = below.qty, qB = above.qty;
-      total += pA + ((pB - pA) * (quantity - qA)) / (qB - qA);
-    } else if (below) {
-      total += below.price;
-    } else if (above) {
-      total += above.price;
-    } else if (sorted.length > 0) {
-      total += sorted[0].price;
+    if (priceToUse !== null) {
+      total += priceToUse;
     }
   }
 
   return total;
+}
+
+// Get interpolated price with addons - WordPress style
+// WordPress builds combined tiers (base + addon at each tier), then interpolates between those
+function getInterpolatedPriceWithAddons(
+  conditionalPrices: Array<{ qty: number | string; price: number | string }>,
+  quantity: number,
+  addons: AddonData[],
+  selectedAddons: Record<number, string | string[]>
+): number {
+  if (!conditionalPrices || conditionalPrices.length === 0) return 0;
+
+  // Build combined tiers: base price + addon prices at each tier qty
+  const combinedTiers = conditionalPrices.map(cp => {
+    const tierQty = parseFloatSafe(cp.qty);
+    const basePrice = parseFloatSafe(cp.price);
+
+    // Add addon prices for this tier qty
+    let addonPrice = 0;
+    for (const addon of addons) {
+      if (selectedAddons[addon.id]) {
+        addonPrice += getAddonPriceAtTierQty(addon, selectedAddons[addon.id], tierQty);
+      }
+    }
+
+    return { qty: tierQty, price: basePrice + addonPrice };
+  }).sort((a, b) => a.qty - b.qty);
+
+  // Now interpolate using the combined tiers
+  // Exact match
+  const exact = combinedTiers.find(t => t.qty === quantity);
+  if (exact) return exact.price;
+
+  // Interpolation
+  let below: { qty: number; price: number } | null = null;
+  let above: { qty: number; price: number } | null = null;
+
+  for (const t of combinedTiers) {
+    if (t.qty < quantity) below = t;
+    if (t.qty > quantity && !above) above = t;
+  }
+
+  if (below && above && above.qty !== below.qty) {
+    const pA = below.price, pB = above.price;
+    const qA = below.qty, qB = above.qty;
+    return pA + ((pB - pA) * (quantity - qA)) / (qB - qA);
+  }
+
+  if (below) return below.price;
+  if (above) return above.price;
+  return combinedTiers[0]?.price || 0;
 }
 
 export default function ProductConfigurator({ productSlug, workerUrl = 'https://hercules-product-sync.gilles-86d.workers.dev' }: ProductConfiguratorProps) {
@@ -320,20 +364,18 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     };
   }, [matchedVariation, config]);
 
-  // Calculate final price
+  // Calculate final price - uses WordPress combined-tier interpolation
   const priceInfo = useMemo(() => {
     if (!matchedVariation || quantitySelected <= 0) return null;
 
-    const basePrice = getInterpolatedPrice(matchedVariation.conditional_prices, quantitySelected);
+    // Use combined-tier interpolation (WordPress style)
+    const pricePerPiece = getInterpolatedPriceWithAddons(
+      matchedVariation.conditional_prices,
+      quantitySelected,
+      visibleAddons,
+      selectedAddons
+    );
 
-    let addonPrice = 0;
-    for (const addon of visibleAddons) {
-      if (selectedAddons[addon.id]) {
-        addonPrice += getAddonPriceForQty(addon, selectedAddons[addon.id], quantitySelected);
-      }
-    }
-
-    const pricePerPiece = basePrice + addonPrice;
     const totalExclVat = pricePerPiece * quantitySelected;
     const taxMultiplier = config ? 1 + (config.tax_percent / 100) : 1.19;
     const totalInclVat = totalExclVat * taxMultiplier;
@@ -366,13 +408,13 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     }
   };
 
-  // Calculate addon price per piece for the current quantity
-  const getAddonPricePerPiece = (): number => {
+  // Calculate addon price per piece for the current quantity (floor-based for tier display)
+  const getAddonPricePerPiece = (qty: number): number => {
     let total = 0;
     for (const addon of visibleAddons) {
       const selectedValue = selectedAddons[addon.id];
       if (selectedValue) {
-        total += getAddonPriceForQty(addon, selectedValue, quantitySelected);
+        total += getAddonPriceAtTierQty(addon, selectedValue, qty);
       }
     }
     return total;
@@ -386,10 +428,14 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     setAddToCartError(null);
 
     try {
-      // Calculate prices
-      const basePrice = getInterpolatedPrice(matchedVariation.conditional_prices, quantitySelected);
-      const addonPricePerPiece = getAddonPricePerPiece();
-      const finalPricePerPiece = basePrice + addonPricePerPiece;
+      // Calculate prices using combined-tier interpolation (WordPress style)
+      const finalPricePerPiece = getInterpolatedPriceWithAddons(
+        matchedVariation.conditional_prices,
+        quantitySelected,
+        visibleAddons,
+        selectedAddons
+      );
+      const addonPricePerPiece = getAddonPricePerPiece(quantitySelected);
 
       // Prepare form data for WordPress AJAX
       const params = new URLSearchParams();
@@ -489,7 +535,15 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
 
   // Check if all selections are complete for add to cart
   const allAttributesSelected = attributeKeys.every(key => selectedAttributes[key]);
-  const allAddonsSelected = visibleAddons.every(addon => selectedAddons[addon.id]);
+  // For multiple_choise addons, user must select at least one option (including "Keine")
+  const allAddonsSelected = visibleAddons.every(addon => {
+    const value = selectedAddons[addon.id];
+    if (addon.display_type === 'multiple_choise') {
+      // Multiple choice requires at least one checkbox selected (including 'none')
+      return Array.isArray(value) && value.length > 0;
+    }
+    return !!value;
+  });
   const canAddToCart = allAttributesSelected && allAddonsSelected && quantitySelected > 0 && matchedVariation;
 
   // Calculate current visible step number (excluding hidden default attributes)
@@ -696,6 +750,90 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                     ))}
                   </select>
                 )}
+
+                {/* Multiple Choice (checkboxes) for addons like Zubehör - auto-advances on selection */}
+                {addon.display_type === 'multiple_choise' && (() => {
+                  const currentSelected = Array.isArray(selectedValue) ? selectedValue : (selectedValue ? [selectedValue] : []);
+                  const isNoneChecked = currentSelected.includes('none');
+
+                  const handleCheckboxChange = (value: string, checked: boolean) => {
+                    let newSelected: string[];
+                    if (value === 'none') {
+                      // "Keine" clears all other selections and advances immediately
+                      newSelected = checked ? ['none'] : [];
+                    } else {
+                      // Remove 'none' if selecting an actual option
+                      const withoutNone = currentSelected.filter(v => v !== 'none');
+                      if (checked) {
+                        newSelected = [...withoutNone, value];
+                      } else {
+                        newSelected = withoutNone.filter(v => v !== value);
+                      }
+                    }
+                    // Update selection and advance to next step immediately
+                    setSelectedAddons(prev => ({ ...prev, [addon.id]: newSelected }));
+                    if (newSelected.length > 0) {
+                      setMaxVisibleStep(stepIndex + 1);
+                    }
+                  };
+
+                  return (
+                    <div className="kd-step-choises">
+                      {/* "Keine" (None) checkbox - always first */}
+                      <label style={{ display: 'block', marginBottom: '8px' }}>
+                        <input
+                          type="checkbox"
+                          name={String(addon.id)}
+                          value="none"
+                          checked={isNoneChecked}
+                          onChange={(e) => handleCheckboxChange('none', e.target.checked)}
+                          style={{ marginRight: '8px' }}
+                        />
+                        Keine
+                      </label>
+                      {/* Dynamic options from database */}
+                      {addon.options.map((option, index) => {
+                        const isChecked = currentSelected.includes(option.name);
+                        return (
+                          <label key={index} style={{ display: 'block', marginBottom: '8px' }}>
+                            <input
+                              type="checkbox"
+                              name={String(addon.id)}
+                              value={option.name}
+                              checked={isChecked}
+                              onChange={(e) => handleCheckboxChange(option.name, e.target.checked)}
+                              style={{ marginRight: '8px' }}
+                            />
+                            {option.name}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
+                {/* Select Boxes for addons */}
+                {addon.display_type === 'select_boxes' && (
+                  <div className="box-selector" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {addon.options.map(option => (
+                      <div
+                        key={option.name}
+                        className="box-selector-item"
+                        onClick={() => handleAddonSelect(addon.id, option.name, stepIndex)}
+                        style={{
+                          cursor: 'pointer',
+                          border: selectedValue === option.name ? '2px solid #469ADC' : '1px solid #ddd',
+                          padding: '10px',
+                          borderRadius: '10px',
+                          width: '31%',
+                          background: selectedValue === option.name ? '#e6f0fa' : '#fff',
+                        }}
+                      >
+                        <strong>{option.name}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -726,11 +864,11 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                 const tierQty = parseFloatSafe(tier.qty);
                 const tierPrice = parseFloatSafe(tier.price);
 
-                // Calculate addon price for this tier
+                // Calculate addon price for this tier (exact tier qty, so floor-based is correct)
                 let addonPrice = 0;
                 for (const addon of visibleAddons) {
                   if (selectedAddons[addon.id]) {
-                    addonPrice += getAddonPriceForQty(addon, selectedAddons[addon.id], tierQty);
+                    addonPrice += getAddonPriceAtTierQty(addon, selectedAddons[addon.id], tierQty);
                   }
                 }
                 const totalPrice = tierPrice + addonPrice;
@@ -739,7 +877,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                 const pricesArray = matchedVariation?.conditional_prices || config.variations?.[0]?.conditional_prices || [];
                 const firstTier = pricesArray[0];
                 const firstPrice = firstTier ? parseFloatSafe(firstTier.price) + (visibleAddons.reduce((sum, addon) =>
-                  sum + (selectedAddons[addon.id] ? getAddonPriceForQty(addon, selectedAddons[addon.id], parseFloatSafe(firstTier.qty)) : 0), 0)) : 0;
+                  sum + (selectedAddons[addon.id] ? getAddonPriceAtTierQty(addon, selectedAddons[addon.id], parseFloatSafe(firstTier.qty)) : 0), 0)) : 0;
                 const savings = firstPrice > 0 ? Math.round((1 - totalPrice / firstPrice) * 100) : 0;
 
                 return (
@@ -801,12 +939,24 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                       background: `linear-gradient(to right, #253461 0%, #253461 ${((tempQuantity - quantityRange.min) / (quantityRange.max - quantityRange.min)) * 100}%, #E3E3E3 ${((tempQuantity - quantityRange.min) / (quantityRange.max - quantityRange.min)) * 100}%, #E3E3E3 100%)`,
                     }}
                   />
-                  {/* Tick marks */}
+                  {/* Tick marks - positioned at exact value percentages */}
                   <div className="kd-range-ticks">
                     {Array.from({ length: 11 }, (_, i) => {
                       const tickValue = Math.round(quantityRange.min + (i * (quantityRange.max - quantityRange.min) / 10));
+                      // Calculate the exact position for this tick value
+                      const tickPosition = ((tickValue - quantityRange.min) / (quantityRange.max - quantityRange.min)) * 100;
                       return (
-                        <span key={i} className="kd-qty-range-price-tooltip">{tickValue}</span>
+                        <span
+                          key={i}
+                          className="kd-qty-range-price-tooltip"
+                          style={{
+                            position: 'absolute',
+                            left: `${tickPosition}%`,
+                            transform: 'translateX(-50%)'
+                          }}
+                        >
+                          {tickValue}
+                        </span>
                       );
                     })}
                   </div>
@@ -963,8 +1113,18 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     <div className="kd-question-box">
       <h3>HAST DU EINE FRAGE?</h3>
       <div className="kd-question-buttons">
-        <a href="/kontakt/" className="kd-btn-contact">KONTAKTIEREN SIE UNS</a>
-        <a href="/faq/" className="kd-btn-faq">SIEHE FAQ</a>
+        <ContactFormPopup
+          triggerType="button"
+          triggerText="KONTAKTIEREN SIE UNS"
+          triggerClassName="kd-btn-contact"
+        />
+        <a href="#faq" className="kd-btn-faq" onClick={(e) => {
+          e.preventDefault();
+          const faqSection = document.getElementById('faq');
+          if (faqSection) {
+            faqSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        }}>SIEHE FAQ</a>
       </div>
     </div>
 

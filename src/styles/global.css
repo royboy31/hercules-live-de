@@ -71,38 +71,43 @@ html {
 
 body {
   @apply antialiased;
-  background-color: #ffffff;
+  background-color: #FAFAFA;
 }
 
-/* Typography */
+/* Typography - Using 600 weight to match WordPress production site */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-family-sans);
   font-weight: 600;
   color: var(--color-primary);
+  line-height: 1.1;
 }
 
 /* Button Base Styles */
 .btn-primary {
-  @apply inline-flex items-center justify-center px-8 py-4 font-medium text-white rounded-full transition-all duration-200;
+  @apply inline-flex items-center justify-center px-8 py-4 font-medium text-white rounded-full;
   background-color: var(--color-accent);
   border: 1px solid var(--color-accent);
+  transition: all 0.25s ease-in-out;
 }
 
 .btn-primary:hover {
   background-color: transparent;
   color: var(--color-accent);
+  transform: translateY(-2px);
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center px-8 py-4 font-medium rounded-full transition-all duration-200;
+  @apply inline-flex items-center justify-center px-8 py-4 font-medium rounded-full;
   background-color: transparent;
   color: var(--color-secondary);
   border: 1px solid var(--color-secondary);
+  transition: all 0.25s ease-in-out;
 }
 
 .btn-secondary:hover {
   background-color: var(--color-secondary);
   color: white;
+  transform: translateY(-2px);
 }
 
 /* Container */
@@ -116,13 +121,15 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Card Styles */
 .card {
-  @apply rounded-xl overflow-hidden transition-all duration-200;
+  @apply rounded-xl overflow-hidden;
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease-in-out;
 }
 
 .card:hover {
   box-shadow: var(--shadow-md);
+  transform: scale(1.02);
 }
 
 /* Form Inputs */
@@ -215,4 +222,28 @@ select:focus {
 
 .swiper-pagination-bullet-active {
   background: var(--color-accent) !important;
+}
+
+/* Performance: content-visibility for below-fold sections */
+/* This allows the browser to skip rendering of off-screen content */
+.lazy-render {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px; /* Estimated height to prevent layout shift */
+}
+
+/* Apply to specific below-fold sections on homepage */
+.top-performer-section,
+.why-choose-section,
+.design-service-section,
+.hercules-merchandise-section,
+.trust-logos-section,
+.customer-reviews-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+
+/* Footer can also benefit */
+footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
 }

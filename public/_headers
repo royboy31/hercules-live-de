@@ -1,0 +1,47 @@
+# Cloudflare Pages headers configuration
+# Reference: https://developers.cloudflare.com/pages/configuration/headers/
+
+# Cache static assets aggressively (1 year)
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache images for 1 year (they're hashed/versioned)
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache fonts for 1 year
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.woff
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.ttf
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache CSS for 1 year (Astro hashes these)
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache JS for 1 year (Astro hashes these)
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML pages - short cache for updates to propagate quickly
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Collection pages
+/collections/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Product pages
+/produkte/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Blog pages
+/blogs/*
+  Cache-Control: public, max-age=0, must-revalidate

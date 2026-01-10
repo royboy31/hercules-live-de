@@ -128,7 +128,7 @@ CLOUDFLARE_API_TOKEN="ZN0wjGH08jqnYCOvlpNH5Y-z--3FeL-63fnLndQp" CLOUDFLARE_ACCOU
 2. **Slide 2:** "HEBEN SIE SICH AB IN IHREN FARBEN MIT STOLZ." → /collections/personalisierte-fanschals/
 3. **Slide 3:** "Umkleidekabinen-Komfort, Streetstyle-Stolz." → /product/personalisierte-badeschlappen/
 
-## Current Status (Last Updated: 2026-01-06)
+## Current Status (Last Updated: 2026-01-07)
 
 ### Completed
 - ✅ Homepage fully replicated from WordPress
@@ -165,6 +165,9 @@ CLOUDFLARE_API_TOKEN="ZN0wjGH08jqnYCOvlpNH5Y-z--3FeL-63fnLndQp" CLOUDFLARE_ACCOU
 - ✅ **Product Detail Pages** - `/produkte/[slug]` with gallery, configurator, description, and design section
 - ✅ **Product Configurator** - Pearl WC Steps style with attribute selection and quantity tiers
 - ✅ **Dynamic Design Section** - "Wie bekommt man ein Design?" with product-specific PDF downloads from ACF fields
+- ✅ **Multiple Choice Addons** - `multiple_choise` display type for checkbox-style addons (e.g., Zubehör)
+- ✅ **German Number Format** - Fixed comma decimal separator parsing ("10,25" → 10.25)
+- ✅ **WordPress-Style Pricing** - Combined-tier interpolation matching Pearl WC Steps plugin exactly
 
 ### Next Steps
 1. Implement cart functionality (add to cart from Astro pages)
@@ -684,6 +687,541 @@ WordPress mu-plugins/
 ```
 
 ## Session History
+
+### Session 2026-01-10 (R2 File Upload for Contact Forms)
+**Task:** Implement R2 bucket file uploads for contact forms - files should upload to R2 and URLs saved to emails/Google Sheets.
+
+**Implementation:**
+
+1. **Updated `functions/api/contact.ts`:**
+   - Now reads uploaded files from FormData
+   - Converts files to base64 for JSON transport to worker
+   - Added file size validation (10MB per file, 25MB total)
+   - German error messages for size limits
+
+2. **Updated `workers/form-handler/src/index.ts`:**
+   - Added `UploadedFile` and `UploadedFileResult` interfaces
+   - Added `base64ToUint8Array()` function for R2 upload
+   - Added `generateR2Key()` for organized storage paths (`YYYY/MM/DD/timestamp-id-filename`)
+   - Added `uploadFilesToR2()` function with R2 bucket integration
+   - Updated `handleContactForm()` to process file uploads before email/sheets
+   - Updated email template to show clickable file links with sizes (📎 icon)
+   - Google Sheets now receives file URLs (format: `filename: url`)
+
+3. **Updated `workers/form-handler/wrangler.toml`:**
+   - Added R2 bucket binding configuration (commented out until R2 enabled)
+   - Added `R2_PUBLIC_URL` environment variable
+
+**Files Modified:**
+- `functions/api/contact.ts` - Base64 file encoding and forwarding
+- `workers/form-handler/src/index.ts` - R2 upload logic and email/sheets integration
+- `workers/form-handler/wrangler.toml` - R2 bucket configuration
+
+**Deployed:**
+- Form Handler Worker: `https://hercules-form-handler.gilles-86d.workers.dev` (Version: cb6f6329)
+- Astro Site: `https://a1c36e59.hercules-astro.pages.dev`
+
+**Pending - Enable R2:**
+R2 object storage is not yet enabled in the Cloudflare account. To activate file uploads:
+1. Go to Cloudflare Dashboard → R2 → Enable R2 (requires payment method)
+2. Create bucket: `hercules-form-uploads`
+3. Enable public access or configure custom domain
+4. Uncomment R2 binding in `workers/form-handler/wrangler.toml`:
+   ```toml
+   [[r2_buckets]]
+   binding = "FORM_UPLOADS"
+   bucket_name = "hercules-form-uploads"
+   ```
+5. Update `R2_PUBLIC_URL` to match bucket's public URL
+6. Redeploy worker: `npx wrangler deploy --config workers/form-handler/wrangler.toml`
+
+**Current Behavior (Without R2):**
+- Forms work normally, files received but not stored
+- Emails show file names (not clickable URLs)
+- Google Sheets shows file names (not URLs)
+- Graceful fallback - no errors shown to users
+
+---
+
+### Session 2026-01-10 (Product Page Layout & Button Fixes)
+**Tasks Completed:**
+
+1. **Product Page "HAST DU EINE FRAGE?" Button Fixes:**
+   - Contact button now opens `ContactFormPopup` instead of navigating to `/kontakt/`
+   - FAQ link now scrolls smoothly to `#faq` section on the same page
+   - Added `id="faq"` to the FAQ section in product page template
+   - Added CSS overrides in `steps.css` for proper button styling within question box
+
+2. **Product Page Container Width Fix:**
+   - Changed `.container` padding from `20px` to `0` to match header width (1280px edge-to-edge)
+   - Added mobile responsive padding (`15px`) for screens under 900px
+
+3. **Product Page Grid Gap Fix:**
+   - Reduced gap between gallery and configurator from `50px` to `20px` (matching WordPress Elementor default)
+   - Updated mobile gap from `30px` to `20px`
+
+4. **Breadcrumb & Section Spacing Fix:**
+   - Reduced breadcrumb padding from `20px 0` to `10px 0`
+   - Reduced product section padding from `40px 0` to `20px 0`
+
+**Files Modified:**
+- `src/components/ProductConfigurator.tsx` - Added ContactFormPopup import, updated question box buttons
+- `src/pages/produkte/[slug].astro` - Added `id="faq"`, fixed container/grid/spacing CSS
+- `src/styles/steps.css` - Added CSS overrides for ContactFormPopup button in question box
+
+**Deployed:** https://hercules-astro.pages.dev
+
+---
+
+### Session 2026-01-10 (Mini Cart & Wishlist Implementation)
+**Tasks Completed:**
+
+1. **Mini Cart Styling Improvements** (`src/components/UserSession.tsx`):
+   - Increased mini cart width from 280px to 375px for better button display
+   - Added `lineHeight: 1` to both action buttons to match WordPress
+   - Fixed product title to show only name without options: `item.name.split(' - ')[0]`
+
+2. **Mini Cart Remove Item Functionality**:
+   - Added X button next to each product to remove from cart
+   - Created custom WordPress endpoint: `POST /wp-json/hercules/v1/cart/remove`
+   - Updated `hercules-session-api.php` to v1.8.0 with cart removal function
+   - Remove button has hover effect (turns red) and loading state
+   - Uses returned cart data directly instead of refetching
+
+3. **Wishlist Functionality - Full localStorage Implementation**:
+   - Rewrote `WishlistButton.tsx` to use localStorage instead of WordPress API
+   - No more WordPress dependency for wishlist
+   - Stores full product data: id, name, slug, price, thumbnail, addedAt timestamp
+   - Exported helper functions: `getWishlist`, `saveWishlist`, `isInWishlist`, `addToWishlist`, `removeFromWishlist`, `toggleWishlist`, `getWishlistCount`
+   - Cross-component state sync via custom event: `hercules:wishlist-updated`
+
+4. **WishlistCount Header Component** (`src/components/WishlistCount.tsx`):
+   - New React component showing heart icon with count badge
+   - Matches cart icon styling (44x44px, border, rounded corners)
+   - Pink badge (#e91e63) showing count (max 99+)
+   - Listens for wishlist updates via custom event
+   - Added to both Header.astro and StickyHeader.astro
+
+5. **Wishlist Page** (`src/pages/wishlist.astro`):
+   - New page at `/wishlist/` displaying saved wishlist items
+   - Consistent #FAFAFA background throughout (breadcrumb and main area)
+   - 3-column product grid matching category archive layout
+   - Product cards matching CategoryProductCard style:
+     - White background, 20px border-radius, 1px border
+     - Hover shadow effect
+     - Product image, title, price, "Mehr erfahren" button
+   - Filled heart icon as remove button (pink, top-right)
+   - Fade animation when removing items (0.25s transition)
+   - Empty state with heart icon and "Produkte entdecken" button
+   - Responsive: 3 cols desktop, 2 cols tablet, 1 col mobile
+
+6. **Edge Router Fix** (`workers/edge-router/src/index.ts`):
+   - Removed `/wishlist` and `/wunschliste` from WORDPRESS_PATHS
+   - Added `/wishlist` to ASTRO_PATHS
+   - Ensures wishlist page routes to Astro, not WordPress
+
+7. **CategoryProductCard Update** (`src/components/CategoryProductCard.astro`):
+   - Updated to pass full product data to WishlistButton:
+     - productId, productName, productSlug, productPrice, productThumbnail
+
+**Files Created:**
+- `src/components/WishlistCount.tsx` - Header wishlist icon with count badge
+- `src/pages/wishlist.astro` - Wishlist page
+
+**Files Modified:**
+- `src/components/UserSession.tsx` - Mini cart styling, remove functionality
+- `src/components/WishlistButton.tsx` - Rewritten for localStorage
+- `src/components/Header.astro` - Added WishlistCount component
+- `src/components/StickyHeader.astro` - Added WishlistCount component
+- `src/components/CategoryProductCard.astro` - Pass product data to WishlistButton
+- `workers/edge-router/src/index.ts` - Fixed routing for /wishlist
+
+**WordPress Files Modified:**
+- `wp-content/mu-plugins/hercules-session-api.php` - v1.8.0 with cart removal endpoint
+
+**Technical Details:**
+
+*localStorage Wishlist Structure:*
+```typescript
+interface WishlistItem {
+  id: number;
+  name: string;
+  slug: string;
+  price?: string;
+  thumbnail?: string;
+  addedAt: number;  // timestamp for sorting
+}
+// Stored at key: 'hercules_wishlist_items'
+```
+
+*Cart Remove API:*
+```bash
+POST /wp-json/hercules/v1/cart/remove
+Body: { "key": "cart_item_key" }
+Response: { "success": true, "cart": {...updated cart data...} }
+```
+
+**Deployed:**
+- Astro: https://92fb4e6a.hercules-astro.pages.dev
+- Production: https://hercules-astro.pages.dev
+- Edge Router: Updated for /wishlist routing
+
+**Test URLs:**
+- Wishlist page: https://staging.hercules-merchandise.de/wishlist/
+- Add to wishlist: Click heart on any product card in category pages
+
+---
+
+### Session 2026-01-09 (PageSpeed Optimization - Mobile Performance)
+**Task:** Optimize mobile PageSpeed score from 68 to 90+ (achieved 78)
+
+**Problem:** Mobile PageSpeed Insights score was 68 with LCP of 7.6s. User wanted to achieve 90+ score.
+
+**Final Results:**
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| **Mobile Score** | 68 | **78** | **+10 points** |
+| **Desktop Score** | 92 | **96** | +4 points |
+| **LCP** | 7.6s | **4.4s** | **-42%** |
+| **FCP** | 2.7s | **2.6s** | -4% |
+| **Speed Index** | 5.8s | **4.9s** | -16% |
+| **CLS** | 0.015 | **0** | Perfect |
+
+**Optimizations Applied:**
+
+1. **Cache Headers with Middleware** (`functions/_middleware.ts`):
+   - Created middleware to set `Cache-Control: public, max-age=31536000, immutable` for static assets
+   - Required `_routes.json` with `"include": ["/*"]` to route all requests through middleware
+   - Cloudflare Pages Functions were overriding `_headers` file, so middleware was needed
+
+2. **Responsive Slider Images** (3-tier srcset):
+   - Created 480px mobile images: 3.5-7.7KB (vs 50-84KB original)
+   - Created 640px tablet images: 6-23KB
+   - Updated Slider.astro with srcset: `480w, 640w, 1280w`
+   - Script: `scripts/optimize-images.mjs` using sharp
+
+3. **Product Images to WebP**:
+   - Converted PNG product images to WebP: 160-250KB → 12-22KB (90%+ reduction)
+   - Updated `src/data/homepage-products.json` to use .webp extensions
+
+4. **Image Dimensions**:
+   - Added width/height to all images (TopPerformer, Header, MobileMenu, Footer)
+   - Fixed "unsized images" audit from 0.5 to 1.0
+
+5. **LCP Image Optimization**:
+   - Changed slider from CSS background-image to `<img>` element
+   - Added `fetchpriority="high"` and `loading="eager"` for first slide
+   - Added responsive preload links with media queries in BaseLayout.astro
+
+6. **Deferred Swiper Initialization**:
+   - Used `requestIdleCallback` to initialize Swiper after main thread is idle
+   - Prevents blocking during critical rendering path
+
+7. **Content-Visibility CSS** (`src/styles/global.css`):
+   ```css
+   .top-performer-section,
+   .why-choose-section,
+   .design-service-section,
+   .hercules-merchandise-section,
+   .trust-logos-section,
+   .customer-reviews-section {
+     content-visibility: auto;
+     contain-intrinsic-size: auto 400px;
+   }
+   ```
+
+8. **Reduced Font Weights**:
+   - Changed from `Jost:wght@300;400;500;600;700` to `Jost:wght@400;500;600`
+   - Changed from `Roboto:wght@400;500` to `Roboto:wght@400`
+
+9. **Preconnect Hints**:
+   - Added preconnect for Worker API and WordPress domains
+
+**Files Created/Modified:**
+- `public/_headers` - Cache configuration (overridden by middleware)
+- `public/_routes.json` - Routes all requests through middleware
+- `functions/_middleware.ts` - Sets cache headers for static assets
+- `scripts/optimize-images.mjs` - Sharp-based image optimization script
+- `src/components/Slider.astro` - Responsive images, deferred Swiper
+- `src/components/TopPerformer.astro` - Image dimensions
+- `src/components/Header.astro` - Image dimensions
+- `src/components/MobileMenu.astro` - Image dimensions
+- `src/layouts/BaseLayout.astro` - Responsive preload, reduced fonts, preconnect
+- `src/styles/global.css` - content-visibility CSS
+- `src/data/homepage-products.json` - WebP images
+- `public/images/slider/*-mobile.webp` - 640px mobile images
+- `public/images/slider/*-mobile-sm.webp` - 480px small mobile images
+- `public/images/products/*.webp` - WebP product images
+
+**Remaining Limitations:**
+- Mobile score limited by simulated 3G network (1.6 Mbps)
+- LCP 4.4s is near the network limit for any image on 3G
+- Unused JavaScript (24 KB) from React/Swiper - would require major refactoring
+- Desktop score is 96, confirming the page is well-optimized
+
+**PageSpeed Test Command:**
+```bash
+curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https%3A%2F%2Fhercules-astro.pages.dev&key=AIzaSyCEBwlUlOrIxXcRLHCiUVInsAsDTunskC4&category=performance&strategy=mobile"
+```
+
+---
+
+### Session 2026-01-09 (Comprehensive QA Testing - Staging vs Production)
+**Task:** Comprehensive QA testing of Astro staging site against WordPress production site
+
+**Testing Performed Using Chrome DevTools MCP:**
+
+1. **Chrome DevTools MCP Setup on Windows:**
+   - Initial connection failed - Chrome wasn't running with remote debugging
+   - Killed all Chrome processes: `taskkill /F /IM chrome.exe /T`
+   - Launched Chrome with: `--remote-debugging-port=9222 --user-data-dir="C:\temp\chrome-debug"`
+   - Successfully connected via MCP for browser automation
+
+2. **Pages Tested:**
+   - Homepage (`/`)
+   - Product page (`/produkte/personalisierter-fussballschal`)
+   - Collection page (`/collections/personalisierte-fanschals/`)
+   - Blog index (`/blogs/`)
+   - Blog single (`/blogs/einen-strickschal-entwerfen-das-sollten-sie-wissen`)
+   - 404 page (`/non-existent-page-test`)
+
+3. **Testing Categories:**
+   - Meta tags comparison (title, OG tags, Twitter cards)
+   - Desktop styling (fonts, colors, spacing)
+   - Mobile responsiveness (375x812 viewport)
+   - Click events and hover states
+   - Animations and transitions
+   - Typography comparison
+   - Interactive components
+
+**Key Findings:**
+
+| Category | Status | Issue |
+|----------|--------|-------|
+| Meta Tags | ⚠️ | Title missing "DE" suffix; production has wrong "UK" ogSiteName |
+| Desktop Styling | ⚠️ | Different font stacks (Jost vs system fonts), background colors |
+| Mobile | ❌ CRITICAL | Navigation not collapsing - shows full desktop nav on mobile |
+| Interactions | ✅ | Dropdowns and click events working |
+| Animations | ⚠️ | Less polished transitions, missing slider arrows |
+| Components | ⚠️ | Missing Chathive live chat widget |
+
+**Staging Improvements Over Production:**
+- Cleaner codebase (fewer console errors)
+- OG image present (production missing)
+- Correct site name (production shows "UK" incorrectly)
+- Better performance with Astro architecture
+
+**Reports Generated:**
+- `/qa/QA_REPORT.md` - Initial page-by-page testing
+- `/qa/COMPREHENSIVE_QA_REPORT.md` - Full comparison with styling, mobile, interactions
+
+**Screenshots Captured:**
+- `homepage-staging.png`, `homepage-production.png`
+- `mobile-staging-homepage.png`, `mobile-production-homepage.png`
+- `product-staging.png`, `collection-staging.png`
+- `blog-staging.png`, `blog-single-staging.png`
+- `404-staging.png`, `hover-staging-nav.png`
+
+**Priority Action Items:**
+1. ❌ **CRITICAL:** Implement hamburger menu for mobile viewports
+2. ⚠️ Add slider Previous/Next navigation arrows
+3. ⚠️ Add "DE" suffix to page title
+4. ⚠️ Consider integrating Chathive live chat
+
+---
+
+### Session 2026-01-09 (SEO Implementation & Brevo Email Integration)
+**Tasks Completed:**
+
+1. **Brevo Email Integration** - Set up transactional emails for all form submissions:
+   - Contact form emails (to client with company CC)
+   - Newsletter signup notifications (to company)
+   - Product quantity request emails (to client with company CC)
+   - API Key configured as Cloudflare Pages secret
+   - **Note:** User needs to disable IP restriction in Brevo account settings for emails to work
+
+2. **Rank Math SEO Implementation** - Full SEO setup based on WordPress Rank Math export:
+   - Created centralized SEO config at `src/config/seo.ts`
+   - Updated `BaseLayout.astro` with comprehensive meta tags
+   - Added JSON-LD structured data for all page types
+   - Created proper `robots.txt`
+   - Configured `@astrojs/sitemap` integration
+
+**Files Created:**
+- `functions/lib/brevo.ts` - Brevo email utility with HTML templates
+- `src/config/seo.ts` - SEO configuration with JSON-LD schema generators
+
+**Files Modified:**
+- `functions/api/contact.ts` - Added Brevo email sending
+- `functions/api/newsletter.ts` - Added Brevo notification emails
+- `src/layouts/BaseLayout.astro` - Full SEO meta tags, Open Graph, Twitter Cards, JSON-LD
+- `public/robots.txt` - Proper robots directives
+- `astro.config.mjs` - Added sitemap integration with filtering/priorities
+- `src/pages/index.astro` - Homepage SEO with OG image
+- `src/pages/produkte/[slug].astro` - Product schema + Breadcrumb schema
+- `src/pages/collections/[slug].astro` - CollectionPage schema + Breadcrumb schema
+- `src/pages/blogs/index.astro` - Blog archive CollectionPage schema
+- `src/pages/blogs/[slug].astro` - BlogPosting schema with dates/author
+
+**SEO Features Implemented:**
+- **Meta Tags:** Title templates, descriptions, robots directives, canonical URLs
+- **Open Graph:** Full OG tags with article/product specific tags
+- **Twitter Cards:** Summary large image cards
+- **Hreflang:** DE/EN/FR alternate URLs
+- **JSON-LD Schemas:**
+  - Organization (homepage)
+  - WebSite with SearchAction (homepage)
+  - Product with AggregateOffer (product pages)
+  - CollectionPage (category/blog archive)
+  - BlogPosting (blog posts)
+  - BreadcrumbList (all pages)
+- **Sitemap:** Auto-generated with priority settings (homepage 1.0, products 0.9, categories 0.8)
+
+**Build Output:**
+- 146 pages built successfully
+- `sitemap-index.xml` generated
+
+**Pending:**
+- User needs to disable IP restriction at https://app.brevo.com/security/authorised_ips
+- Change test email back to `info@hercules-merchandise.co.uk` for production
+
+---
+
+### Session 2026-01-09 (404 Page Matching WordPress)
+**Task:** Create custom 404 page matching WordPress Elementor design exactly.
+
+**Research Process:**
+1. SSH into Combell server (`ssh combel`)
+2. Found Elementor template ID 12484 "404 Fehler" in database
+3. Extracted `_elementor_data` JSON with page structure
+4. Located custom CSS in `wp-content/themes/hello-theme-child-master/css/custom-combined.css`
+
+**WordPress 404 Page Structure:**
+- Breadcrumbs (Home > 404) - Jost 14px, link color #787878, current #00AEEF
+- "404" heading with typing animation - Jost 8rem (107px), 600 weight, #253461
+- Message text with typing animation - Jost 35px, 600 weight, #5F5F5F
+- "Zur Startseite" button - green pill (#10C99E), Jost 15px, uppercase
+- Product search form (AJAX search)
+
+**CSS Typing Animation (from WordPress):**
+```css
+.typing {
+  animation: typing 4s steps(40, end) forwards,
+             blink 0.7s step-end infinite,
+             hideCursor 0.1s linear 4s forwards;
+}
+.typing-text {
+  animation: typing 3s steps(25, end) 2s forwards, blink 0.7s infinite;
+}
+@keyframes typing { from { width: 0 } to { width: 100% } }
+@keyframes blink { 50% { border-color: transparent } }
+```
+
+**Final Implementation:**
+- Text: "Ups! Die Seite, die du suchst, existiert nicht…"
+- 404 heading color: #253461 (dark blue)
+- Message text color: #5F5F5F (gray)
+- Breadcrumb background: #f9f9f9 (matches main area)
+- Mobile responsive: heading 35px, message 13px (no animation)
+- Integrated ProductSearch React component
+
+**Files Created/Modified:**
+- `src/pages/404.astro` - Complete 404 page with typing animation
+- `public/images/breadcrumb-separator.svg` - Blue arrow separator from WordPress
+
+**Deployed:**
+- Preview: https://7886f5fe.hercules-astro.pages.dev
+- Production: https://hercules-astro.pages.dev
+
+---
+
+### Session 2026-01-07 (Product Configurator Pricing & Zubehör Addon Fix)
+**Task:** Fix multiple issues with the product configurator for baseball-cap product:
+1. Zubehör addon (ID 80) with `multiple_choise` display type not rendering
+2. Missing "Keine" option in Zubehör
+3. Styling should be simple checkbox list (not styled boxes)
+4. Selection should auto-advance without submit button
+5. Custom quantity prices different between Astro and WordPress
+
+**Problems Identified:**
+
+1. **Missing `multiple_choise` display type**: ProductConfigurator only handled `image_selector`, `dropdown`, `select_boxes`
+2. **German comma decimal separator**: Prices like "10,25" were parsed as 10 instead of 10.25
+3. **Wrong pricing algorithm**: Astro interpolated base price separately, then added floor-matched addon price. WordPress builds combined tiers (base + addon at each tier), then interpolates.
+
+**Fixes Applied to `src/components/ProductConfigurator.tsx`:**
+
+1. **Added `multiple_choise` display type** (lines 700-759):
+   ```tsx
+   {addon.display_type === 'multiple_choise' && (() => {
+     // "Keine" checkbox (always first)
+     // Dynamic options from database
+     // Auto-advance on selection (no submit button)
+   })()}
+   ```
+
+2. **Fixed German number format** (`parseFloatSafe` function):
+   ```typescript
+   function parseFloatSafe(val: any): number {
+     const str = String(val).replace(',', '.');  // Handle German comma
+     return isNaN(parseFloat(str)) ? 0 : parseFloat(str);
+   }
+   ```
+
+3. **Implemented WordPress combined-tier interpolation** (`getInterpolatedPriceWithAddons` function):
+   ```typescript
+   // WordPress approach:
+   // 1. Build combined tiers: base + addon at each tier qty
+   // 2. Interpolate between combined tier prices
+
+   function getInterpolatedPriceWithAddons(
+     conditionalPrices, quantity, addons, selectedAddons
+   ): number {
+     // Build combined tiers
+     const combinedTiers = conditionalPrices.map(cp => {
+       const tierQty = parseFloatSafe(cp.qty);
+       const basePrice = parseFloatSafe(cp.price);
+       let addonPrice = 0;
+       for (const addon of addons) {
+         if (selectedAddons[addon.id]) {
+           addonPrice += getAddonPriceAtTierQty(addon, selectedAddons[addon.id], tierQty);
+         }
+       }
+       return { qty: tierQty, price: basePrice + addonPrice };
+     });
+     // Then interpolate using combined tiers...
+   }
+   ```
+
+4. **Renamed function for clarity**: `getAddonPriceForQty` → `getAddonPriceAtTierQty`
+
+5. **Updated all price calculations**:
+   - `priceInfo` useMemo - uses `getInterpolatedPriceWithAddons`
+   - `handleAddToCart` - uses `getInterpolatedPriceWithAddons`
+   - Quantity tier display - uses `getAddonPriceAtTierQty`
+
+**Pricing Algorithm Comparison:**
+
+| Approach | For qty 30 with addon |
+|----------|----------------------|
+| **Old (wrong)** | Interpolate base (25→50), add floor-matched addon at qty 25 |
+| **New (correct)** | Build combined tiers {25: base+addon, 50: base+addon}, interpolate between |
+
+**Files Modified:**
+- `src/components/ProductConfigurator.tsx` - All pricing and display fixes
+
+**Deployed:**
+- Preview: https://53a19b19.hercules-astro.pages.dev
+- Production: https://hercules-astro.pages.dev
+
+**Test Product:** https://staging.hercules-merchandise.de/produkte/baseball-cap/
+- Zubehör addon now renders as checkbox list ✓
+- "Keine" option appears first ✓
+- Auto-advances on selection ✓
+- Prices should match WordPress for custom quantities ✓
+
+---
 
 ### Session 2026-01-06 (Dynamic Design Section with Product-Specific PDFs)
 **Task:** Fix "Wie bekommt man ein Design?" section to use product-specific PDF downloads from WordPress ACF fields

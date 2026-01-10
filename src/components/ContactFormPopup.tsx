@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ContactFormPopupProps {
   triggerType?: 'button' | 'icon' | 'link';
@@ -191,8 +192,8 @@ export default function ContactFormPopup({
     <>
       {renderTrigger()}
 
-      {/* Popup Overlay */}
-      {isOpen && (
+      {/* Popup Overlay - rendered via Portal to escape stacking context */}
+      {isOpen && createPortal(
         <div
           className="contact-popup-overlay"
           onClick={(e) => {
@@ -396,7 +397,8 @@ export default function ContactFormPopup({
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`

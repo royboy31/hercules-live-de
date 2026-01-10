@@ -12,17 +12,23 @@
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",
+    "@astrojs/sitemap": "^3.6.1",
     "@nanostores/persistent": "^1.2.0",
     "@nanostores/react": "^1.0.0",
     "@tailwindcss/vite": "^4.1.18",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "astro": "^5.16.6",
+    "astro-critters": "^2.2.1",
     "clsx": "^2.1.1",
     "nanostores": "^1.1.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "swiper": "^12.0.3",
     "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "lighthouse": "^12.8.2",
+    "sharp": "^0.34.5"
   }
 }

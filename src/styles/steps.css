@@ -209,8 +209,8 @@ input[type="range"]::-ms-thumb {
 
 /* Range price tooltip */
 .kd-qty-range-price-tooltip {
-    margin-top: 32px;
-    position: relative;
+    position: absolute;
+    top: 0;
     font-family: Jost;
     font-weight: 400;
     font-size: 14px;
@@ -218,6 +218,7 @@ input[type="range"]::-ms-thumb {
     letter-spacing: 0%;
     text-transform: uppercase;
     color: #253461;
+    white-space: nowrap;
 }
 
 .kd-qty-range-price-tooltip:before {
@@ -226,18 +227,10 @@ input[type="range"]::-ms-thumb {
     height: 14px;
     background-color: #BCBCBC;
     width: 1px;
-    bottom: calc(100% + 7px);
-    left: calc(49.5%);
-}
-
-.kd-qty-range-price-tooltip:not(:last-child):after {
-    content: "";
-    position: absolute;
-    height: 7px;
-    background-color: #BCBCBC;
-    width: 1px;
-    bottom: calc(100% + 14px);
-    left: 149.5%;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 5px;
 }
 
 /* Quantity column layout */
@@ -735,10 +728,13 @@ input[type="range"]::-webkit-slider-runnable-track {
 }
 
 .kd-range-ticks {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-    padding: 0 8px;
+    position: relative;
+    margin-top: 20px; /* More space between slider and tick lines */
+    padding: 0;
+    /* Account for slider thumb width (16px) - thumb center moves from 8px to (width-8px) */
+    width: calc(100% - 16px);
+    margin-left: 8px;
+    height: 50px; /* Height for absolutely positioned tick labels */
 }
 
 .kd-qty-controls {
@@ -972,6 +968,27 @@ input[type="range"]::-webkit-slider-runnable-track {
 .kd-btn-faq:hover {
     background-color: #253461;
     color: white;
+}
+
+/* Override ContactFormPopup button styles when in question box */
+.kd-question-buttons .contact-trigger-button.kd-btn-contact {
+    font-family: 'Jost', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    text-transform: uppercase;
+    padding: 12px 25px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-block;
+    background-color: #10C99E;
+    color: white;
+    border: 1px solid #10C99E;
+}
+
+.kd-question-buttons .contact-trigger-button.kd-btn-contact:hover {
+    background-color: transparent;
+    color: #10C99E;
 }
 
 /* ==========================================

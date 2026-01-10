@@ -1,5 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import {
+  siteConfig,
+  getCollectionPageSchema,
+  getBreadcrumbSchema
+} from '../../config/seo';
 
 const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
@@ -23,12 +28,34 @@ function formatDate(dateStr: string) {
     day: 'numeric'
   });
 }
+
+// SEO configuration
+const pageTitle = 'Blog';
+const pageDescription = 'Entdecken Sie die neuesten Nachrichten, Tipps und Einblicke rund um individuelle Fanschals, Merchandise-Artikel und mehr.';
+const canonicalUrl = `${siteConfig.siteUrl}/blogs/`;
+
+// Generate JSON-LD schemas
+const jsonLdSchemas = [];
+
+// CollectionPage schema for blog archive
+jsonLdSchemas.push(getCollectionPageSchema({
+  name: 'Blog',
+  description: pageDescription,
+  url: canonicalUrl
+}));
+
+// Breadcrumb schema
+jsonLdSchemas.push(getBreadcrumbSchema([
+  { name: 'Home', url: siteConfig.siteUrl },
+  { name: 'Blog', url: canonicalUrl }
+]));
 ---
 
 <BaseLayout
-  title="Blog - Hercules Merchandise"
-  description="Entdecken Sie die neuesten Nachrichten, Tipps und Einblicke rund um individuelle Fanschals, Merchandise-Artikel und mehr."
+  title={pageTitle}
+  description={pageDescription}
   pageType="blog"
+  jsonLd={jsonLdSchemas}
 >
   <!-- Breadcrumb -->
   <div class="breadcrumb-section">

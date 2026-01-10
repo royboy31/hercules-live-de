@@ -157,6 +157,8 @@ interface SyncedProduct {
   pdf_2_url: string | null;
   // FAQ items
   faq: Array<{ question: string; answer: string }>;
+  // Number of images successfully cached in KV (for frontend to know how many thumbnails to show)
+  cached_image_count: number;
   synced_at: string;
 }
 
@@ -659,6 +661,8 @@ async function transformProduct(
     pdf_2_url: product.pdf_2_url || null,
     // FAQ items from ACF fields
     faq: product.faq || [],
+    // Will be updated after image caching
+    cached_image_count: 0,
     synced_at: new Date().toISOString(),
   };
 }
@@ -721,20 +725,9 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
           false // Don't sync images - no R2 bucket
         );
 
-        // Store in KV
-        await env.PRODUCTS_KV.put(
-          `product:${product.id}`,
-          JSON.stringify(syncedProduct)
-        );
-
-        // Also store by slug for easy lookup
-        await env.PRODUCTS_KV.put(
-          `product:slug:${product.slug}`,
-          JSON.stringify(syncedProduct)
-        );
-
         // Cache gallery images in KV (limited to MAX_GALLERY_IMAGES to stay within subrequest limits)
         // forceRefresh parameter passed from sync endpoint to re-download all images
+        let cachedImageCount = 0;
         if (product.slug && product.images?.length > 0) {
           const imagesToCache = Math.min(product.images.length, MAX_GALLERY_IMAGES);
           for (let i = 0; i < imagesToCache; i++) {
@@ -742,15 +735,29 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
             if (img?.src) {
               // Try 600x600 thumbnail first (higher quality for display at 361x361), fallback to original if 404
               const thumbnailUrl = img.src.replace(/(\.[^.]+)$/, '-600x600$1');
-              const success = await syncImageToKV(env.PRODUCTS_KV, thumbnailUrl, product.slug, i, forceImageRefresh);
+              let success = await syncImageToKV(env.PRODUCTS_KV, thumbnailUrl, product.slug, i, forceImageRefresh);
               if (!success && img.src !== thumbnailUrl) {
                 // Fallback to original image if thumbnail doesn't exist
                 // Force refresh since we know it's not cached (just failed above)
-                await syncImageToKV(env.PRODUCTS_KV, img.src, product.slug, i, true);
+                success = await syncImageToKV(env.PRODUCTS_KV, img.src, product.slug, i, true);
+              }
+              if (success) {
+                cachedImageCount++;
               }
             }
           }
         }
+
+        // Update product with cached image count and re-save
+        syncedProduct.cached_image_count = cachedImageCount;
+        await env.PRODUCTS_KV.put(
+          `product:${product.id}`,
+          JSON.stringify(syncedProduct)
+        );
+        await env.PRODUCTS_KV.put(
+          `product:slug:${product.slug}`,
+          JSON.stringify(syncedProduct)
+        );
 
         synced++;
       } catch (error) {
@@ -1924,7 +1931,15 @@ export default {
       }>(kvKey);
 
       if (!base64Image) {
-        // Image not cached - return 404 or redirect to original
+        // Image not cached - try to get original URL from product data and redirect
+        const product = await env.PRODUCTS_KV.get<SyncedProduct>(`product:slug:${slug}`, 'json');
+        if (product && product.images && product.images[imageIndex]) {
+          // Redirect to WordPress image URL
+          const originalUrl = product.images[imageIndex].src;
+          if (originalUrl) {
+            return Response.redirect(originalUrl, 302);
+          }
+        }
         return new Response('Image not found', { status: 404 });
       }
 

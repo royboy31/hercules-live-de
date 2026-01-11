@@ -1135,7 +1135,17 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
       </div>
       <div className="kd-vision-content">
         <h3>VERWIRKLICHEN SIE IHRE VISION ERHALTEN SIE EIN INDIVIDUELLES DESIGN!</h3>
-        <a href="/design-service/" className="kd-btn-design">GEHEN SIE ZUM DESIGN-BEREICH</a>
+        <a
+          href="#design-section"
+          className="kd-btn-design"
+          onClick={(e) => {
+            e.preventDefault();
+            const designSection = document.getElementById('design-section');
+            if (designSection) {
+              designSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >GEHEN SIE ZUM DESIGN-BEREICH</a>
       </div>
     </div>
     </>

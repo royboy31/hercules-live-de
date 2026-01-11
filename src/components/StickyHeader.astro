@@ -4,6 +4,7 @@
 import ProductSearch from './ProductSearch.tsx';
 import UserSession from './UserSession.tsx';
 import WishlistCount from './WishlistCount.tsx';
+import ContactFormPopup from './ContactFormPopup.tsx';
 
 // Navigation items for mobile dropdown
 const sportarten = [
@@ -131,13 +132,7 @@ const themen = [
     <!-- Section df3bc94 - 25% width - Icons -->
     <div class="sticky-section sticky-icons-section">
       <!-- Contact/Email Button - c87a233 -->
-      <a href="#" class="elementor-button sticky-contact-btn" aria-label="Kontakt">
-        <span class="elementor-button-icon">
-          <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-            <path d="M464 64H48C21.49 64 0 85.49 0 112v288c0 26.51 21.49 48 48 48h416c26.51 0 48-21.49 48-48V112c0-26.51-21.49-48-48-48zm0 48v40.805c-22.422 18.259-58.168 46.651-134.587 106.49-16.841 13.247-50.201 45.072-73.413 44.701-23.208.375-56.579-31.459-73.413-44.701C106.18 199.465 70.425 171.067 48 152.805V112h416zM48 400V214.398c22.914 18.251 55.409 43.862 104.938 82.646 21.857 17.205 60.134 55.186 103.062 54.955 42.717.231 80.509-37.199 103.053-54.947 49.528-38.783 82.032-64.401 104.947-82.653V400H48z" fill="currentColor"/>
-          </svg>
-        </span>
-      </a>
+      <ContactFormPopup client:load triggerType="icon" triggerClassName="sticky-contact-popup" />
 
       <!-- Account Icon - fb697af - view-framed -->
       <div class="sticky-user-session">
@@ -409,8 +404,9 @@ const themen = [
     margin-right: calc(17px * 0.25); /* icon-margin formula */
   }
 
-  /* Contact Button - rounded square matching WordPress */
-  .sticky-contact-btn {
+  /* Sticky header contact popup trigger - matching original green button */
+  .sticky-contact-popup:global(.contact-trigger-icon),
+  :global(.sticky-contact-popup.contact-trigger-icon) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -426,23 +422,26 @@ const themen = [
     text-decoration: none;
     transition: all 0.3s;
     flex-shrink: 0;
+    cursor: pointer;
   }
 
-  .sticky-contact-btn:hover,
-  .sticky-contact-btn:focus {
+  .sticky-contact-popup:global(.contact-trigger-icon:hover),
+  :global(.sticky-contact-popup.contact-trigger-icon:hover),
+  .sticky-contact-popup:global(.contact-trigger-icon:focus),
+  :global(.sticky-contact-popup.contact-trigger-icon:focus) {
     background-color: #FFFFFF;
     color: #10C99E;
     border-color: #10C99E;
   }
 
-  .sticky-contact-btn svg {
+  :global(.sticky-contact-popup.contact-trigger-icon svg) {
     width: 22px;
     height: 22px;
     fill: currentColor;
   }
 
-  .sticky-contact-btn:hover svg,
-  .sticky-contact-btn:focus svg {
+  :global(.sticky-contact-popup.contact-trigger-icon:hover svg),
+  :global(.sticky-contact-popup.contact-trigger-icon:focus svg) {
     fill: #10C99E;
   }
 

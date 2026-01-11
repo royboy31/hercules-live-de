@@ -134,6 +134,21 @@ export default function QuantityRequestPopup({
     setError(null);
 
     try {
+      // Format attributes as readable string (e.g., "farbe: rot, größe: XL")
+      const attributesStr = Object.entries(selectedAttributes)
+        .filter(([_, value]) => value && value.toLowerCase() !== 'default')
+        .map(([key, value]) => `${key.replace(/^pa_/, '')}: ${value}`)
+        .join(', ');
+
+      // Format addons as readable string
+      const addonsStr = Object.entries(selectedAddons)
+        .filter(([_, value]) => value)
+        .map(([id, value]) => {
+          const valueStr = Array.isArray(value) ? value.join(', ') : value;
+          return `Addon ${id}: ${valueStr}`;
+        })
+        .join(', ');
+
       const submitData = new FormData();
       submitData.append('firstName', formData.firstName);
       submitData.append('lastName', formData.lastName);
@@ -146,8 +161,8 @@ export default function QuantityRequestPopup({
       submitData.append('productId', String(productId));
       submitData.append('productName', productName);
       submitData.append('quantity', String(maxQuantity));
-      submitData.append('attributes', JSON.stringify(selectedAttributes));
-      submitData.append('addons', JSON.stringify(selectedAddons));
+      submitData.append('attributes', attributesStr);
+      submitData.append('addons', addonsStr);
       submitData.append('formType', 'quantity_request');
 
       // Add files

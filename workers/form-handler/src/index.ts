@@ -62,6 +62,7 @@ interface EmailRecipient {
 interface SendEmailParams {
   to: EmailRecipient[];
   cc?: EmailRecipient[];
+  replyTo?: EmailRecipient;
   subject: string;
   htmlContent: string;
   textContent?: string;
@@ -86,6 +87,7 @@ async function sendEmail(
         },
         to: params.to,
         cc: params.cc,
+        replyTo: params.replyTo,
         subject: params.subject,
         htmlContent: params.htmlContent,
         textContent: params.textContent,
@@ -673,9 +675,13 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
     let emailError = '';
 
     // 1. Save to Google Sheets (with file URLs)
+    // Use formType as the type for proper sheet routing (quantity_request, expressdelivery, or contact)
     const sheetsResult = await saveToGoogleSheets(env, {
-      type: 'contact',
+      type: contactData.formType || 'contact',
       name: contactData.name,
+      // Also send firstName and lastName separately for quantity_request forms
+      firstName: firstName,
+      lastName: lastName,
       email: contactData.email,
       phone: contactData.phone,
       message: contactData.message,
@@ -738,13 +744,39 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
           });
         }
 
-        // Send email to client with company CC'd
-        const emailResult = await sendEmail(env, {
-          to: [{ email: contactData.email, name: contactData.name }],
-          cc: [{ email: env.COMPANY_EMAIL, name: 'Hercules Merchandise' }],
-          subject,
-          htmlContent,
-        });
+        // Send email based on form type (matching WordPress flow)
+        // - Contact Form: TO admin, CC customer
+        // - Express Delivery: TO admin only, Reply-To customer
+        // - Quantity Request: TO admin, Reply-To customer
+        let emailParams: SendEmailParams;
+
+        if (formType === 'expressdelivery' || formType === 'express_delivery') {
+          // Express delivery: TO admin only, Reply-To customer (no CC)
+          emailParams = {
+            to: [{ email: env.COMPANY_EMAIL, name: 'Hercules Merchandise' }],
+            replyTo: { email: contactData.email, name: contactData.name },
+            subject: `Dringende Angebotsanfrage - ${contactData.productName || 'Express'}`,
+            htmlContent,
+          };
+        } else if (formType === 'quantity' || formType === 'quantity_request' || contactData.productName) {
+          // Quantity request: TO admin, Reply-To customer (no CC)
+          emailParams = {
+            to: [{ email: env.COMPANY_EMAIL, name: 'Hercules Merchandise' }],
+            replyTo: { email: contactData.email, name: contactData.name },
+            subject,
+            htmlContent,
+          };
+        } else {
+          // General contact form: TO admin, CC customer
+          emailParams = {
+            to: [{ email: env.COMPANY_EMAIL, name: 'Hercules Merchandise' }],
+            cc: [{ email: contactData.email, name: contactData.name }],
+            subject,
+            htmlContent,
+          };
+        }
+
+        const emailResult = await sendEmail(env, emailParams);
 
         emailSuccess = emailResult.success;
         if (!emailResult.success) {
@@ -871,7 +903,7 @@ async function handleStatus(env: Env): Promise<Response> {
   return new Response(
     JSON.stringify({
       status: 'ok',
-      version: '1.1.0',
+      version: '1.3.0',
       config: {
         brevoConfigured: !!env.BREVO_API_KEY,
         googleSheetsConfigured: !!env.GOOGLE_APPS_SCRIPT_URL,

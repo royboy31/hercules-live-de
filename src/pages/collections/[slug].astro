@@ -245,7 +245,7 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
     <!-- Related Products Section - "Andere Kunden mochten diese Produkte ebenfalls" -->
     {relatedProducts.length > 0 && (
       <section class="related-products-section">
-        <div class="container">
+        <div class="related-products-container">
           <h2 class="related-heading">
             Andere Kunden mochten <span class="highlight">diese Produkte ebenfalls</span>
           </h2>
@@ -537,20 +537,17 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
     }
   }
 
-  /* Related Products Section - "Andere Kunden mochten diese Produkte ebenfalls" */
-  /* Full width section matching production site */
+  /* Related Products Section - "Andere Kunden mochten diese Produkte ebenfalls" - Matching WordPress */
   .related-products-section {
-    padding: 50px 0;
-    background: #FAFAFA;
+    padding: 60px 0 0;
+    background: #fafafa;
     width: 100%;
   }
 
-  .related-products-section .container {
-    width: 100%;
+  .related-products-container {
     max-width: 100%;
     margin: 0 auto;
-    padding: 0 50px;
-    box-sizing: border-box;
+    padding: 0;
   }
 
   .related-heading {
@@ -567,17 +564,16 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
     color: #469ADC;
   }
 
-  /* Elementor grid: 5 columns, 20px column gap, 40px row gap */
+  /* Grid: 5 columns, 20px column gap, 40px row gap */
   .related-products {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     grid-column-gap: 20px;
     grid-row-gap: 40px;
     margin: 0;
-    padding: 0;
+    padding: 0 50px;
     list-style: none;
     width: 100%;
-    max-width: none;
   }
 
   .related-product-item {
@@ -621,8 +617,8 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
 
   /* Tablet: 4 columns */
   @media (max-width: 1024px) {
-    .related-products-section .container {
-      padding: 0 30px;
+    .related-products-section {
+      padding: 40px 0;
     }
 
     .related-products {
@@ -639,16 +635,12 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
   /* Mobile: 2 columns */
   @media (max-width: 767px) {
     .related-products-section {
-      padding: 30px 0;
-    }
-
-    .related-products-section .container {
-      padding: 0 15px;
+      padding: 40px 0;
     }
 
     .related-products {
       grid-template-columns: repeat(2, 1fr);
-      grid-column-gap: 10px;
+      grid-column-gap: 15px;
       grid-row-gap: 20px;
     }
 

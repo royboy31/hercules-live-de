@@ -156,7 +156,7 @@ jsonLdSchemas.push(getBreadcrumbSchema([
               <span itemprop="name">Home</span>
             </a>
             <meta itemprop="position" content="1" />
-            <span class="separator">»</span>
+            <span class="separator"><img src="/images/breadcrumb-separator.svg" alt="" width="6" height="12" /></span>
           </li>
           <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
             <span itemprop="name">{category.name}</span>
@@ -280,9 +280,9 @@ jsonLdSchemas.push(getBreadcrumbSchema([
 
   .category-container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0;
     box-sizing: border-box;
   }
 
@@ -321,8 +321,13 @@ jsonLdSchemas.push(getBreadcrumbSchema([
   }
 
   .breadcrumb .separator {
+    display: flex;
+    align-items: center;
     margin: 0 10px;
-    color: #787878;
+  }
+
+  .breadcrumb .separator img {
+    display: block;
   }
 
   /* Current page (last item) in light blue */
@@ -369,6 +374,7 @@ jsonLdSchemas.push(getBreadcrumbSchema([
     font-weight: 500;
     color: #469ADC;
     text-decoration: none;
+    text-transform: uppercase;
     transition: color 0.2s;
   }
 

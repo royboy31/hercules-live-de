@@ -171,12 +171,24 @@ const logosRow2 = [
 </style>
 
 <script>
-  // Use bundled Swiper instead of CDN to avoid duplicate loading
-  import Swiper from 'swiper';
-  import { Autoplay } from 'swiper/modules';
-  import 'swiper/css';
+  /**
+   * Deferred Swiper initialization using IntersectionObserver
+   * Only loads and initializes Swiper when TrustLogos section enters viewport
+   * This prevents the Autoplay module from blocking LCP on page load
+   */
 
-  document.addEventListener('DOMContentLoaded', function() {
+  let swiperInitialized = false;
+
+  async function initTrustLogosSwiper() {
+    if (swiperInitialized) return;
+    swiperInitialized = true;
+
+    // Dynamically import Swiper only when needed
+    const [{ default: Swiper }, { Autoplay }] = await Promise.all([
+      import('swiper'),
+      import('swiper/modules')
+    ]);
+
     // Common Swiper settings matching WordPress Elementor
     const swiperSettings = {
       modules: [Autoplay],
@@ -211,5 +223,25 @@ const logosRow2 = [
 
     // Initialize RTL carousel
     new Swiper('.trust-swiper-rtl', swiperSettings);
-  });
+  }
+
+  // Use IntersectionObserver to defer Swiper initialization
+  const trustLogosSection = document.querySelector('.trust-logos-section');
+  if (trustLogosSection) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            initTrustLogosSwiper();
+            observer.disconnect(); // Stop observing after init
+          }
+        });
+      },
+      {
+        rootMargin: '200px 0px', // Start loading slightly before visible
+        threshold: 0
+      }
+    );
+    observer.observe(trustLogosSection);
+  }
 </script>

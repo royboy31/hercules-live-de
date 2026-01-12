@@ -38,6 +38,8 @@ interface Props {
   productPrice?: string;
   productCurrency?: string;
   productAvailability?: 'InStock' | 'OutOfStock' | 'PreOrder';
+  // Performance: preload LCP images
+  preloadImages?: string[];
 }
 
 const {
@@ -55,7 +57,8 @@ const {
   author,
   productPrice,
   productCurrency = 'EUR',
-  productAvailability = 'InStock'
+  productAvailability = 'InStock',
+  preloadImages = []
 } = Astro.props;
 
 // Get current path
@@ -123,6 +126,11 @@ if (jsonLd) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Preload LCP images for faster rendering -->
+  {preloadImages.map((src) => (
+    <link rel="preload" as="image" href={src} fetchpriority="high" />
+  ))}
 
   <!-- Primary Meta Tags -->
   <title>{fullTitle}</title>

@@ -137,6 +137,12 @@ jsonLdSchemas.push(getBreadcrumbSchema([
   { name: 'Home', url: siteConfig.siteUrl },
   { name: category?.name || 'Kollektion', url: canonicalUrl }
 ]));
+
+// Get LCP image URL (first product's main image) for preloading
+const lcpImageUrl = validProducts.length > 0
+  ? `${WORKER_URL}/image/${validProducts[0].slug}`
+  : null;
+const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
 ---
 
 <BaseLayout
@@ -145,6 +151,7 @@ jsonLdSchemas.push(getBreadcrumbSchema([
   pageType="collection"
   ogImage={categoryImage}
   jsonLd={jsonLdSchemas}
+  preloadImages={preloadImages}
 >
   <section class="category-page">
     <div class="category-container">
@@ -179,8 +186,8 @@ jsonLdSchemas.push(getBreadcrumbSchema([
       <!-- Product Grid -->
       {validProducts.length > 0 ? (
         <ul class="products">
-          {validProducts.map((product: any) => (
-            <CategoryProductCard product={product} />
+          {validProducts.map((product: any, index: number) => (
+            <CategoryProductCard product={product} index={index} />
           ))}
         </ul>
       ) : (

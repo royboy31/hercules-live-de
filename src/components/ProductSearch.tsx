@@ -161,7 +161,7 @@ export default function ProductSearch({
         .product-search-input {
           width: 100%;
           padding: 12px 45px 12px 18px;
-          border: 1px solid #bfbfbf;
+          border: 1px solid #253461;
           border-radius: 15px;
           font-family: 'Jost', sans-serif;
           font-size: 14px;
@@ -171,7 +171,7 @@ export default function ProductSearch({
         }
 
         .product-search-input:focus {
-          border-color: #253461;
+          border-color: #469ADC;
         }
 
         .product-search-input::placeholder {

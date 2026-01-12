@@ -538,16 +538,19 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
   }
 
   /* Related Products Section - "Andere Kunden mochten diese Produkte ebenfalls" */
-  /* Matching Elementor container styles exactly */
+  /* Full width section matching production site */
   .related-products-section {
     padding: 50px 0;
     background: #FAFAFA;
+    width: 100%;
   }
 
   .related-products-section .container {
-    max-width: 1280px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
     padding: 0 50px;
+    box-sizing: border-box;
   }
 
   .related-heading {
@@ -633,7 +636,7 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
     }
   }
 
-  /* Mobile: 1 column (matching elementor-grid-mobile-1) */
+  /* Mobile: 2 columns */
   @media (max-width: 767px) {
     .related-products-section {
       padding: 30px 0;
@@ -644,8 +647,8 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
     }
 
     .related-products {
-      grid-template-columns: 1fr;
-      grid-column-gap: 0;
+      grid-template-columns: repeat(2, 1fr);
+      grid-column-gap: 10px;
       grid-row-gap: 20px;
     }
 
@@ -655,11 +658,18 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
     }
 
     .related-product-item {
-      padding: 30px 10px;
+      padding: 20px 10px;
     }
 
     .related-product-title {
-      font-size: 16px;
+      font-size: 14px;
+    }
+  }
+
+  /* Small mobile: 1 column */
+  @media (max-width: 480px) {
+    .related-products {
+      grid-template-columns: 1fr;
     }
   }
 

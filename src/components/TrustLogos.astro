@@ -93,7 +93,8 @@ const logosRow2 = [
 <style>
   .trust-section {
     background-color: #F4F4F4;
-    padding: 30px 0;
+    padding: 60px 0;
+    margin-top: 50px;
     overflow: hidden;
     width: 100%;
   }
@@ -109,7 +110,7 @@ const logosRow2 = [
     text-transform: uppercase;
     color: #253461;
     text-align: center;
-    margin: 0 0 20px 0;
+    margin: 0 0 40px 0;
     padding: 0 20px;
   }
 
@@ -226,8 +227,8 @@ const logosRow2 = [
   }
 
   // Use IntersectionObserver to defer Swiper initialization
-  const trustLogosSection = document.querySelector('.trust-logos-section');
-  if (trustLogosSection) {
+  const trustSection = document.querySelector('.trust-section');
+  if (trustSection) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -242,6 +243,9 @@ const logosRow2 = [
         threshold: 0
       }
     );
-    observer.observe(trustLogosSection);
+    observer.observe(trustSection);
+  } else {
+    // Fallback: initialize after a short delay if section not found
+    setTimeout(initTrustLogosSwiper, 1000);
   }
 </script>

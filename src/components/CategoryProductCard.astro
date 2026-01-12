@@ -57,7 +57,7 @@ const galleryImages = (product.images || []).slice(0, imageCount).map((img, inde
   };
 });
 
-// Worker cached main image URL
+// Worker cached main image URL (direct from KV, no transformation)
 const workerImageUrl = `${WORKER_URL}/image/${product.slug}`;
 
 // Format price - just show the base price like WooCommerce does

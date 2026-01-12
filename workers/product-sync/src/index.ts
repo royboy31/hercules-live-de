@@ -461,12 +461,41 @@ async function syncImageToKV(
       }
     }
 
-    // Fetch the image
-    const response = await fetch(imageUrl, {
-      headers: {
-        'User-Agent': 'Hercules-Product-Sync/1.0',
-      },
-    });
+    // Try to fetch WebP version first (pre-converted on WordPress server)
+    // WebP files are stored alongside originals with same name but .webp extension
+    const webpUrl = imageUrl.replace(/\.(png|jpe?g)$/i, '.webp');
+    let response: Response;
+    let contentType: string;
+
+    // Try WebP first
+    if (webpUrl !== imageUrl) {
+      response = await fetch(webpUrl, {
+        headers: {
+          'User-Agent': 'Hercules-Product-Sync/1.0',
+        },
+      });
+
+      if (response.ok) {
+        contentType = 'image/webp';
+        console.log(`Using WebP: ${webpUrl}`);
+      } else {
+        // Fall back to original format
+        response = await fetch(imageUrl, {
+          headers: {
+            'User-Agent': 'Hercules-Product-Sync/1.0',
+          },
+        });
+        contentType = response.headers.get('content-type') || 'image/png';
+      }
+    } else {
+      // No WebP conversion possible (URL doesn't end in png/jpg)
+      response = await fetch(imageUrl, {
+        headers: {
+          'User-Agent': 'Hercules-Product-Sync/1.0',
+        },
+      });
+      contentType = response.headers.get('content-type') || 'image/png';
+    }
 
     if (!response.ok) {
       console.error(`Failed to fetch image: ${imageUrl} - ${response.status}`);
@@ -474,7 +503,6 @@ async function syncImageToKV(
     }
 
     const imageBuffer = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'image/png';
 
     // Store image as base64 in KV with metadata
     const base64Image = btoa(
@@ -1692,6 +1720,113 @@ export default {
       });
     }
 
+    // Resync all images as WebP (force re-download and convert)
+    // Use ?offset=N for pagination (default batch size: 10 products)
+    if (url.pathname === '/resync-images' && request.method === 'POST') {
+      const authHeader = request.headers.get('Authorization');
+      if (authHeader !== `Bearer ${env.WEBHOOK_SECRET}`) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+
+      const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+      const batchSize = 5; // Products per batch (reduced to stay within 50 subrequest limit)
+
+      try {
+        // Get all products from index
+        const indexStr = await env.PRODUCTS_KV.get('product:index');
+        if (!indexStr) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'No products found in index'
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const allProducts = JSON.parse(indexStr) as Array<{ id: number; name: string; slug: string }>;
+        const totalProducts = allProducts.length;
+        const productsToSync = allProducts.slice(offset, offset + batchSize);
+
+        let imagesSynced = 0;
+        let imagesFailed = 0;
+        const results: Array<{ slug: string; images: number; failed: number }> = [];
+
+        for (const product of productsToSync) {
+          // Get full product data to access images array
+          const productStr = await env.PRODUCTS_KV.get(`product:slug:${product.slug}`);
+          if (!productStr) continue;
+
+          const productData = JSON.parse(productStr);
+          const images = productData.images || [];
+          let productImagesSynced = 0;
+          let productImagesFailed = 0;
+
+          // Sync each image with force refresh (WebP conversion)
+          // Limit to 5 images per product to stay within subrequest limits
+          for (let i = 0; i < images.length && i < 5; i++) {
+            const imageUrl = images[i].src || images[i].local_src;
+            if (!imageUrl) continue;
+
+            const success = await syncImageToKV(
+              env.PRODUCTS_KV,
+              imageUrl,
+              product.slug,
+              i,
+              true // forceRefresh = true to re-download as WebP
+            );
+
+            if (success) {
+              productImagesSynced++;
+              imagesSynced++;
+            } else {
+              productImagesFailed++;
+              imagesFailed++;
+            }
+          }
+
+          results.push({
+            slug: product.slug,
+            images: productImagesSynced,
+            failed: productImagesFailed
+          });
+        }
+
+        const hasMore = offset + batchSize < totalProducts;
+        const nextOffset = hasMore ? offset + batchSize : null;
+
+        return new Response(JSON.stringify({
+          success: true,
+          batch: {
+            offset,
+            batchSize,
+            processed: productsToSync.length,
+            totalProducts
+          },
+          images: {
+            synced: imagesSynced,
+            failed: imagesFailed
+          },
+          results,
+          hasMore,
+          nextOffset,
+          message: hasMore
+            ? `Processed ${productsToSync.length} products. Run again with offset=${nextOffset} to continue.`
+            : `Complete! All ${totalProducts} products processed.`
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
+      } catch (error) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Get product by ID or slug
     if (url.pathname.startsWith('/product/')) {
       const identifier = url.pathname.replace('/product/', '');
@@ -1918,10 +2053,15 @@ export default {
 
     // Serve cached product images
     // Supports: /image/{slug} (main image) or /image/{slug}/{index} (gallery image)
+    // Optional query params: ?w=300 (width), ?format=webp (output format)
     if (url.pathname.startsWith('/image/')) {
       const pathParts = url.pathname.replace('/image/', '').split('/');
       const slug = pathParts[0];
       const imageIndex = pathParts[1] ? parseInt(pathParts[1], 10) : 0;
+
+      // Optional resizing parameters
+      const requestedWidth = url.searchParams.get('w');
+      const requestedFormat = url.searchParams.get('format');
 
       if (!slug) {
         return new Response('Missing product slug', { status: 400 });
@@ -1942,16 +2082,75 @@ export default {
         // Image not cached - try to get original URL from product data and redirect
         const product = await env.PRODUCTS_KV.get<SyncedProduct>(`product:slug:${slug}`, 'json');
         if (product && product.images && product.images[imageIndex]) {
-          // Redirect to WordPress image URL
+          // Redirect to WordPress image URL (with optional resizing via Cloudflare)
           const originalUrl = product.images[imageIndex].src;
           if (originalUrl) {
+            // If resizing requested, use Cloudflare Image Resizing
+            if (requestedWidth || requestedFormat) {
+              const imageOptions: RequestInitCfPropertiesImage = {
+                fit: 'contain',
+                quality: 85,
+              };
+              if (requestedWidth) {
+                imageOptions.width = parseInt(requestedWidth, 10);
+              }
+              if (requestedFormat === 'webp') {
+                imageOptions.format = 'webp';
+              }
+              try {
+                const resizedResponse = await fetch(originalUrl, {
+                  cf: { image: imageOptions }
+                });
+                if (resizedResponse.ok) {
+                  const headers = new Headers(resizedResponse.headers);
+                  headers.set('Cache-Control', 'public, max-age=86400');
+                  headers.set('Access-Control-Allow-Origin', '*');
+                  return new Response(resizedResponse.body, {
+                    status: 200,
+                    headers
+                  });
+                }
+              } catch (e) {
+                // Fall through to redirect if resizing fails
+              }
+            }
             return Response.redirect(originalUrl, 302);
           }
         }
         return new Response('Image not found', { status: 404 });
       }
 
-      // Decode base64 to binary
+      // If resizing requested and we have the original URL, use Cloudflare Image Resizing
+      if ((requestedWidth || requestedFormat) && metadata?.originalUrl) {
+        const imageOptions: RequestInitCfPropertiesImage = {
+          fit: 'contain',
+          quality: 85,
+        };
+        if (requestedWidth) {
+          imageOptions.width = parseInt(requestedWidth, 10);
+        }
+        if (requestedFormat === 'webp') {
+          imageOptions.format = 'webp';
+        }
+        try {
+          const resizedResponse = await fetch(metadata.originalUrl, {
+            cf: { image: imageOptions }
+          });
+          if (resizedResponse.ok) {
+            const headers = new Headers(resizedResponse.headers);
+            headers.set('Cache-Control', 'public, max-age=86400');
+            headers.set('Access-Control-Allow-Origin', '*');
+            return new Response(resizedResponse.body, {
+              status: 200,
+              headers
+            });
+          }
+        } catch (e) {
+          // Fall through to serve original if resizing fails
+        }
+      }
+
+      // Decode base64 to binary (original image)
       const binaryString = atob(base64Image);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {

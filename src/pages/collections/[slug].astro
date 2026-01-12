@@ -138,7 +138,7 @@ jsonLdSchemas.push(getBreadcrumbSchema([
   { name: category?.name || 'Kollektion', url: canonicalUrl }
 ]));
 
-// Get LCP image URL (first product's main image) for preloading
+// Get LCP image URL for preloading (must match the actual src used)
 const lcpImageUrl = validProducts.length > 0
   ? `${WORKER_URL}/image/${validProducts[0].slug}`
   : null;

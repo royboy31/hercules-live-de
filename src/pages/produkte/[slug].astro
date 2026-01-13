@@ -416,7 +416,7 @@ if (product) {
         <!-- Related Products Section - "Andere Kunden mochten diese Produkte ebenfalls" -->
         {relatedProducts.length > 0 && (
           <section class="related-products-section">
-            <div class="container">
+            <div class="related-products-container">
               <h2 class="related-heading">
                 Andere Kunden mochten <span class="highlight">diese Produkte ebenfalls</span>
               </h2>
@@ -514,7 +514,7 @@ if (product) {
   /* Breadcrumb - Matching WordPress EAEL styling */
   .breadcrumb {
     background: #FAFAFA;
-    padding: 10px 0;
+    padding: 28px 0 5px;
   }
 
   .breadcrumb .container {
@@ -522,12 +522,13 @@ if (product) {
     align-items: center;
     gap: 10px;
     font-family: 'Jost', sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 400;
   }
 
   .breadcrumb a {
-    color: #253461;
+    color: rgb(95, 95, 95);
+    font-size: 14px;
     text-decoration: none;
     transition: color 0.2s ease;
   }
@@ -761,7 +762,7 @@ if (product) {
 
   /* ProductConfigurator component handles variations and add-to-cart via steps.css */
 
-  /* Product Description Card */
+  /* Product Description Card - Matching WordPress Elementor */
   .product-description {
     margin-top: 50px;
     border: 1px solid #DCDCDC;
@@ -771,10 +772,10 @@ if (product) {
   }
 
   .description-content {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Jost', sans-serif;
     font-size: 16px;
-    line-height: 1.7;
-    color: #555;
+    line-height: 1.5;
+    color: #5F5F5F;
   }
 
   /* Styles for injected HTML content (set:html) - must use :global() */
@@ -795,27 +796,74 @@ if (product) {
   .description-content :global(h3) {
     font-family: 'Jost', sans-serif;
     color: #253461;
-    margin: 25px 0 15px 0;
-    font-size: 20px;
+    margin: 30px 0 15px 0;
+    font-size: 22px;
     font-weight: 600;
     text-align: left;
     text-transform: none;
   }
 
+  .description-content :global(h4) {
+    font-family: 'Jost', sans-serif;
+    color: #253461;
+    margin: 25px 0 12px 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
   .description-content :global(p) {
-    margin-bottom: 15px;
+    margin-bottom: 18px;
   }
 
+  /* Bullet point list styling - WordPress style */
   .description-content :global(ul) {
-    padding-left: 20px;
+    list-style: none;
+    padding-left: 40px;
+    margin: 20px 0;
   }
 
-  .description-content :global(li) {
-    margin-bottom: 8px;
+  .description-content :global(ul li) {
+    position: relative;
+    padding-left: 25px;
+    line-height: 1.6;
+  }
+
+  .description-content :global(ul li::before) {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 8px;
+    height: 8px;
+    background-color: #5F5F5F;
+    border-radius: 50%;
+  }
+
+  /* Ordered list styling */
+  .description-content :global(ol) {
+    list-style-type: decimal;
+    padding-left: 40px;
+    margin: 20px 0;
+  }
+
+  .description-content :global(ol li) {
+    line-height: 1.6;
+    padding-left: 5px;
   }
 
   .description-content :global(a) {
     color: #469ADC;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .description-content :global(a:hover) {
+    color: #253461;
+    text-decoration: underline;
+  }
+
+  .description-content :global(strong) {
+    font-weight: 600;
   }
 
   @media (max-width: 768px) {
@@ -823,8 +871,27 @@ if (product) {
       padding: 30px 20px;
     }
 
+    .description-content {
+      font-size: 15px;
+    }
+
     .description-content :global(h2:first-of-type) {
       font-size: 28px;
+    }
+
+    .description-content :global(h2 ~ h2),
+    .description-content :global(h3) {
+      font-size: 18px;
+    }
+
+    .description-content :global(ul li) {
+      padding-left: 22px;
+    }
+
+    .description-content :global(ul li::before) {
+      width: 6px;
+      height: 6px;
+      top: 7px;
     }
   }
 
@@ -833,7 +900,7 @@ if (product) {
     margin-top: 50px;
     background: url('/images/footer-bg-1.jpg') center center / cover no-repeat;
     position: relative;
-    padding: 35px 20px 40px 20px;
+    padding: 55px 20px 40px 20px;
   }
 
   .design-section-container {
@@ -1341,10 +1408,17 @@ if (product) {
     }
   }
 
-  /* Related Products Section - "Andere Kunden mochten diese Produkte ebenfalls" */
+  /* Related Products Section - "Andere Kunden mochten diese Produkte ebenfalls" - Matching WordPress */
   .related-products-section {
     padding: 60px 0;
-    background: #FAFAFA;
+    background: #F4F4F4;
+    width: 100%;
+  }
+
+  .related-products-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0;
   }
 
   .related-heading {
@@ -1429,6 +1503,10 @@ if (product) {
 
   /* Mobile: 2 columns */
   @media (max-width: 768px) {
+    .related-products-section {
+      padding: 40px 0;
+    }
+
     .related-products {
       grid-template-columns: repeat(2, 1fr);
       grid-column-gap: 15px;
@@ -1456,11 +1534,12 @@ if (product) {
     }
   }
 
-  /* Customer Reviews Section - "Was Kunden über uns sagen" */
+  /* Customer Reviews Section - "Was Kunden über uns sagen" - Matching homepage spacing */
   .reviews-section {
     width: 100%;
-    padding: 60px 0 50px 0;
-    background: #ffffff;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 80px 0 50px 0;
   }
 
   .reviews-heading {
@@ -1470,7 +1549,7 @@ if (product) {
     text-transform: uppercase;
     color: #253461;
     text-align: center;
-    margin: 0 0 20px 0;
+    margin: 0 0 55px 0;
   }
 
   .reviews-heading .highlight {
@@ -1490,7 +1569,7 @@ if (product) {
 
   @media (max-width: 767px) {
     .reviews-section {
-      padding: 40px 0;
+      padding: 40px 20px;
     }
 
     .reviews-heading {

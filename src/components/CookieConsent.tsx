@@ -42,41 +42,23 @@ export default function CookieConsent() {
     window.dispatchEvent(new CustomEvent('cmplz_consent_updated', { detail: newPreferences }));
   };
 
-  const handleClose = () => {
-    // Close without saving - user must choose
-    // For GDPR compliance, closing should be like denying
-    saveConsent(false, true);
-  };
-
   if (!isVisible) return null;
 
   return (
     <>
       <div className="cmplz-overlay" />
       <div className="cmplz-cookiebanner" role="dialog" aria-modal="true" aria-labelledby="cmplz-header" aria-describedby="cmplz-message">
-        {/* Header */}
+        {/* Header - Centered logo and title, no close button */}
         <div className="cmplz-header">
           <div className="cmplz-logo">
             <img
-              width="40"
-              height="18"
+              width="50"
+              height="22"
               src="/images/hercules-logo-small.webp"
               alt="Hercules Merchandise DE"
             />
           </div>
-          <div className="cmplz-title" id="cmplz-header">Einwilligung verwalten</div>
-          <div
-            className="cmplz-close"
-            tabIndex={0}
-            role="button"
-            aria-label="Dialog schließen"
-            onClick={handleClose}
-            onKeyDown={(e) => e.key === 'Enter' && handleClose()}
-          >
-            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 352 512">
-              <path fill="currentColor" d="M242.72 256l100.07-100.07c12.28-12.28 12.28-32.19 0-44.48l-22.24-22.24c-12.28-12.28-32.19-12.28-44.48 0L176 189.28 75.93 89.21c-12.28-12.28-32.19-12.28-44.48 0L9.21 111.45c-12.28 12.28-12.28 32.19 0 44.48L109.28 256 9.21 356.07c-12.28 12.28-12.28 32.19 0 44.48l22.24 22.24c12.28 12.28 32.2 12.28 44.48 0L176 322.72l100.07 100.07c12.28 12.28 32.2 12.28 44.48 0l22.24-22.24c12.28-12.28 12.28-32.19 0-44.48L242.72 256z"></path>
-            </svg>
-          </div>
+          <div className="cmplz-title" id="cmplz-header">Cookie-Einstellungen</div>
         </div>
 
         <div className="cmplz-divider"></div>
@@ -84,17 +66,17 @@ export default function CookieConsent() {
         {/* Body */}
         <div className="cmplz-body">
           <div className="cmplz-message" id="cmplz-message">
-            <p><strong>Um die besten Erfahrungen zu bieten, verwenden wir Technologien wie Cookies, um Geräteinformationen zu speichern und/oder darauf zuzugreifen. Wenn Sie diesen Technologien zustimmen, können wir Daten wie Ihr Surfverhalten oder eindeutige IDs auf dieser Website verarbeiten. Wenn Sie Ihre Zustimmung nicht erteilen oder zurückziehen, kann dies bestimmte Funktionen und Features beeinträchtigen.</strong></p>
+            <p>Wir nutzen Cookies, um Ihnen das beste Einkaufserlebnis zu bieten. Dazu gehören Cookies für den Betrieb der Seite, für Analysen und personalisierte Inhalte.</p>
           </div>
 
-          {/* Categories - shown when "Einstellungen anzeigen" is clicked */}
+          {/* Categories - shown when "Einstellungen" is clicked */}
           {showCategories && (
             <div className="cmplz-categories cmplz-fade-in">
               {/* Functional */}
               <details className="cmplz-category cmplz-functional" open>
                 <summary>
                   <span className="cmplz-category-header">
-                    <span className="cmplz-category-title">Funktional</span>
+                    <span className="cmplz-category-title">Notwendig</span>
                     <span className="cmplz-always-active">
                       <span className="cmplz-banner-checkbox">
                         <input type="checkbox" checked disabled className="cmplz-consent-checkbox cmplz-functional" />
@@ -110,7 +92,7 @@ export default function CookieConsent() {
                   </span>
                 </summary>
                 <div className="cmplz-description">
-                  Die technische Speicherung oder der Zugriff ist unbedingt erforderlich für den legitimen Zweck, die Nutzung eines bestimmten Dienstes zu ermöglichen, der vom Abonnenten oder Nutzer ausdrücklich gewünscht wird, oder für den alleinigen Zweck, die Übertragung einer Nachricht über ein elektronisches Kommunikationsnetz durchzuführen.
+                  Diese Cookies sind für die Grundfunktionen der Website erforderlich, wie z.B. Warenkorb und Anmeldung.
                 </div>
               </details>
 
@@ -136,7 +118,7 @@ export default function CookieConsent() {
                   </span>
                 </summary>
                 <div className="cmplz-description">
-                  Die technische Speicherung oder der Zugriff, der ausschließlich zu statistischen Zwecken verwendet wird.
+                  Helfen uns zu verstehen, wie Besucher mit der Website interagieren.
                 </div>
               </details>
 
@@ -162,27 +144,29 @@ export default function CookieConsent() {
                   </span>
                 </summary>
                 <div className="cmplz-description">
-                  Die technische Speicherung oder der Zugriff ist erforderlich, um Nutzerprofile zu erstellen, um Werbung zu versenden, oder um den Nutzer auf einer Website oder über mehrere Websites hinweg zu verfolgen, um ähnliche Marketingzwecke zu erfüllen.
+                  Werden verwendet, um relevante Werbung anzuzeigen.
                 </div>
               </details>
             </div>
           )}
         </div>
 
-        {/* Buttons */}
+        {/* Buttons - GDPR compliant: Accept and Reject must be equally visible */}
         <div className="cmplz-buttons">
           <button className="cmplz-btn cmplz-accept" onClick={() => saveConsent(true)}>
-            Akzeptieren
+            Alle akzeptieren
           </button>
           <button className="cmplz-btn cmplz-deny" onClick={() => saveConsent(false, true)}>
-            Ablehnen
+            Nur notwendige
           </button>
+        </div>
+        <div className="cmplz-settings-link">
           {!showCategories ? (
-            <button className="cmplz-btn cmplz-view-preferences" onClick={() => setShowCategories(true)}>
-              Einstellungen anzeigen
+            <button className="cmplz-link-btn" onClick={() => setShowCategories(true)}>
+              Einstellungen anpassen
             </button>
           ) : (
-            <button className="cmplz-btn cmplz-save-preferences" onClick={() => saveConsent(false)}>
+            <button className="cmplz-link-btn" onClick={() => saveConsent(false)}>
               Auswahl speichern
             </button>
           )}
@@ -196,80 +180,76 @@ export default function CookieConsent() {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.6);
+          background: rgba(0, 0, 0, 0.65);
           z-index: 99998;
+          backdrop-filter: blur(2px);
         }
 
         .cmplz-cookiebanner {
           position: fixed;
-          left: 10px;
-          bottom: 10px;
-          width: 526px;
-          max-width: calc(100vw - 20px);
-          max-height: calc(100vh - 20px);
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: 480px;
+          max-width: calc(100vw - 40px);
+          max-height: calc(100vh - 40px);
           background: #ffffff;
-          border-radius: 12px;
-          padding: 15px 20px;
+          border-radius: 16px;
+          padding: 24px 28px;
           z-index: 99999;
-          box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          gap: 16px;
+          font-family: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           box-sizing: border-box;
           overflow: hidden;
+          animation: cmplz-slideIn 0.3s ease-out;
+        }
+
+        @keyframes cmplz-slideIn {
+          from {
+            opacity: 0;
+            transform: translate(-50%, -48%);
+          }
+          to {
+            opacity: 1;
+            transform: translate(-50%, -50%);
+          }
         }
 
         .cmplz-header {
-          display: grid;
-          grid-template-columns: 100px 1fr 100px;
+          display: flex;
+          flex-direction: column;
           align-items: center;
+          gap: 8px;
+          text-align: center;
         }
 
         .cmplz-logo img {
-          max-height: 40px;
+          max-height: 45px;
           width: auto;
         }
 
         .cmplz-title {
-          justify-self: center;
-          font-size: 15px;
-          font-weight: 500;
+          font-size: 18px;
+          font-weight: 600;
           color: #253461;
           text-align: center;
         }
 
-        .cmplz-close {
-          justify-self: end;
-          font-size: 20px;
-          cursor: pointer;
-          width: 20px;
-          height: 20px;
-          color: #253461;
-          line-height: 20px;
-        }
-
-        .cmplz-close svg {
-          width: 20px;
-          height: 20px;
-        }
-
-        .cmplz-close:hover {
-          opacity: 0.7;
-        }
-
         .cmplz-divider {
-          margin-left: -20px;
-          margin-right: -20px;
-          border-bottom: 1px solid #f2f2f2;
+          margin-left: -28px;
+          margin-right: -28px;
+          border-bottom: 1px solid #e5e7eb;
         }
 
         .cmplz-body {
           display: flex;
           flex-direction: column;
-          gap: 10px;
+          gap: 12px;
           overflow-y: auto;
-          max-height: 55vh;
+          max-height: 50vh;
         }
 
         .cmplz-body::-webkit-scrollbar {
@@ -282,10 +262,10 @@ export default function CookieConsent() {
         }
 
         .cmplz-message {
-          font-size: 12px;
-          line-height: 18px;
-          color: #253461;
-          margin-bottom: 5px;
+          font-size: 14px;
+          line-height: 1.6;
+          color: #4b5563;
+          text-align: center;
         }
 
         .cmplz-message p {
@@ -432,69 +412,102 @@ export default function CookieConsent() {
 
         .cmplz-buttons {
           display: flex;
-          gap: 10px;
+          gap: 12px;
         }
 
         .cmplz-btn {
           flex: 1;
-          height: 45px;
-          padding: 10px;
-          border-radius: 6px;
+          height: 48px;
+          padding: 12px 20px;
+          border-radius: 10px;
           cursor: pointer;
           font-size: 15px;
-          font-weight: 500;
+          font-weight: 600;
           text-align: center;
-          border: 1px solid;
+          border: 2px solid;
           font-family: inherit;
           transition: all 0.2s ease;
           white-space: nowrap;
         }
 
         .cmplz-btn:hover {
-          opacity: 0.9;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
+        /* GDPR Compliant: Both buttons must be equally visible and styled */
         .cmplz-btn.cmplz-accept {
           background-color: #10c99e;
           border-color: #10c99e;
           color: #ffffff;
         }
 
-        .cmplz-btn.cmplz-deny {
-          background-color: #f9f9f9;
-          border-color: #f2f2f2;
-          color: #222222;
+        .cmplz-btn.cmplz-accept:hover {
+          background-color: #0eb38c;
+          border-color: #0eb38c;
         }
 
-        .cmplz-btn.cmplz-view-preferences,
-        .cmplz-btn.cmplz-save-preferences {
-          background-color: #f9f9f9;
-          border-color: #f2f2f2;
-          color: #333333;
+        .cmplz-btn.cmplz-deny {
+          background-color: #253461;
+          border-color: #253461;
+          color: #ffffff;
+        }
+
+        .cmplz-btn.cmplz-deny:hover {
+          background-color: #1a2547;
+          border-color: #1a2547;
+        }
+
+        .cmplz-settings-link {
+          text-align: center;
+          margin-top: -4px;
+        }
+
+        .cmplz-link-btn {
+          background: none;
+          border: none;
+          color: #6b7280;
+          font-size: 13px;
+          font-family: inherit;
+          cursor: pointer;
+          text-decoration: underline;
+          padding: 4px 8px;
+          transition: color 0.2s ease;
+        }
+
+        .cmplz-link-btn:hover {
+          color: #253461;
         }
 
         @media (max-width: 768px) {
           .cmplz-cookiebanner {
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            max-width: 100%;
-            border-radius: 12px 12px 0 0;
+            width: calc(100% - 32px);
+            max-width: 400px;
+            padding: 20px 24px;
           }
 
           .cmplz-buttons {
             flex-direction: column;
+            gap: 10px;
+          }
+
+          .cmplz-btn {
+            height: 50px;
           }
         }
 
         @media (max-width: 425px) {
-          .cmplz-header .cmplz-title {
-            display: none;
+          .cmplz-cookiebanner {
+            width: calc(100% - 24px);
+            padding: 18px 20px;
           }
 
-          .cmplz-header {
-            grid-template-columns: 50px 1fr 30px;
+          .cmplz-title {
+            font-size: 16px;
+          }
+
+          .cmplz-message {
+            font-size: 13px;
           }
 
           .cmplz-category-header {

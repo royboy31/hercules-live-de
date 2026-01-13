@@ -247,3 +247,28 @@ footer {
   content-visibility: auto;
   contain-intrinsic-size: auto 500px;
 }
+
+/* Optimize Swiper containers to reduce forced reflows */
+.swiper {
+  contain: layout style;
+}
+
+.swiper-wrapper {
+  will-change: transform;
+}
+
+.swiper-slide {
+  contain: layout style paint;
+}
+
+/* Reduce reflow scope for product cards */
+.product-card,
+.category-product-card {
+  contain: layout style;
+}
+
+/* Optimize header for scroll performance */
+#sticky-header {
+  will-change: transform, opacity;
+  contain: layout style;
+}

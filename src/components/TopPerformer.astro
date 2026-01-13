@@ -277,7 +277,7 @@ const { products } = Astro.props;
   import { Navigation, Autoplay } from 'swiper/modules';
   import 'swiper/css';
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function initSwiper() {
     new Swiper('.top-performer-swiper', {
       modules: [Navigation, Autoplay],
       slidesPerView: 1,
@@ -304,5 +304,14 @@ const { products } = Astro.props;
         },
       },
     });
+  }
+
+  // Defer Swiper init to avoid blocking main thread
+  document.addEventListener('DOMContentLoaded', () => {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(initSwiper, { timeout: 2000 });
+    } else {
+      setTimeout(initSwiper, 100);
+    }
   });
 </script>

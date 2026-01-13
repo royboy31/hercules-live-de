@@ -59,8 +59,8 @@ export default function CookieConsent() {
           <div className="cmplz-logo">
             <img
               width="40"
-              height="40"
-              src="/images/hercules-logo-original1.png"
+              height="18"
+              src="/images/hercules-logo-small.webp"
               alt="Hercules Merchandise DE"
             />
           </div>

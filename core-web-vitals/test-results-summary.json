@@ -1,0 +1,84 @@
+{
+  "url": "https://staging.hercules-merchandise.de/collections/personalisierte-sportbekleidung/",
+  "testDate": "2026-01-12",
+  "environment": "Production Staging (Edge Router)",
+  "mobile": {
+    "scores": {
+      "performance": 88,
+      "accessibility": 97,
+      "bestPractices": 96,
+      "seo": 92
+    },
+    "metrics": {
+      "fcp": "2.6 s",
+      "lcp": "3.4 s",
+      "tbt": "0 ms",
+      "cls": "0.001",
+      "speedIndex": "2.6 s"
+    },
+    "serverResponseTime": "12 ms",
+    "totalRequests": 89,
+    "jsFiles": 19,
+    "cssFiles": 3,
+    "images": 57
+  },
+  "desktop": {
+    "scores": {
+      "performance": 99,
+      "accessibility": 97,
+      "bestPractices": 96,
+      "seo": 92
+    },
+    "metrics": {
+      "fcp": "0.7 s",
+      "lcp": "0.8 s",
+      "tbt": "0 ms",
+      "cls": "0.005",
+      "speedIndex": "0.9 s"
+    },
+    "serverResponseTime": "13 ms"
+  },
+  "opportunities": [
+    {
+      "title": "Reduce unused JavaScript",
+      "savings": "Est savings of 23 KiB",
+      "file": "client.D_Es0amM.js",
+      "details": "53.4 KB total, 23.0 KB unused (43%)"
+    }
+  ],
+  "optimizationsVerified": [
+    "Image lazy loading with IntersectionObserver",
+    "Deferred TrustLogos Swiper",
+    "Dynamic Swiper imports",
+    "LCP image preload",
+    "Zero layout shift (CLS: 0.001)",
+    "Zero blocking time (TBT: 0ms)",
+    "Fast server response (12-13ms)"
+  ],
+  "edgeRouterImpact": {
+    "latency": "12-13ms",
+    "performancePenalty": "None detected",
+    "conclusion": "Edge Router performs equal to or better than direct Pages URL"
+  },
+  "recommendations": [
+    {
+      "priority": 1,
+      "issue": "Mobile LCP is 3.4s (target: < 2.5s)",
+      "solution": "Add fetchpriority='high' to mobile hero image, optimize image size for mobile viewport",
+      "expectedGain": "+1-2 points"
+    },
+    {
+      "priority": 2,
+      "issue": "23 KB unused JavaScript in client bundle",
+      "solution": "Implement route-based code splitting, remove unused Astro client code",
+      "expectedGain": "+1 point"
+    }
+  ],
+  "pathTo90Plus": {
+    "currentScore": 88,
+    "targetScore": 90,
+    "gap": 2,
+    "estimatedEffort": "1-2 hours",
+    "projectedScore": "90-91"
+  }
+}

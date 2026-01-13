@@ -65,15 +65,35 @@
 </style>
 
 <script is:inline>
-  // Load TrustIndex widget after DOM is ready
-  document.addEventListener('DOMContentLoaded', function() {
-    var container = document.getElementById('trustindex-widget');
-    if (container) {
-      var script = document.createElement('script');
-      script.src = 'https://cdn.trustindex.io/loader.js?72406ce58900366af2861a4ccab';
-      script.defer = true;
-      script.async = true;
-      container.appendChild(script);
+  // Load TrustIndex widget only when section becomes visible (reduces forced reflows)
+  (function() {
+    var loaded = false;
+    function loadWidget() {
+      if (loaded) return;
+      loaded = true;
+      var container = document.getElementById('trustindex-widget');
+      if (container) {
+        var script = document.createElement('script');
+        script.src = 'https://cdn.trustindex.io/loader.js?72406ce58900366af2861a4ccab';
+        script.defer = true;
+        script.async = true;
+        container.appendChild(script);
+      }
     }
-  });
+
+    // Use IntersectionObserver to defer loading until visible
+    var section = document.querySelector('.reviews-section');
+    if (section && 'IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting) {
+          loadWidget();
+          observer.disconnect();
+        }
+      }, { rootMargin: '200px 0px', threshold: 0 });
+      observer.observe(section);
+    } else {
+      // Fallback for browsers without IntersectionObserver
+      document.addEventListener('DOMContentLoaded', loadWidget);
+    }
+  })();
 </script>

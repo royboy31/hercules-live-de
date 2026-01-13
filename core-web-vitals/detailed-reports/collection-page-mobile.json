@@ -1,0 +1,38 @@
+{
+  "url": "https://dff8aa9f.hercules-astro.pages.dev/collections/personalisierte-sportbekleidung/",
+  "strategy": "mobile",
+  "tested_date": "2026-01-12",
+  "scores": {
+    "performance": 78,
+    "accessibility": 97,
+    "best_practices": 96,
+    "seo": 69
+  },
+  "metrics": {
+    "first_contentful_paint": "2.6 s",
+    "largest_contentful_paint": "5.1 s",
+    "total_blocking_time": "20 ms",
+    "cumulative_layout_shift": "0.00",
+    "speed_index": "2.6 s"
+  },
+  "network": {
+    "total_requests": 135,
+    "image_requests": 103,
+    "total_transfer_size": "2,472 KiB"
+  },
+  "opportunities": [
+    {
+      "title": "Reduce unused JavaScript",
+      "savings_ms": 470,
+      "savings_kb": 24
+    },
+    {
+      "title": "Use efficient cache lifetimes",
+      "savings_kb": 829
+    },
+    {
+      "title": "Improve image delivery",
+      "savings_kb": 326
+    }
+  ]
+}

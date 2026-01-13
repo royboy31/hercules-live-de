@@ -138,7 +138,8 @@ jsonLdSchemas.push(getBreadcrumbSchema([
   { name: category?.name || 'Kollektion', url: canonicalUrl }
 ]));
 
-// Get LCP image URL for preloading (must match the actual src used)
+// Get LCP image URL for preloading (must match the actual src used in CategoryProductCard)
+// Note: No resize params as Cloudflare Image Resizing requires Pro plan
 const lcpImageUrl = validProducts.length > 0
   ? `${WORKER_URL}/image/${validProducts[0].slug}`
   : null;

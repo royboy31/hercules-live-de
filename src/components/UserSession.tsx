@@ -1,57 +1,25 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-
-interface CartItem {
-  key: string;
-  product_id: number;
-  name: string;
-  quantity: number;
-  price: string;
-  line_total: string;
-  thumbnail: string | null;
-}
-
-interface SessionData {
-  logged_in: boolean;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    first_name: string;
-    avatar: string;
-  } | null;
-  cart: {
-    count: number;
-    total: string;
-    subtotal: string;
-    items: CartItem[];
-  };
-}
+import { useState, useEffect, useRef } from 'react';
+import { sessionManager, type SessionData, type CartItem } from '../lib/sessionManager';
 
 interface UserSessionProps {
   type: 'cart' | 'account' | 'cart-count';
 }
 
-const CACHE_KEY = 'hercules_session';
-const CACHE_DURATION = 10000; // 10 seconds - shorter for better session sync
-
 // Use the same domain when accessed through Edge Router, otherwise use staging
-const getApiUrl = () => {
+const getBaseUrl = () => {
   if (typeof window === 'undefined') return '';
 
   const hostname = window.location.hostname;
 
-  // If accessed through Edge Router (any variant) or production domain, use relative URL for cookies
   if (
     hostname.includes('hercules-edge-router') ||
     hostname.includes('hercules-merchandise.de') ||
     hostname === 'localhost'
   ) {
-    return '/wp-json/hercules/v1/session';
+    return '';
   }
 
-  // For direct Cloudflare Pages access, cookies won't work but we still try
-  // Note: Cart data won't sync correctly due to cross-origin cookie restrictions
-  return 'https://staging.hercules-merchandise.de/wp-json/hercules/v1/session';
+  return 'https://staging.hercules-merchandise.de';
 };
 
 export default function UserSession({ type }: UserSessionProps) {
@@ -66,18 +34,7 @@ export default function UserSession({ type }: UserSessionProps) {
   const removeFromCart = async (cartItemKey: string) => {
     setRemovingItem(cartItemKey);
     try {
-      const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-      let baseUrl = '';
-
-      if (
-        hostname.includes('hercules-edge-router') ||
-        hostname.includes('hercules-merchandise.de') ||
-        hostname === 'localhost'
-      ) {
-        baseUrl = '';
-      } else {
-        baseUrl = 'https://staging.hercules-merchandise.de';
-      }
+      const baseUrl = getBaseUrl();
 
       // Use custom Hercules API to remove item
       const response = await fetch(`${baseUrl}/wp-json/hercules/v1/cart/remove`, {
@@ -92,25 +49,13 @@ export default function UserSession({ type }: UserSessionProps) {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.cart) {
-          // Update session with new cart data directly
-          setSession(prev => prev ? { ...prev, cart: data.cart } : null);
-          // Update localStorage cache
-          try {
-            const cached = localStorage.getItem(CACHE_KEY);
-            if (cached) {
-              const parsed = JSON.parse(cached);
-              parsed.data.cart = data.cart;
-              parsed.timestamp = Date.now();
-              localStorage.setItem(CACHE_KEY, JSON.stringify(parsed));
-            }
-          } catch (e) {
-            // Ignore localStorage errors
-          }
+          // Update session manager with new cart data
+          sessionManager.updateCart(data.cart);
           // Dispatch event so other components know cart was updated
           window.dispatchEvent(new CustomEvent('hercules:cart-updated', { detail: { cart: data.cart } }));
         } else {
           // Fallback: refresh session
-          await fetchSession(true);
+          await sessionManager.fetchSession(true);
           window.dispatchEvent(new CustomEvent('hercules:cart-updated'));
         }
       } else {
@@ -123,95 +68,28 @@ export default function UserSession({ type }: UserSessionProps) {
     }
   };
 
-  const fetchSession = useCallback(async (force = false) => {
-    try {
-      // Check cache first
-      if (!force && typeof window !== 'undefined') {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          if (Date.now() - timestamp < CACHE_DURATION) {
-            setSession(data);
-            setLoading(false);
-            return;
-          }
-        }
-      }
-
-      const apiUrl = getApiUrl();
-      if (!apiUrl) {
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        credentials: 'include', // Important: send cookies
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data: SessionData = await response.json();
-      setSession(data);
-      setError(null);
-
-      // Cache the response
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          data,
-          timestamp: Date.now(),
-        }));
-      }
-    } catch (err) {
-      console.error('Failed to fetch session:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      // Set default session on error
-      setSession({
-        logged_in: false,
-        user: null,
-        cart: { count: 0, total: '€0,00', subtotal: '€0,00', items: [] },
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchSession();
+    // Subscribe to session manager - only ONE API call is made across all components
+    const unsubscribe = sessionManager.subscribe((newSession, isLoading, sessionError) => {
+      setSession(newSession);
+      setLoading(isLoading);
+      setError(sessionError);
+    });
 
     // Refresh on tab visibility change
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        fetchSession(true);
+        sessionManager.fetchSession(true);
       }
     };
 
     // Listen for custom cart update events
     const handleCartUpdate = (event: Event) => {
       const customEvent = event as CustomEvent;
-      // If cart data is passed in the event, update immediately
       if (customEvent.detail?.cart) {
-        setSession(prev => prev ? { ...prev, cart: customEvent.detail.cart } : null);
-        // Also update localStorage cache
-        try {
-          const cached = localStorage.getItem('hercules_session');
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            parsed.data.cart = customEvent.detail.cart;
-            parsed.timestamp = Date.now();
-            localStorage.setItem('hercules_session', JSON.stringify(parsed));
-          }
-        } catch (e) {
-          // Ignore localStorage errors
-        }
+        sessionManager.updateCart(customEvent.detail.cart);
       } else {
-        // Fallback: fetch fresh data
-        fetchSession(true);
+        sessionManager.fetchSession(true);
       }
     };
 
@@ -227,11 +105,12 @@ export default function UserSession({ type }: UserSessionProps) {
     document.addEventListener('mousedown', handleClickOutside);
 
     return () => {
+      unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('hercules:cart-updated', handleCartUpdate);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [fetchSession]);
+  }, []);
 
   // Cart count badge only
   if (type === 'cart-count') {

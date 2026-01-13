@@ -434,7 +434,8 @@ class WooCommerceClient {
   }
 }
 
-// Image sync helper - caches thumbnail in KV storage
+// Image sync helper - caches images in KV storage
+// Supports both full size (600x600) and thumbnail (300x300) versions
 // Optional imageIndex parameter for caching gallery images (0 = main, 1+ = gallery)
 // Skips download if image already exists in KV (saves API calls when hitting daily limits)
 async function syncImageToKV(
@@ -442,14 +443,19 @@ async function syncImageToKV(
   imageUrl: string,
   productSlug: string,
   imageIndex: number = 0,
-  forceRefresh: boolean = false
+  forceRefresh: boolean = false,
+  size: 'full' | 'thumb' = 'full'
 ): Promise<boolean> {
   if (!imageUrl || !productSlug) {
     return false;
   }
 
   // Key format: image:{slug} for main (index 0), image:{slug}:{index} for gallery
-  const kvKey = imageIndex === 0 ? `image:${productSlug}` : `image:${productSlug}:${imageIndex}`;
+  // Add :thumb suffix for thumbnail versions
+  let kvKey = imageIndex === 0 ? `image:${productSlug}` : `image:${productSlug}:${imageIndex}`;
+  if (size === 'thumb') {
+    kvKey += ':thumb';
+  }
 
   try {
     // Check if image already exists in KV (skip download to save API calls)
@@ -498,16 +504,23 @@ async function syncImageToKV(
     }
 
     if (!response.ok) {
-      console.error(`Failed to fetch image: ${imageUrl} - ${response.status}`);
+      console.error(`Failed to fetch image: ${imageUrl} - ${response.status} (tried WebP: ${webpUrl})`);
       return false;
     }
 
     const imageBuffer = await response.arrayBuffer();
+    console.log(`Successfully fetched: ${response.url} (${contentType}, ${imageBuffer.byteLength} bytes)`);
 
     // Store image as base64 in KV with metadata
-    const base64Image = btoa(
-      String.fromCharCode(...new Uint8Array(imageBuffer))
-    );
+    // Use chunked conversion to avoid call stack overflow for large images
+    const bytes = new Uint8Array(imageBuffer);
+    const chunkSize = 0x8000; // 32KB chunks
+    let binaryString = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    const base64Image = btoa(binaryString);
 
     await kv.put(
       kvKey,
@@ -518,14 +531,15 @@ async function syncImageToKV(
           originalUrl: imageUrl,
           syncedAt: new Date().toISOString(),
           imageIndex,
+          size,
         },
       }
     );
 
-    console.log(`Cached image ${imageIndex} for ${productSlug}`);
+    console.log(`Cached image ${imageIndex} (${size}) for ${productSlug}`);
     return true;
   } catch (error) {
-    console.error(`Error syncing image ${imageIndex} for ${productSlug}:`, error);
+    console.error(`Error syncing image ${imageIndex} (${size}) for ${productSlug}:`, error);
     return false;
   }
 }
@@ -702,13 +716,13 @@ async function transformProduct(
 }
 
 // Batch size for product sync (to stay under subrequest limit)
-// With fallback logic, each image can use up to 3 subrequests (kv.get, fetch, fallback fetch)
-// Reduced batch size to allow more images per product
+// With 2 sizes per image (full + thumb) and fallback logic, subrequests add up fast
 const BATCH_SIZE = 1;
 
 // Max gallery images to cache per product (to stay within 50 subrequest limit)
-// 1 product × 10 images × 2 subrequests = 20 (leaving room for API + KV ops)
-const MAX_GALLERY_IMAGES = 10;
+// Now caching 2 sizes per image (full 600x600 + thumb 300x300)
+// 1 product × 5 images × 2 sizes × 2 fetches (WebP + fallback) = 20 subrequests max
+const MAX_GALLERY_IMAGES = 5;
 
 // Main sync function with batching support
 // forceImageRefresh: if true, re-download all images even if already cached (for upgrading image sizes)
@@ -761,21 +775,33 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
 
         // Cache gallery images in KV (limited to MAX_GALLERY_IMAGES to stay within subrequest limits)
         // forceRefresh parameter passed from sync endpoint to re-download all images
+        // Cache both main (300x300) and thumb (150x150) versions for optimal display sizes:
+        // - Main: 300x300 for ~361px display on category cards (upscaled slightly is OK)
+        // - Thumb: 150x150 for ~98px display in thumbnail carousels (7-8KB vs 100KB+)
         let cachedImageCount = 0;
         if (product.slug && product.images?.length > 0) {
           const imagesToCache = Math.min(product.images.length, MAX_GALLERY_IMAGES);
           for (let i = 0; i < imagesToCache; i++) {
             const img = product.images[i];
             if (img?.src) {
-              // Try 600x600 thumbnail first (higher quality for display at 361x361), fallback to original if 404
-              const thumbnailUrl = img.src.replace(/(\.[^.]+)$/, '-600x600$1');
-              let success = await syncImageToKV(env.PRODUCTS_KV, thumbnailUrl, product.slug, i, forceImageRefresh);
-              if (!success && img.src !== thumbnailUrl) {
-                // Fallback to original image if thumbnail doesn't exist
-                // Force refresh since we know it's not cached (just failed above)
-                success = await syncImageToKV(env.PRODUCTS_KV, img.src, product.slug, i, true);
+              // Cache main size (300x300) for category cards - good balance of quality and size
+              const mainUrl = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
+              let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, forceImageRefresh, 'full');
+              if (!mainSuccess && img.src !== mainUrl) {
+                // Fallback to original image if 300x300 doesn't exist
+                mainSuccess = await syncImageToKV(env.PRODUCTS_KV, img.src, product.slug, i, true, 'full');
               }
-              if (success) {
+
+              // Cache thumbnail (150x150) for thumbnail carousels - ~7KB vs 100KB+
+              const thumbUrl = img.src.replace(/(\.[^.]+)$/, '-150x150$1');
+              let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, forceImageRefresh, 'thumb');
+              if (!thumbSuccess && img.src !== thumbUrl) {
+                // Fallback to 300x300 if 150x150 doesn't exist
+                const fallbackUrl = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
+                thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallbackUrl, product.slug, i, true, 'thumb');
+              }
+
+              if (mainSuccess || thumbSuccess) {
                 cachedImageCount++;
               }
             }
@@ -1720,6 +1746,83 @@ export default {
       });
     }
 
+    // Debug: Test single image fetch and full sync process
+    if (url.pathname === '/test-image-fetch' && request.method === 'POST') {
+      const authHeader = request.headers.get('Authorization');
+      if (authHeader !== `Bearer ${env.WEBHOOK_SECRET}`) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+
+      const testUrl = url.searchParams.get('url') || 'https://staging.hercules-merchandise.de/wp-content/uploads/2025/08/Hercules-Merchandise-Jacquard-Woven-Towel-1-300x300.webp';
+      const testSync = url.searchParams.get('sync') === 'true';
+
+      try {
+        const response = await fetch(testUrl, {
+          headers: { 'User-Agent': 'Hercules-Product-Sync/1.0' },
+        });
+
+        const buffer = await response.arrayBuffer();
+
+        const result: any = {
+          url: testUrl,
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get('content-type'),
+          contentLength: response.headers.get('content-length'),
+          actualSize: buffer.byteLength,
+          ok: response.ok,
+        };
+
+        // Try full sync process if requested
+        if (testSync && response.ok) {
+          try {
+            // Chunked base64 conversion
+            const bytes = new Uint8Array(buffer);
+            const chunkSize = 0x8000;
+            let binaryString = '';
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+              const chunk = bytes.subarray(i, i + chunkSize);
+              binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+            }
+            const base64Image = btoa(binaryString);
+
+            result.base64Length = base64Image.length;
+            result.base64Preview = base64Image.substring(0, 50) + '...';
+
+            // Try to store in KV
+            const testKey = 'test:image:debug';
+            await env.PRODUCTS_KV.put(testKey, base64Image, {
+              metadata: { contentType: 'image/webp', originalUrl: testUrl, syncedAt: new Date().toISOString() },
+            });
+
+            result.kvStored = true;
+            result.kvKey = testKey;
+
+            // Verify retrieval
+            const retrieved = await env.PRODUCTS_KV.get(testKey);
+            result.kvRetrieved = retrieved !== null;
+            result.kvRetrievedLength = retrieved?.length || 0;
+          } catch (syncError) {
+            result.syncError = syncError instanceof Error ? syncError.message : String(syncError);
+            result.syncErrorStack = syncError instanceof Error ? syncError.stack : undefined;
+          }
+        }
+
+        return new Response(JSON.stringify(result, null, 2), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        return new Response(JSON.stringify({
+          url: testUrl,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Resync all images as WebP (force re-download and convert)
     // Use ?offset=N for pagination (default batch size: 10 products)
     if (url.pathname === '/resync-images' && request.method === 'POST') {
@@ -1729,7 +1832,7 @@ export default {
       }
 
       const offset = parseInt(url.searchParams.get('offset') || '0', 10);
-      const batchSize = 5; // Products per batch (reduced to stay within 50 subrequest limit)
+      const batchSize = 1; // 1 product per batch to allow more images per product
 
       try {
         // Get all products from index
@@ -1762,20 +1865,35 @@ export default {
           let productImagesFailed = 0;
 
           // Sync each image with force refresh (WebP conversion)
-          // Limit to 5 images per product to stay within subrequest limits
-          for (let i = 0; i < images.length && i < 5; i++) {
+          // With batchSize=1, we can sync up to 10 images per product
+          // 10 images × 2 sizes × 2 fetches (WebP fallback) = 40 subrequests max (within 50 limit)
+          for (let i = 0; i < images.length && i < 10; i++) {
             const imageUrl = images[i].src || images[i].local_src;
             if (!imageUrl) continue;
 
-            const success = await syncImageToKV(
+            // Sync main size (300x300) for category cards
+            const mainUrl = imageUrl.replace(/(\.[^.]+)$/, '-300x300$1');
+            const fullSuccess = await syncImageToKV(
               env.PRODUCTS_KV,
-              imageUrl,
+              mainUrl,
               product.slug,
               i,
-              true // forceRefresh = true to re-download as WebP
+              true, // forceRefresh
+              'full'
             );
 
-            if (success) {
+            // Sync thumbnail (150x150) for thumbnail carousels - ~7KB
+            const thumbUrl = imageUrl.replace(/(\.[^.]+)$/, '-150x150$1');
+            const thumbSuccess = await syncImageToKV(
+              env.PRODUCTS_KV,
+              thumbUrl,
+              product.slug,
+              i,
+              true, // forceRefresh
+              'thumb'
+            );
+
+            if (fullSuccess || thumbSuccess) {
               productImagesSynced++;
               imagesSynced++;
             } else {
@@ -1819,6 +1937,107 @@ export default {
       } catch (error) {
         return new Response(JSON.stringify({
           success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Resync images for a specific product by slug (targeted resync)
+    // Use POST /resync-product-images/{slug} to force resync one product's images
+    if (url.pathname.startsWith('/resync-product-images/') && request.method === 'POST') {
+      const authHeader = request.headers.get('Authorization');
+      if (authHeader !== `Bearer ${env.WEBHOOK_SECRET}`) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+
+      const slug = url.pathname.replace('/resync-product-images/', '');
+      if (!slug) {
+        return new Response(JSON.stringify({ success: false, error: 'Missing product slug' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      try {
+        // Get full product data
+        const productStr = await env.PRODUCTS_KV.get(`product:slug:${slug}`);
+        if (!productStr) {
+          return new Response(JSON.stringify({ success: false, error: 'Product not found' }), {
+            status: 404,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const product = JSON.parse(productStr);
+        const images = product.images || [];
+        let imagesSynced = 0;
+        let imagesFailed = 0;
+        const imageResults: Array<{ index: number; mainSuccess: boolean; thumbSuccess: boolean; mainSize?: string; thumbSize?: string }> = [];
+
+        // Sync each image with force refresh
+        // Max 5 images per product to stay within subrequest limits
+        for (let i = 0; i < images.length && i < 5; i++) {
+          const imageUrl = images[i].src || images[i].local_src;
+          if (!imageUrl) continue;
+
+          // Sync main size (300x300) for category cards - look for WebP first
+          const mainUrl = imageUrl.replace(/(\.[^.]+)$/, '-300x300$1');
+          const mainSuccess = await syncImageToKV(
+            env.PRODUCTS_KV,
+            mainUrl,
+            slug,
+            i,
+            true, // forceRefresh
+            'full'
+          );
+
+          // Sync thumbnail (150x150) for thumbnail carousels
+          const thumbUrl = imageUrl.replace(/(\.[^.]+)$/, '-150x150$1');
+          const thumbSuccess = await syncImageToKV(
+            env.PRODUCTS_KV,
+            thumbUrl,
+            slug,
+            i,
+            true, // forceRefresh
+            'thumb'
+          );
+
+          imageResults.push({
+            index: i,
+            mainSuccess,
+            thumbSuccess,
+            mainSize: mainSuccess ? '300x300' : undefined,
+            thumbSize: thumbSuccess ? '150x150' : undefined
+          });
+
+          if (mainSuccess) imagesSynced++;
+          if (thumbSuccess) imagesSynced++;
+          if (!mainSuccess) imagesFailed++;
+          if (!thumbSuccess) imagesFailed++;
+        }
+
+        return new Response(JSON.stringify({
+          success: true,
+          slug,
+          productName: product.name,
+          images: {
+            total: images.length,
+            processed: Math.min(images.length, 5),
+            synced: imagesSynced,
+            failed: imagesFailed
+          },
+          results: imageResults
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
+      } catch (error) {
+        return new Response(JSON.stringify({
+          success: false,
+          slug,
           error: error instanceof Error ? error.message : 'Unknown error'
         }), {
           status: 500,
@@ -2010,7 +2229,7 @@ export default {
       return new Response(bytes, {
         headers: {
           'Content-Type': metadata?.contentType || 'image/jpeg',
-          'Cache-Control': 'public, max-age=86400', // Cache for 1 day
+          'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
           'Access-Control-Allow-Origin': '*',
         },
       });
@@ -2053,7 +2272,7 @@ export default {
 
     // Serve cached product images
     // Supports: /image/{slug} (main image) or /image/{slug}/{index} (gallery image)
-    // Optional query params: ?w=300 (width), ?format=webp (output format)
+    // Optional query params: ?size=thumb (300x300), ?w=300 (width), ?format=webp (output format)
     if (url.pathname.startsWith('/image/')) {
       const pathParts = url.pathname.replace('/image/', '').split('/');
       const slug = pathParts[0];
@@ -2062,48 +2281,67 @@ export default {
       // Optional resizing parameters
       const requestedWidth = url.searchParams.get('w');
       const requestedFormat = url.searchParams.get('format');
+      const requestedSize = url.searchParams.get('size'); // 'thumb' for 300x300 thumbnails
 
       if (!slug) {
         return new Response('Missing product slug', { status: 400 });
       }
 
       // Key format: image:{slug} for main (index 0), image:{slug}:{index} for gallery
-      const kvKey = imageIndex === 0 ? `image:${slug}` : `image:${slug}:${imageIndex}`;
+      // Add :thumb suffix if requesting thumbnail size
+      let kvKey = imageIndex === 0 ? `image:${slug}` : `image:${slug}:${imageIndex}`;
+      if (requestedSize === 'thumb') {
+        kvKey += ':thumb';
+      }
 
       // Get image from KV with metadata
-      const { value: base64Image, metadata } = await env.PRODUCTS_KV.getWithMetadata<{
+      let { value: base64Image, metadata } = await env.PRODUCTS_KV.getWithMetadata<{
         contentType: string;
         originalUrl: string;
         syncedAt: string;
         imageIndex?: number;
+        size?: string;
       }>(kvKey);
+
+      // If requesting thumb but not cached, fall back to full size
+      if (!base64Image && requestedSize === 'thumb') {
+        const fullKey = imageIndex === 0 ? `image:${slug}` : `image:${slug}:${imageIndex}`;
+        const fullResult = await env.PRODUCTS_KV.getWithMetadata<{
+          contentType: string;
+          originalUrl: string;
+          syncedAt: string;
+          imageIndex?: number;
+          size?: string;
+        }>(fullKey);
+        if (fullResult.value) {
+          base64Image = fullResult.value;
+          metadata = fullResult.metadata;
+        }
+      }
 
       if (!base64Image) {
         // Image not cached - try to get original URL from product data and redirect
         const product = await env.PRODUCTS_KV.get<SyncedProduct>(`product:slug:${slug}`, 'json');
         if (product && product.images && product.images[imageIndex]) {
-          // Redirect to WordPress image URL (with optional resizing via Cloudflare)
+          // Redirect to WordPress image URL (with optional resizing via cdn-cgi)
           const originalUrl = product.images[imageIndex].src;
           if (originalUrl) {
-            // If resizing requested, use Cloudflare Image Resizing
+            // If resizing requested, use Cloudflare cdn-cgi Image Resizing
             if (requestedWidth || requestedFormat) {
-              const imageOptions: RequestInitCfPropertiesImage = {
-                fit: 'contain',
-                quality: 85,
-              };
+              const options: string[] = ['fit=contain', 'quality=85'];
               if (requestedWidth) {
-                imageOptions.width = parseInt(requestedWidth, 10);
+                options.push(`width=${requestedWidth}`);
               }
               if (requestedFormat === 'webp') {
-                imageOptions.format = 'webp';
+                options.push('format=webp');
               }
               try {
-                const resizedResponse = await fetch(originalUrl, {
-                  cf: { image: imageOptions }
-                });
+                const originalUrlObj = new URL(originalUrl);
+                const cdnCgiUrl = `${originalUrlObj.origin}/cdn-cgi/image/${options.join(',')}${originalUrlObj.pathname}`;
+                const resizedResponse = await fetch(cdnCgiUrl);
                 if (resizedResponse.ok) {
                   const headers = new Headers(resizedResponse.headers);
-                  headers.set('Cache-Control', 'public, max-age=86400');
+                  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
                   headers.set('Access-Control-Allow-Origin', '*');
                   return new Response(resizedResponse.body, {
                     status: 200,
@@ -2120,33 +2358,49 @@ export default {
         return new Response('Image not found', { status: 404 });
       }
 
-      // If resizing requested and we have the original URL, use Cloudflare Image Resizing
-      if ((requestedWidth || requestedFormat) && metadata?.originalUrl) {
-        const imageOptions: RequestInitCfPropertiesImage = {
-          fit: 'contain',
-          quality: 85,
-        };
-        if (requestedWidth) {
-          imageOptions.width = parseInt(requestedWidth, 10);
-        }
-        if (requestedFormat === 'webp') {
-          imageOptions.format = 'webp';
-        }
-        try {
-          const resizedResponse = await fetch(metadata.originalUrl, {
-            cf: { image: imageOptions }
-          });
-          if (resizedResponse.ok) {
-            const headers = new Headers(resizedResponse.headers);
-            headers.set('Cache-Control', 'public, max-age=86400');
-            headers.set('Access-Control-Allow-Origin', '*');
-            return new Response(resizedResponse.body, {
-              status: 200,
-              headers
-            });
+      // If resizing requested, use Cloudflare Image Resizing via cdn-cgi URL
+      // This works on any Cloudflare-proxied domain (cf.image requires zone with Image Resizing)
+      if (requestedWidth || requestedFormat) {
+        let originalUrl = metadata?.originalUrl;
+
+        // Fallback: get originalUrl from product data if not in metadata
+        if (!originalUrl) {
+          const product = await env.PRODUCTS_KV.get<SyncedProduct>(`product:slug:${slug}`, 'json');
+          if (product && product.images && product.images[imageIndex]) {
+            originalUrl = product.images[imageIndex].src;
           }
-        } catch (e) {
-          // Fall through to serve original if resizing fails
+        }
+
+        if (originalUrl) {
+          // Build cdn-cgi image URL options
+          const options: string[] = ['fit=contain', 'quality=85'];
+          if (requestedWidth) {
+            options.push(`width=${requestedWidth}`);
+          }
+          if (requestedFormat === 'webp') {
+            options.push('format=webp');
+          }
+
+          // Extract path from original URL (e.g., /wp-content/uploads/...)
+          // URL format: https://staging.hercules-merchandise.de/cdn-cgi/image/options/path
+          try {
+            const originalUrlObj = new URL(originalUrl);
+            const cdnCgiUrl = `${originalUrlObj.origin}/cdn-cgi/image/${options.join(',')}${originalUrlObj.pathname}`;
+
+            const resizedResponse = await fetch(cdnCgiUrl);
+            if (resizedResponse.ok) {
+              const headers = new Headers(resizedResponse.headers);
+              headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+              headers.set('Access-Control-Allow-Origin', '*');
+              return new Response(resizedResponse.body, {
+                status: 200,
+                headers
+              });
+            }
+          } catch (e) {
+            // Fall through to serve original if resizing fails
+            console.error('Cloudflare cdn-cgi Image Resizing failed:', e);
+          }
         }
       }
 
@@ -2161,7 +2415,7 @@ export default {
       return new Response(bytes, {
         headers: {
           'Content-Type': metadata?.contentType || 'image/png',
-          'Cache-Control': 'public, max-age=86400', // Cache for 1 day
+          'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
           'Access-Control-Allow-Origin': '*',
         },
       });
@@ -2198,7 +2452,7 @@ export default {
       return new Response(bytes, {
         headers: {
           'Content-Type': metadata?.contentType || 'image/png',
-          'Cache-Control': 'public, max-age=86400', // Cache for 1 day
+          'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
           'Access-Control-Allow-Origin': '*',
         },
       });

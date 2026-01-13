@@ -1736,13 +1736,29 @@ if (product) {
     }
   });
 
-  // Load TrustIndex widget for Customer Reviews
+  // Load TrustIndex widget only when visible (reduces forced reflows)
   const trustIndexContainer = document.getElementById('trustindex-widget-product');
   if (trustIndexContainer) {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.trustindex.io/loader.js?72406ce58900366af2861a4ccab';
-    script.defer = true;
-    script.async = true;
-    trustIndexContainer.appendChild(script);
+    const loadTrustWidget = () => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.trustindex.io/loader.js?72406ce58900366af2861a4ccab';
+      script.defer = true;
+      script.async = true;
+      trustIndexContainer.appendChild(script);
+    };
+
+    // Defer until section is visible
+    const reviewsSection = trustIndexContainer.closest('.customer-reviews-section');
+    if (reviewsSection && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+          loadTrustWidget();
+          observer.disconnect();
+        }
+      }, { rootMargin: '200px 0px', threshold: 0 });
+      observer.observe(reviewsSection);
+    } else {
+      loadTrustWidget();
+    }
   }
 </script>

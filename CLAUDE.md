@@ -2368,7 +2368,7 @@ Reference - current CSS in Footer.astro (matching WordPress):
 `/workers/product-sync/`
 
 ### Deployed URL
-`https://hercules-product-sync.kamindudushmantha.workers.dev`
+`https://hercules-product-sync.gilles-86d.workers.dev`
 
 ### Purpose
 Cloudflare Worker that syncs product data from WooCommerce to KV storage for the headless Astro frontend.
@@ -2434,7 +2434,7 @@ All webhooks use HMAC-SHA256 signature verification with the same secret.
 # Sync all products in batches
 offset=0
 while true; do
-  result=$(curl -s -X POST "https://hercules-product-sync.kamindudushmantha.workers.dev/sync?offset=$offset" -H "Authorization: Bearer hercules-webhook-secret-2024")
+  result=$(curl -s -X POST "https://hercules-product-sync.gilles-86d.workers.dev/sync?offset=$offset" -H "Authorization: Bearer hercules-webhook-secret-2024")
   hasMore=$(echo "$result" | python3 -c "import sys, json; print(json.load(sys.stdin).get('hasMore', False))")
   [ "$hasMore" = "False" ] && break
   offset=$(echo "$result" | python3 -c "import sys, json; print(json.load(sys.stdin).get('nextOffset', 0))")
@@ -2444,8 +2444,96 @@ done
 ### Deploy
 ```bash
 cd workers/product-sync
-CLOUDFLARE_API_TOKEN="..." CLOUDFLARE_ACCOUNT_ID="d6d3df04acc98efe34f43e42636a3dfc" npx wrangler deploy
+CLOUDFLARE_API_TOKEN="ZN0wjGH08jqnYCOvlpNH5Y-z--3FeL-63fnLndQp" CLOUDFLARE_ACCOUNT_ID="86dfa0e10ca766f79d5042548fc2776f" npx wrangler deploy
 ```
+
+---
+
+### Image Sync - Troubleshooting & Manual Resync
+
+**Image Sizes Cached:**
+- **Main images**: 300x300 (~20-70KB) - for category card display at 361px
+- **Thumbnails**: 150x150 (~7-20KB) - for thumbnail carousel at 98px display
+- Images stored in KV with keys: `image:{slug}:{index}` (main) and `image:{slug}:{index}:thumb` (thumbnails)
+
+**Automatic Sync:**
+- Cron job runs daily at 3 AM UTC
+- Images are synced during product sync (both main and thumb sizes)
+- Uses WordPress thumbnail URLs: `-300x300.png` and `-150x150.png`
+
+**Step 1: Check Current Image Sync Status**
+```bash
+# Check last sync time
+curl -s "https://hercules-product-sync.gilles-86d.workers.dev/status" | python3 -m json.tool
+
+# Check if images are being served correctly
+curl -sI "https://hercules-product-sync.gilles-86d.workers.dev/image/personalisierter-fussballschal" | grep content-type
+curl -sI "https://hercules-product-sync.gilles-86d.workers.dev/image/personalisierter-fussballschal?size=thumb" | grep content-type
+
+# Check actual image sizes (should be ~20KB for thumb, ~70KB for main)
+curl -s -o /tmp/main.img "https://hercules-product-sync.gilles-86d.workers.dev/image/personalisierter-fussballschal" && ls -la /tmp/main.img
+curl -s -o /tmp/thumb.img "https://hercules-product-sync.gilles-86d.workers.dev/image/personalisierter-fussballschal?size=thumb" && ls -la /tmp/thumb.img
+```
+
+**Step 2: Manual Image Resync (if auto-sync failed)**
+```bash
+# Resync ALL images with force refresh (processes 1 product at a time)
+# WARNING: May hit KV daily write limit (1000 writes/day on free tier)
+offset=0
+while true; do
+  echo "Processing product $offset..."
+  result=$(curl -s -X POST "https://hercules-product-sync.gilles-86d.workers.dev/resync-images?offset=$offset" \
+    -H "Authorization: Bearer hercules-webhook-secret-2024")
+
+  synced=$(echo "$result" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('images', {}).get('synced', 0))" 2>/dev/null)
+  failed=$(echo "$result" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('images', {}).get('failed', 0))" 2>/dev/null)
+  hasMore=$(echo "$result" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('hasMore', False))" 2>/dev/null)
+
+  echo "  Synced: $synced, Failed: $failed"
+
+  [ "$hasMore" = "False" ] && break
+  offset=$((offset + 1))
+  sleep 0.5
+done
+```
+
+**Step 3: Check if WordPress Thumbnails Exist**
+```bash
+# If images are failing, check if WordPress has generated the thumbnail sizes
+# Get a product's image URL
+curl -s "https://hercules-product-sync.gilles-86d.workers.dev/product/personalisierter-fussballschal" > /tmp/product.json
+img_url=$(python3 -c "import json; d=json.load(open('/tmp/product.json')); print(d['images'][0]['src'])")
+
+# Check if thumbnail sizes exist on WordPress
+base_url=$(echo "$img_url" | sed 's/\.[^.]*$//')
+ext=$(echo "$img_url" | grep -oE '\.[^.]+$')
+curl -sI "${base_url}-150x150${ext}" | head -1  # Should return HTTP/2 200
+curl -sI "${base_url}-300x300${ext}" | head -1  # Should return HTTP/2 200
+```
+
+**Common Issues:**
+
+1. **KV Daily Write Limit Hit (1000 writes/day)**
+   - Error: Images show as "failed" but no actual error message
+   - Solution: Wait until midnight UTC for limit reset, or upgrade Cloudflare plan
+   - Check: If ALL images fail, this is likely the cause
+
+2. **WordPress Thumbnails Don't Exist**
+   - Some images may not have generated thumbnails
+   - Solution: Regenerate thumbnails in WordPress (use "Regenerate Thumbnails" plugin)
+   - The sync will fall back to original size if thumbnails don't exist
+
+3. **WebP Conversion**
+   - Worker tries WebP first (smaller files), falls back to PNG/JPG
+   - WebP versions stored alongside originals on WordPress with `.webp` extension
+
+**After Resync - Rebuild Astro Site:**
+```bash
+cd "/home/kamindu/Headerless Herculess site/astro-hercules"
+npm run build && CLOUDFLARE_API_TOKEN="ZN0wjGH08jqnYCOvlpNH5Y-z--3FeL-63fnLndQp" CLOUDFLARE_ACCOUNT_ID="86dfa0e10ca766f79d5042548fc2776f" npx wrangler pages deploy dist/ --project-name=hercules-astro --commit-dirty=true
+```
+
+---
 
 ### Documentation
 - See `/workers/product-sync/README.md` for detailed setup

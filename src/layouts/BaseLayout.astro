@@ -283,7 +283,7 @@ if (jsonLd) {
 
   <Footer />
 
-  <!-- Cookie Consent Banner -->
-  <CookieConsent client:load />
+  <!-- Cookie Consent Banner - client:idle defers loading until main thread is idle -->
+  <CookieConsent client:idle />
 </body>
 </html>

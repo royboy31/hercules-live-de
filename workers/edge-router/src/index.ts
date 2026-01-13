@@ -365,8 +365,12 @@ export default {
           newHeaders.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
           newHeaders.set('Pragma', 'no-cache');
         } else if (!isWordPress) {
-          // Astro pages can be cached
-          newHeaders.set('Cache-Control', 'public, max-age=300'); // 5 minutes
+          // Astro static assets (/_astro/*) have content hashes - preserve their 1-year cache
+          // Only set short cache for HTML pages
+          if (!pathname.startsWith('/_astro/')) {
+            newHeaders.set('Cache-Control', 'public, max-age=300'); // 5 minutes for HTML
+          }
+          // Note: /_astro/* files keep their original Cache-Control from Cloudflare Pages
         }
         // Note: For cacheable WordPress pages, preserve their original Cache-Control
 

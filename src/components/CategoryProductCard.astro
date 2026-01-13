@@ -2,8 +2,12 @@
 /**
  * CategoryProductCard - Product card for category archive pages
  * Matches WordPress WooCommerce styling from staging.hercules-merchandise.de
+ *
+ * PERFORMANCE: Uses pure CSS for thumbnail carousel (no Swiper.js)
+ * - Eliminates ~70KB Swiper bundle from category pages
+ * - Removes critical request chain dependency
+ * - Uses CSS flexbox for horizontal scrolling thumbnails
  */
-import 'swiper/css';
 import WishlistButton from './WishlistButton.tsx';
 
 interface Props {
@@ -44,20 +48,24 @@ const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 // Get gallery images from Worker KV cache (no WordPress access at runtime)
 // Use cached_image_count from product data to know exactly how many images are available
 // Fall back to images array length with a max of 10 if cached_image_count not set
+// Images are cached at two sizes:
+// - Main (300x300): ~20KB for category card display at 361px
+// - Thumb (150x150): ~7KB for thumbnail carousel at 98px display
 const imageCount = product.cached_image_count ?? Math.min(product.images?.length || 0, 10);
 const galleryImages = (product.images || []).slice(0, imageCount).map((img, index) => {
   // Worker URL format: /image/{slug} for index 0, /image/{slug}/{index} for gallery
-  const mainSrc = index === 0
+  // Add ?size=thumb for 150x150 thumbnail versions
+  const baseUrl = index === 0
     ? `${WORKER_URL}/image/${product.slug}`
     : `${WORKER_URL}/image/${product.slug}/${index}`;
   return {
-    thumb: mainSrc, // Use same cached image for thumbnail
-    main: mainSrc,
+    thumb: `${baseUrl}?size=thumb`,  // 150x150 thumbnail (~7KB)
+    main: baseUrl,                    // 300x300 main image (~20KB)
     alt: img.alt || product.name
   };
 });
 
-// Worker cached main image URL (direct from KV, no transformation)
+// Worker cached main image URL - 300x300 for ~361px display
 const workerImageUrl = `${WORKER_URL}/image/${product.slug}`;
 
 // Format price - just show the base price like WooCommerce does
@@ -113,7 +121,7 @@ const cardFeatures = product.card_features || [];
     )}
 
     <!-- Product Gallery -->
-    <div class="kd-product-gallery">
+    <div class="kd-product-gallery" data-product-slug={product.slug}>
       <!-- Main Image -->
       <div class="kd-main-image">
         <img
@@ -127,22 +135,27 @@ const cardFeatures = product.card_features || [];
         />
       </div>
 
-      <!-- Thumbnail Carousel - Deferred loading to improve LCP -->
-      <!-- Gallery images are loaded via JS after page load to reduce initial requests -->
+      <!-- Thumbnail Row - Pure CSS (no Swiper) -->
       {galleryImages.length > 1 && (
-        <div
-          class="kd-thumbnails swiper-container kd-gallery-deferred"
-          data-gallery={JSON.stringify(galleryImages)}
-          data-product-slug={product.slug}
-        >
-          <div class="swiper-wrapper">
-            <!-- Placeholder slides - images will be injected via JS -->
-            {galleryImages.slice(0, 4).map((_, idx) => (
-              <div class="swiper-slide kd-thumb-placeholder">
-                <div class="kd-thumb-skeleton"></div>
-              </div>
-            ))}
-          </div>
+        <div class="kd-thumbnails" data-gallery={JSON.stringify(galleryImages)}>
+          {galleryImages.slice(0, 4).map((img, idx) => (
+            <button
+              type="button"
+              class={`kd-thumb-btn${idx === 0 ? ' active' : ''}`}
+              data-thumb-src={img.thumb}
+              data-main-src={img.main}
+              aria-label={`Thumbnail ${idx + 1}`}
+            >
+              <img
+                src={img.thumb}
+                alt=""
+                loading="lazy"
+                class="kd-thumb"
+                width="83"
+                height="83"
+              />
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -247,67 +260,43 @@ const cardFeatures = product.card_features || [];
     aspect-ratio: 1/1;
   }
 
-  /* Thumbnail carousel - Swiper */
+  /* Thumbnail row - Pure CSS flexbox (no Swiper) */
   .kd-thumbnails {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
     width: 100%;
     overflow: hidden;
-    min-width: 0;
   }
 
-  .kd-thumbnails .swiper-wrapper {
-    display: flex;
-  }
-
-  .kd-thumbnails .swiper-slide {
+  .kd-thumb-btn {
     flex-shrink: 0;
     background: #F2F2F2;
     border-radius: 4px;
+    border: 2px solid transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: border-color 0.2s, opacity 0.2s;
+    opacity: 0.85;
+    width: 83px;
+    height: 83px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  .kd-thumb {
-    width: 100%;
-    height: 100%;
-    border-radius: 4px;
-    object-fit: contain;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: border-color 0.2s, opacity 0.2s;
-    opacity: 0.85;
-    display: block;
-  }
-
-  .kd-thumb:hover,
-  .kd-thumb.active {
+  .kd-thumb-btn:hover,
+  .kd-thumb-btn.active {
     border-color: #469ADC;
     opacity: 1;
   }
 
-  /* Skeleton placeholders for deferred gallery loading - prevents CLS */
-  .kd-thumb-placeholder {
-    background: #F2F2F2;
-    border-radius: 4px;
-  }
-
-  .kd-thumb-skeleton {
-    width: 83px;
-    height: 83px;
-    background: linear-gradient(90deg, #F2F2F2 25%, #E8E8E8 50%, #F2F2F2 75%);
-    background-size: 200% 100%;
-    animation: skeleton-shimmer 1.5s infinite;
-    border-radius: 4px;
-  }
-
-  @keyframes skeleton-shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* Hide skeleton when images are loaded */
-  .kd-gallery-loaded .kd-thumb-placeholder {
-    display: none;
+  .kd-thumb {
+    width: 100%;
+    height: 100%;
+    border-radius: 2px;
+    object-fit: contain;
+    display: block;
   }
 
   .woocommerce-loop-product__title {
@@ -388,154 +377,41 @@ const cardFeatures = product.card_features || [];
       font-size: 11px;
       padding: 8px 12px;
     }
+
+    .kd-thumb-btn {
+      width: 60px;
+      height: 60px;
+    }
   }
 </style>
 
 <script>
   /**
-   * Deferred gallery loading using IntersectionObserver
-   *
-   * Gallery thumbnails are only loaded when:
-   * 1. The product card enters the viewport (200px margin)
-   * 2. This dramatically reduces initial image requests from 90+ to ~6-12
-   *
-   * Benefits:
-   * - LCP improves because only main product images load initially
-   * - CLS = 0 because skeleton placeholders reserve space
-   * - User sees thumbnails when they scroll to view them
-   * - Swiper is dynamically imported only when needed (reduces initial JS)
+   * Thumbnail click handler - Pure vanilla JS (no Swiper)
+   * Uses event delegation for efficient handling across all product cards
    */
-
-  // Track which galleries have been initialized to avoid duplicates
-  const initializedGalleries = new Set<string>();
-  let swiperIndex = 0;
-  let SwiperModule: any = null;
-
-  async function loadGalleryImages(container: Element): Promise<void> {
-    const galleryData = container.getAttribute('data-gallery');
-    const productSlug = container.getAttribute('data-product-slug');
-
-    if (!galleryData || !productSlug || initializedGalleries.has(productSlug)) {
-      return;
-    }
-
-    initializedGalleries.add(productSlug);
-
-    try {
-      const images = JSON.parse(galleryData) as Array<{ thumb: string; main: string; alt: string }>;
-      const wrapper = container.querySelector('.swiper-wrapper');
-
-      if (!wrapper) return;
-
-      // Clear placeholder slides
-      wrapper.innerHTML = '';
-
-      // Create actual image slides
-      images.forEach((img, idx) => {
-        const slide = document.createElement('div');
-        slide.className = 'swiper-slide';
-
-        const imgEl = document.createElement('img');
-        imgEl.src = img.thumb;
-        imgEl.alt = img.alt;
-        imgEl.loading = 'lazy';
-        imgEl.className = 'kd-thumb' + (idx === 0 ? ' active' : '');
-        imgEl.width = 83;
-        imgEl.height = 83;
-        imgEl.dataset.full = img.main;
-        imgEl.onerror = () => { slide.style.display = 'none'; };
-
-        slide.appendChild(imgEl);
-        wrapper.appendChild(slide);
-      });
-
-      // Mark as loaded and initialize Swiper
-      container.classList.add('kd-gallery-loaded');
-      container.classList.remove('kd-gallery-deferred');
-
-      // Dynamically import Swiper only when needed (reduces initial JS bundle)
-      if (!SwiperModule) {
-        const module = await import('swiper');
-        SwiperModule = module.default;
-      }
-
-      // Initialize Swiper for this container
-      const swiperClass = `kd-swiper-${swiperIndex++}`;
-      container.classList.add(swiperClass);
-
-      new SwiperModule(`.${swiperClass}`, {
-        slidesPerView: 4,
-        spaceBetween: 10,
-        slidesPerGroup: 1,
-        watchSlidesProgress: true,
-        loop: false
-      });
-
-    } catch (e) {
-      console.error('Failed to parse gallery data:', e);
-    }
-  }
-
   function setupThumbnailClickHandlers() {
-    // Use event delegation for better performance
     document.addEventListener('click', (e) => {
-      const thumb = (e.target as Element).closest('.kd-thumb');
-      if (!thumb) return;
+      const btn = (e.target as Element).closest('.kd-thumb-btn');
+      if (!btn) return;
 
       e.preventDefault();
       e.stopPropagation();
 
-      const gallery = thumb.closest('.kd-product-gallery');
+      const gallery = btn.closest('.kd-product-gallery');
       const mainImg = gallery?.querySelector('.kd-main-img') as HTMLImageElement;
-      const fullSrc = (thumb as HTMLImageElement).dataset.full;
-      const container = thumb.closest('.kd-thumbnails');
+      const mainSrc = (btn as HTMLElement).dataset.mainSrc;
+      const thumbnails = btn.closest('.kd-thumbnails');
 
-      if (mainImg && fullSrc) {
-        mainImg.src = fullSrc;
+      if (mainImg && mainSrc) {
+        mainImg.src = mainSrc;
         // Update active state
-        container?.querySelectorAll('.kd-thumb').forEach(t => t.classList.remove('active'));
-        thumb.classList.add('active');
+        thumbnails?.querySelectorAll('.kd-thumb-btn').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
       }
     });
   }
 
-  function initIntersectionObserver() {
-    // Only load gallery images when product card is near viewport
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const container = entry.target;
-            loadGalleryImages(container);
-            observer.unobserve(container); // Stop observing once loaded
-          }
-        });
-      },
-      {
-        // Load when within 200px of viewport (preload slightly before visible)
-        rootMargin: '200px 0px',
-        threshold: 0
-      }
-    );
-
-    // Observe all deferred gallery containers
-    document.querySelectorAll('.kd-thumbnails.kd-gallery-deferred').forEach((container) => {
-      observer.observe(container);
-    });
-  }
-
-  // Set up click handlers immediately (event delegation)
+  // Initialize immediately - no IntersectionObserver needed for CSS thumbnails
   setupThumbnailClickHandlers();
-
-  // Initialize IntersectionObserver after DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initIntersectionObserver);
-  } else {
-    // DOM already ready, use requestIdleCallback to not block main thread
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(initIntersectionObserver, { timeout: 100 });
-    } else {
-      setTimeout(initIntersectionObserver, 0);
-    }
-  }
 </script>

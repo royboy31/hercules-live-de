@@ -69,14 +69,14 @@ const directLinks = [
   <!-- Main Header Row -->
   <div class="header-main">
     <div class="header-container">
-      <!-- Logo - 282x126px original, displayed at 70% width -->
+      <!-- Logo - use original size image for desktop (172px display width) -->
       <div class="header-logo-wrap">
         <a href="/" class="header-logo">
           <img
-            src="/images/hercules-logo-original1.png"
+            src="/images/hercules-logo-original1.webp"
             alt="Hercules Merchandise"
-            width="282"
-            height="126"
+            width="172"
+            height="76"
           />
         </a>
       </div>
@@ -86,13 +86,13 @@ const directLinks = [
         <ProductSearch client:load placeholder="Produkte suchen..." />
       </div>
 
-      <!-- Header Icons -->
+      <!-- Header Icons - client:idle to break critical request chain -->
       <div class="header-icons">
-        <UserSession client:load type="account" />
+        <UserSession client:idle type="account" />
 
-        <WishlistCount client:load />
+        <WishlistCount client:idle />
 
-        <UserSession client:load type="cart" />
+        <UserSession client:idle type="cart" />
       </div>
     </div>
   </div>
@@ -192,7 +192,7 @@ const directLinks = [
   <div class="mobile-header-inner">
     <div class="mobile-logo-wrap">
       <a href="/" class="mobile-logo">
-        <img src="/images/hercules-logo-mobile.png" alt="Hercules Merchandise" width="282" height="140" />
+        <img src="/images/hercules-logo-mobile-optimized.webp" alt="Hercules Merchandise" width="282" height="140" />
       </a>
     </div>
     <div class="mobile-actions">

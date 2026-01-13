@@ -1,6 +1,7 @@
 ---
 // Sie vertrauen uns - Trust Logos Section
-// Using bundled Swiper.js (not CDN) to match WordPress Elementor carousel exactly
+// Pure CSS animation - no JavaScript required for continuous scroll
+// This eliminates the critical request chain from Swiper.js
 
 const logosRow1 = [
   { src: '/images/logos/Glasgow-Saints.png', alt: 'Glasgow Saints' },
@@ -62,26 +63,44 @@ const logosRow2 = [
   <div class="trust-container">
     <h2 class="section-heading">Sie vertrauen uns</h2>
 
-    <!-- Row 1: Left to Right -->
-    <div class="swiper trust-swiper-ltr">
-      <div class="swiper-wrapper">
+    <!-- Row 1: Left to Right (CSS animation) -->
+    <div class="marquee-container">
+      <div class="marquee-track marquee-ltr">
+        {/* First set of logos */}
         {logosRow1.map((logo) => (
-          <div class="swiper-slide">
+          <div class="logo-item">
             <figure class="logo-figure">
-              <img src={logo.src} alt={logo.alt} loading="lazy" />
+              <img src={logo.src} alt={logo.alt} loading="lazy" width="218" height="100" />
+            </figure>
+          </div>
+        ))}
+        {/* Duplicate for seamless loop */}
+        {logosRow1.map((logo) => (
+          <div class="logo-item" aria-hidden="true">
+            <figure class="logo-figure">
+              <img src={logo.src} alt="" loading="lazy" width="218" height="100" />
             </figure>
           </div>
         ))}
       </div>
     </div>
 
-    <!-- Row 2: Right to Left -->
-    <div class="swiper trust-swiper-rtl" dir="rtl">
-      <div class="swiper-wrapper">
+    <!-- Row 2: Right to Left (CSS animation) -->
+    <div class="marquee-container">
+      <div class="marquee-track marquee-rtl">
+        {/* First set of logos */}
         {logosRow2.map((logo) => (
-          <div class="swiper-slide">
+          <div class="logo-item">
             <figure class="logo-figure">
-              <img src={logo.src} alt={logo.alt} loading="lazy" />
+              <img src={logo.src} alt={logo.alt} loading="lazy" width="218" height="100" />
+            </figure>
+          </div>
+        ))}
+        {/* Duplicate for seamless loop */}
+        {logosRow2.map((logo) => (
+          <div class="logo-item" aria-hidden="true">
+            <figure class="logo-figure">
+              <img src={logo.src} alt="" loading="lazy" width="218" height="100" />
             </figure>
           </div>
         ))}
@@ -114,13 +133,55 @@ const logosRow2 = [
     padding: 0 20px;
   }
 
-  .swiper {
+  /* Marquee container hides overflow */
+  .marquee-container {
     width: 100%;
+    overflow: hidden;
     padding: 10px 0;
   }
 
-  .swiper-slide {
-    width: auto;
+  /* Track contains logos and animates */
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    gap: 20px;
+  }
+
+  /* Left to right animation */
+  .marquee-ltr {
+    animation: scroll-ltr 60s linear infinite;
+  }
+
+  /* Right to left animation */
+  .marquee-rtl {
+    animation: scroll-rtl 60s linear infinite;
+  }
+
+  @keyframes scroll-ltr {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes scroll-rtl {
+    0% {
+      transform: translateX(-50%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  /* Pause animation on hover */
+  .marquee-container:hover .marquee-track {
+    animation-play-state: paused;
+  }
+
+  .logo-item {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -162,90 +223,19 @@ const logosRow2 = [
     .logo-figure img {
       width: 140px;
     }
+
+    /* Faster animation on mobile for better UX */
+    .marquee-ltr,
+    .marquee-rtl {
+      animation-duration: 40s;
+    }
   }
 
-  /* Linear timing for continuous scroll */
-  :global(.trust-swiper-ltr .swiper-wrapper),
-  :global(.trust-swiper-rtl .swiper-wrapper) {
-    transition-timing-function: linear !important;
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-ltr,
+    .marquee-rtl {
+      animation: none;
+    }
   }
 </style>
-
-<script>
-  /**
-   * Deferred Swiper initialization using IntersectionObserver
-   * Only loads and initializes Swiper when TrustLogos section enters viewport
-   * This prevents the Autoplay module from blocking LCP on page load
-   */
-
-  let swiperInitialized = false;
-
-  async function initTrustLogosSwiper() {
-    if (swiperInitialized) return;
-    swiperInitialized = true;
-
-    // Dynamically import Swiper only when needed
-    const [{ default: Swiper }, { Autoplay }] = await Promise.all([
-      import('swiper'),
-      import('swiper/modules')
-    ]);
-
-    // Common Swiper settings matching WordPress Elementor
-    const swiperSettings = {
-      modules: [Autoplay],
-      slidesPerView: 8,
-      spaceBetween: 20,
-      loop: true,
-      speed: 9000,
-      autoplay: {
-        delay: 0,
-        disableOnInteraction: false,
-        pauseOnMouseEnter: true,
-      },
-      allowTouchMove: true,
-      breakpoints: {
-        0: {
-          slidesPerView: 2,
-          spaceBetween: 20,
-        },
-        768: {
-          slidesPerView: 4,
-          spaceBetween: 20,
-        },
-        1025: {
-          slidesPerView: 8,
-          spaceBetween: 20,
-        },
-      },
-    };
-
-    // Initialize LTR carousel
-    new Swiper('.trust-swiper-ltr', swiperSettings);
-
-    // Initialize RTL carousel
-    new Swiper('.trust-swiper-rtl', swiperSettings);
-  }
-
-  // Use IntersectionObserver to defer Swiper initialization
-  const trustSection = document.querySelector('.trust-section');
-  if (trustSection) {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            initTrustLogosSwiper();
-            observer.disconnect(); // Stop observing after init
-          }
-        });
-      },
-      {
-        rootMargin: '200px 0px', // Start loading slightly before visible
-        threshold: 0
-      }
-    );
-    observer.observe(trustSection);
-  } else {
-    // Fallback: initialize after a short delay if section not found
-    setTimeout(initTrustLogosSwiper, 1000);
-  }
-</script>

@@ -130,23 +130,24 @@ const themen = [
     </div>
 
     <!-- Section df3bc94 - 25% width - Icons -->
+    <!-- client:idle breaks critical request chain - session fetch deferred until browser idle -->
     <div class="sticky-section sticky-icons-section">
       <!-- Contact/Email Button - c87a233 -->
-      <ContactFormPopup client:load triggerType="icon" triggerClassName="sticky-contact-popup" />
+      <ContactFormPopup client:idle triggerType="icon" triggerClassName="sticky-contact-popup" />
 
       <!-- Account Icon - fb697af - view-framed -->
       <div class="sticky-user-session">
-        <UserSession client:load type="account" />
+        <UserSession client:idle type="account" />
       </div>
 
       <!-- Wishlist Icon - 80c9398 - view-framed -->
       <div class="sticky-wishlist-wrapper">
-        <WishlistCount client:load />
+        <WishlistCount client:idle />
       </div>
 
       <!-- Cart Icon - 0ab1fd6 - view-framed -->
       <div class="sticky-user-session sticky-cart-session">
-        <UserSession client:load type="cart" />
+        <UserSession client:idle type="cart" />
       </div>
     </div>
   </div>
@@ -557,10 +558,11 @@ const themen = [
   let ticking = false;
   const stickyHeader = document.getElementById('sticky-header');
   const mainHeader = document.getElementById('main-header');
+  // Cache header height once to avoid forced reflows on every scroll
+  const mainHeaderHeight = mainHeader?.offsetHeight || 150;
 
   function updateStickyHeader() {
     const scrollY = window.scrollY;
-    const mainHeaderHeight = mainHeader?.offsetHeight || 150;
 
     // Show sticky header when scrolled past main header
     if (scrollY > mainHeaderHeight + 50) {

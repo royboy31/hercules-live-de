@@ -468,8 +468,8 @@ async function syncImageToKV(
     }
 
     // Try to fetch WebP version first (pre-converted on WordPress server)
-    // WebP files are stored alongside originals with same name but .webp extension
-    const webpUrl = imageUrl.replace(/\.(png|jpe?g)$/i, '.webp');
+    // WordPress stores WebP alongside originals with .webp APPENDED (e.g., image.png.webp)
+    const webpUrl = /\.(png|jpe?g)$/i.test(imageUrl) ? imageUrl + '.webp' : imageUrl;
     let response: Response;
     let contentType: string;
 

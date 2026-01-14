@@ -688,6 +688,45 @@ WordPress mu-plugins/
 
 ## Session History
 
+### Session 2026-01-14 (CLS Fixes & Worker Image Size Optimization)
+**Task:** Fix Cumulative Layout Shift (CLS) issues on homepage and update Worker image sizes.
+
+**CLS Issues Fixed:**
+
+1. **Google Reviews Image** - Added `aspect-ratio: 306 / 36` to both Header.astro and TopBar.astro
+2. **About Hercules Image** - Added `aspect-ratio: 600 / 400` to HerculesMerchandise.astro
+3. **Product Images** - Added `aspect-ratio: 1 / 1` to TopPerformer.astro
+4. **Font-Related CLS** - Changed `display=swap` to `display=optional` in font loading
+5. **Font Fallbacks** - Added metric-adjusted fallback fonts (Jost Fallback, Roboto Fallback) in global.css
+6. **Slider Content** - Added `min-height` to slide-contents and slide-heading
+
+**Worker Image Size Updates:**
+- Main images: Changed from 300x300 to **361x361** (exact display size)
+- Thumbnails: Changed from 150x150 to **100x100** (for 83px display)
+- Worker deployed: Version `04f4fd94-0a95-4722-bf2c-dcd986cf054e`
+
+**Results:**
+| URL | CLS Score | CLS Value |
+|-----|-----------|-----------|
+| hercules-astro.pages.dev | 1 (perfect) | 0.003 |
+| staging.hercules-merchandise.de | 1 (perfect) | 0.027 |
+
+**Pending:** Image resync blocked by KV daily write limit (resets midnight UTC)
+
+**Files Modified:**
+- `src/components/Header.astro` - aspect-ratio for mobile Google Reviews
+- `src/components/TopBar.astro` - aspect-ratio for desktop Google Reviews
+- `src/components/HerculesMerchandise.astro` - aspect-ratio for about image
+- `src/components/TopPerformer.astro` - aspect-ratio for product images
+- `src/components/Slider.astro` - min-height for content reservation
+- `src/styles/global.css` - Font fallback definitions
+- `src/layouts/BaseLayout.astro` - display=optional for fonts
+- `workers/product-sync/src/index.ts` - Image sizes 361x361/100x100
+
+**Documentation:** See `docs/SESSION_2026-01-14_CLS_FIXES.md` for detailed changes.
+
+---
+
 ### Session 2026-01-11 (Product Sync Fix & Deployment Configuration)
 **Task:** Fix product sync not updating frontend after WordPress product changes.
 

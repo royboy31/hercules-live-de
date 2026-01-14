@@ -138,10 +138,11 @@ const slides = [
   .slide-contents {
     width: 1020px;
     max-width: 100%;
+    min-height: 200px; /* Reserve space to prevent CLS */
   }
 
   .slide-heading {
-    font-family: 'Jost', sans-serif;
+    font-family: 'Jost', 'Jost Fallback', sans-serif;
     font-size: 60px;
     font-weight: 600;
     line-height: 1.05;
@@ -149,6 +150,7 @@ const slides = [
     text-transform: uppercase;
     margin: 0 0 20px 0;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    min-height: 1.05em; /* Reserve space for heading */
   }
 
   .slide-description {

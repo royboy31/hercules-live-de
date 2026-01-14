@@ -511,6 +511,15 @@ async function syncImageToKV(
     const imageBuffer = await response.arrayBuffer();
     console.log(`Successfully fetched: ${response.url} (${contentType}, ${imageBuffer.byteLength} bytes)`);
 
+    // For thumbnails, reject if the image is too large (> 30KB)
+    // This prevents caching full-size images as "thumbnails" when WordPress
+    // didn't generate proper thumbnail sizes
+    const MAX_THUMB_SIZE = 30 * 1024; // 30KB - proper 150x150 thumbs are typically 5-15KB
+    if (size === 'thumb' && imageBuffer.byteLength > MAX_THUMB_SIZE) {
+      console.warn(`Rejecting oversized thumbnail (${imageBuffer.byteLength} bytes > ${MAX_THUMB_SIZE}): ${imageUrl}`);
+      return false;
+    }
+
     // Store image as base64 in KV with metadata
     // Use chunked conversion to avoid call stack overflow for large images
     const bytes = new Uint8Array(imageBuffer);
@@ -597,7 +606,7 @@ async function transformProduct(
   const images = await Promise.all(
     product.images.map(async (img, index) => {
       let localSrc = img.src;
-      let localThumbnail = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
+      let localThumbnail = img.src.replace(/(\.[^.]+)$/, '-361x361$1');
 
       if (syncImages) {
         localSrc = await syncImageToR2(bucket, img.src, product.slug, index, false);
@@ -608,7 +617,7 @@ async function transformProduct(
         id: img.id,
         src: img.src,
         local_src: localSrc,
-        thumbnail: img.src.replace(/(\.[^.]+)$/, '-300x300$1'),
+        thumbnail: img.src.replace(/(\.[^.]+)$/, '-361x361$1'),
         local_thumbnail: localThumbnail,
         alt: img.alt,
       };
@@ -775,30 +784,35 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
 
         // Cache gallery images in KV (limited to MAX_GALLERY_IMAGES to stay within subrequest limits)
         // forceRefresh parameter passed from sync endpoint to re-download all images
-        // Cache both main (300x300) and thumb (150x150) versions for optimal display sizes:
-        // - Main: 300x300 for ~361px display on category cards (upscaled slightly is OK)
-        // - Thumb: 150x150 for ~98px display in thumbnail carousels (7-8KB vs 100KB+)
+        // Cache both main and thumb versions using WordPress custom sizes:
+        // - Main: 361x361 for exact 361px display on category cards (~10-15KB WebP)
+        // - Thumb: 100x100 for 83px display in thumbnail carousels (~2-5KB WebP)
         let cachedImageCount = 0;
         if (product.slug && product.images?.length > 0) {
           const imagesToCache = Math.min(product.images.length, MAX_GALLERY_IMAGES);
           for (let i = 0; i < imagesToCache; i++) {
             const img = product.images[i];
             if (img?.src) {
-              // Cache main size (300x300) for category cards - good balance of quality and size
-              const mainUrl = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
+              // Cache main size (361x361) for category cards - exact match for display size
+              const mainUrl = img.src.replace(/(\.[^.]+)$/, '-361x361$1');
               let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, forceImageRefresh, 'full');
               if (!mainSuccess && img.src !== mainUrl) {
-                // Fallback to original image if 300x300 doesn't exist
-                mainSuccess = await syncImageToKV(env.PRODUCTS_KV, img.src, product.slug, i, true, 'full');
+                // Fallback to 300x300, then 600x600, then original
+                const fallback300 = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
+                mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback300, product.slug, i, true, 'full');
+                if (!mainSuccess) {
+                  const fallback600 = img.src.replace(/(\.[^.]+)$/, '-600x600$1');
+                  mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback600, product.slug, i, true, 'full');
+                }
               }
 
-              // Cache thumbnail (150x150) for thumbnail carousels - ~7KB vs 100KB+
-              const thumbUrl = img.src.replace(/(\.[^.]+)$/, '-150x150$1');
+              // Cache thumbnail (100x100) for thumbnail carousels - ~2-5KB WebP
+              const thumbUrl = img.src.replace(/(\.[^.]+)$/, '-100x100$1');
               let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, forceImageRefresh, 'thumb');
               if (!thumbSuccess && img.src !== thumbUrl) {
-                // Fallback to 300x300 if 150x150 doesn't exist
-                const fallbackUrl = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
-                thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallbackUrl, product.slug, i, true, 'thumb');
+                // Fallback to 83x83 (exact display size) if 100x100 doesn't exist
+                const fallback83 = img.src.replace(/(\.[^.]+)$/, '-83x83$1');
+                thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback83, product.slug, i, true, 'thumb');
               }
 
               if (mainSuccess || thumbSuccess) {
@@ -1871,8 +1885,8 @@ export default {
             const imageUrl = images[i].src || images[i].local_src;
             if (!imageUrl) continue;
 
-            // Sync main size (300x300) for category cards
-            const mainUrl = imageUrl.replace(/(\.[^.]+)$/, '-300x300$1');
+            // Sync main size (361x361) for category cards - exact display size
+            const mainUrl = imageUrl.replace(/(\.[^.]+)$/, '-361x361$1');
             const fullSuccess = await syncImageToKV(
               env.PRODUCTS_KV,
               mainUrl,
@@ -1882,8 +1896,8 @@ export default {
               'full'
             );
 
-            // Sync thumbnail (150x150) for thumbnail carousels - ~7KB
-            const thumbUrl = imageUrl.replace(/(\.[^.]+)$/, '-150x150$1');
+            // Sync thumbnail (100x100) for thumbnail carousels - displayed at 83px
+            const thumbUrl = imageUrl.replace(/(\.[^.]+)$/, '-100x100$1');
             const thumbSuccess = await syncImageToKV(
               env.PRODUCTS_KV,
               thumbUrl,
@@ -1983,8 +1997,8 @@ export default {
           const imageUrl = images[i].src || images[i].local_src;
           if (!imageUrl) continue;
 
-          // Sync main size (300x300) for category cards - look for WebP first
-          const mainUrl = imageUrl.replace(/(\.[^.]+)$/, '-300x300$1');
+          // Sync main size (361x361) for category cards - exact display size
+          const mainUrl = imageUrl.replace(/(\.[^.]+)$/, '-361x361$1');
           const mainSuccess = await syncImageToKV(
             env.PRODUCTS_KV,
             mainUrl,
@@ -1994,8 +2008,8 @@ export default {
             'full'
           );
 
-          // Sync thumbnail (150x150) for thumbnail carousels
-          const thumbUrl = imageUrl.replace(/(\.[^.]+)$/, '-150x150$1');
+          // Sync thumbnail (100x100) for thumbnail carousels - displayed at 83px
+          const thumbUrl = imageUrl.replace(/(\.[^.]+)$/, '-100x100$1');
           const thumbSuccess = await syncImageToKV(
             env.PRODUCTS_KV,
             thumbUrl,
@@ -2009,8 +2023,8 @@ export default {
             index: i,
             mainSuccess,
             thumbSuccess,
-            mainSize: mainSuccess ? '300x300' : undefined,
-            thumbSize: thumbSuccess ? '150x150' : undefined
+            mainSize: mainSuccess ? '361x361' : undefined,
+            thumbSize: thumbSuccess ? '100x100' : undefined
           });
 
           if (mainSuccess) imagesSynced++;
@@ -2096,35 +2110,61 @@ export default {
 
         try {
           const response = await fetch(wpUrl, {
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'Hercules-Product-Sync-Worker/1.0',
+            },
           });
 
           if (!response.ok) {
-            return new Response('Product config not found', { status: 404 });
+            const errorText = await response.text();
+            console.error(`WordPress API error: ${response.status} - ${errorText}`);
+            return new Response(JSON.stringify({
+              error: 'Product config not found',
+              status: response.status,
+              wpUrl: wpUrl,
+              details: errorText.substring(0, 200)
+            }), {
+              status: 404,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
           }
 
           const config = await response.json();
-
-          // Cache in KV for 1 hour (will be refreshed on product sync)
           configStr = JSON.stringify(config);
-          await env.PRODUCTS_KV.put(`product-config:${identifier}`, configStr, {
-            expirationTtl: 3600, // 1 hour
-          });
 
-          // Also cache by ID and slug for easy lookup
-          if (config.product_id) {
-            await env.PRODUCTS_KV.put(`product-config:${config.product_id}`, configStr, {
-              expirationTtl: 3600,
+          // Try to cache in KV (non-blocking - continue even if cache fails)
+          try {
+            await env.PRODUCTS_KV.put(`product-config:${identifier}`, configStr, {
+              expirationTtl: 3600, // 1 hour
             });
-          }
-          if (config.product_slug) {
-            await env.PRODUCTS_KV.put(`product-config:${config.product_slug}`, configStr, {
-              expirationTtl: 3600,
-            });
+
+            // Also cache by ID and slug for easy lookup
+            if (config.product_id) {
+              await env.PRODUCTS_KV.put(`product-config:${config.product_id}`, configStr, {
+                expirationTtl: 3600,
+              });
+            }
+            if (config.product_slug) {
+              await env.PRODUCTS_KV.put(`product-config:${config.product_slug}`, configStr, {
+                expirationTtl: 3600,
+              });
+            }
+          } catch (kvError) {
+            // KV write failed (likely daily limit exceeded) - log but continue
+            console.warn('KV cache write failed:', kvError instanceof Error ? kvError.message : 'Unknown error');
           }
         } catch (error) {
-          console.error('Error fetching product config:', error);
-          return new Response('Error fetching product config', { status: 500 });
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error('Error fetching product config:', errorMessage);
+          return new Response(JSON.stringify({
+            error: 'Error fetching product config',
+            message: errorMessage,
+            wpUrl: wpUrl
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
         }
       }
 

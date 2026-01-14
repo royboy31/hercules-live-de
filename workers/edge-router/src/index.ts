@@ -33,6 +33,7 @@ const WORDPRESS_PATHS = [
   '/warenkorb',
   '/checkout',
   '/kasse',
+  '/thank-you',
 
   // Account
   '/my-account',

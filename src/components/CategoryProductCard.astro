@@ -45,27 +45,27 @@ const isLCPCandidate = index === 0;
 
 const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
 
-// Get gallery images from Worker KV cache (no WordPress access at runtime)
+// Get gallery images from Worker KV cache
 // Use cached_image_count from product data to know exactly how many images are available
 // Fall back to images array length with a max of 10 if cached_image_count not set
-// Images are cached at two sizes:
-// - Main (300x300): ~20KB for category card display at 361px
-// - Thumb (150x150): ~7KB for thumbnail carousel at 98px display
+//
+// Image sizing (cached in KV during product sync - exact WordPress sizes):
+// - Main images: 361x361 WebP (~10-15KB) - exact match for 361px display
+// - Thumbnails: 100x100 WebP (~2-5KB) - displayed at 83px (slight buffer for retina)
 const imageCount = product.cached_image_count ?? Math.min(product.images?.length || 0, 10);
 const galleryImages = (product.images || []).slice(0, imageCount).map((img, index) => {
   // Worker URL format: /image/{slug} for index 0, /image/{slug}/{index} for gallery
-  // Add ?size=thumb for 150x150 thumbnail versions
   const baseUrl = index === 0
     ? `${WORKER_URL}/image/${product.slug}`
     : `${WORKER_URL}/image/${product.slug}/${index}`;
   return {
-    thumb: `${baseUrl}?size=thumb`,  // 150x150 thumbnail (~7KB)
-    main: baseUrl,                    // 300x300 main image (~20KB)
+    thumb: `${baseUrl}?size=thumb`,  // 100x100 cached thumbnail (~2-5KB)
+    main: baseUrl,                    // 361x361 cached main image (~10-15KB)
     alt: img.alt || product.name
   };
 });
 
-// Worker cached main image URL - 300x300 for ~361px display
+// Worker main image URL - 361x361 cached image
 const workerImageUrl = `${WORKER_URL}/image/${product.slug}`;
 
 // Format price - just show the base price like WooCommerce does
@@ -135,10 +135,10 @@ const cardFeatures = product.card_features || [];
         />
       </div>
 
-      <!-- Thumbnail Row - Pure CSS (no Swiper) -->
+      <!-- Thumbnail Row - Scrollable, Lazy Loaded -->
       {galleryImages.length > 1 && (
         <div class="kd-thumbnails" data-gallery={JSON.stringify(galleryImages)}>
-          {galleryImages.slice(0, 4).map((img, idx) => (
+          {galleryImages.slice(0, 6).map((img, idx) => (
             <button
               type="button"
               class={`kd-thumb-btn${idx === 0 ? ' active' : ''}`}
@@ -260,13 +260,31 @@ const cardFeatures = product.card_features || [];
     aspect-ratio: 1/1;
   }
 
-  /* Thumbnail row - Pure CSS flexbox (no Swiper) */
+  /* Thumbnail row - Scrollable flexbox */
   .kd-thumbnails {
     display: flex;
-    gap: 10px;
-    justify-content: center;
+    gap: 8px;
+    justify-content: flex-start;
     width: 100%;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 0;
+    scrollbar-width: thin;
+    scrollbar-color: #ddd transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .kd-thumbnails::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .kd-thumbnails::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .kd-thumbnails::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 2px;
   }
 
   .kd-thumb-btn {

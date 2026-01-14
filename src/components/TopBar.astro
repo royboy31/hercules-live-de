@@ -37,12 +37,60 @@
       </ul>
 
       <!-- Google Reviews - Right Side (306x36px) -->
-      <a href="#review-section" class="google-reviews">
+      <a href="#review-section" class="google-reviews google-reviews-link">
         <img src="/images/googke-rev-5-2.png" alt="Hercules Merchandise Google Bewertungen 4.9 Sterne" width="306" height="36" />
       </a>
     </div>
   </div>
 </div>
+
+<script is:inline>
+  // Google Reviews link handler - smart scrolling/redirect
+  // Works across all pages - scrolls to reviews if present, redirects to homepage otherwise
+  (function() {
+    var reviewsLinks = document.querySelectorAll('.google-reviews-link');
+
+    reviewsLinks.forEach(function(link) {
+      link.addEventListener('click', function(e) {
+        var reviewSection = document.getElementById('review-section');
+
+        if (reviewSection) {
+          // Reviews section exists on this page - smooth scroll to it
+          e.preventDefault();
+          reviewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Update URL hash without triggering page jump
+          if (history.pushState) {
+            history.pushState(null, null, '#review-section');
+          }
+        } else {
+          // Reviews section does NOT exist - redirect to homepage with hash
+          e.preventDefault();
+          window.location.href = '/#review-section';
+        }
+      });
+    });
+
+    // Handle page load with hash - smooth scroll if section exists
+    function handleHashOnLoad() {
+      if (window.location.hash === '#review-section') {
+        var reviewSection = document.getElementById('review-section');
+        if (reviewSection) {
+          // Small delay to ensure page is fully loaded
+          setTimeout(function() {
+            reviewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+        }
+      }
+    }
+
+    // Run on DOMContentLoaded and also check immediately if already loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', handleHashOnLoad);
+    } else {
+      handleHashOnLoad();
+    }
+  })();
+</script>
 
 <style>
   .top-bar {

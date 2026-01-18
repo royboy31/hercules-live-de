@@ -465,7 +465,7 @@ export default function UserSession({ type }: UserSessionProps) {
       textDecoration: 'none',
     };
 
-    // Green dot styles - matching WordPress exactly
+    // Green dot styles - brand green (#10C99E)
     const dotStyle: React.CSSProperties = {
       position: 'absolute',
       right: '-6px',
@@ -473,7 +473,7 @@ export default function UserSession({ type }: UserSessionProps) {
       width: '15px',
       height: '15px',
       borderRadius: '50%',
-      background: 'green',
+      background: '#10C99E',
       zIndex: 223343,
       opacity: 1,
       visibility: 'visible',

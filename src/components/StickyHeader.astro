@@ -6,13 +6,16 @@ import UserSession from './UserSession.tsx';
 import WishlistCount from './WishlistCount.tsx';
 import ContactFormPopup from './ContactFormPopup.tsx';
 
-// Navigation items for mobile dropdown
+// Navigation items for mobile dropdown (order from WordPress - column-first layout)
+// Column 1: Fußball, Rugby, Basketball, Laufen
+// Column 2: Field hockey, Volleyball, Handball, Radfahren
+// Column 3: Fitness, Golf, eSports
 const sportarten = [
   { label: 'Fußball', href: '/collections/fussball/', icon: 'Football.svg' },
   { label: 'Rugby', href: '/collections/rugby/', icon: 'Rugby-1.svg' },
   { label: 'Basketball', href: '/collections/basketball/', icon: 'Basketball-1.svg' },
   { label: 'Laufen', href: '/collections/laufen/', icon: 'running-1.svg' },
-  { label: 'Feldhockey', href: '/collections/feldhockey/', icon: 'field-hockey-1.svg' },
+  { label: 'Field hockey', href: '/collections/feldhockey/', icon: 'field-hockey-1.svg' },
   { label: 'Volleyball', href: '/collections/volleyball/', icon: 'volleyball-1.svg' },
   { label: 'Handball', href: '/collections/handball/', icon: 'handball-1.svg' },
   { label: 'Radfahren', href: '/collections/radfahren/', icon: 'cycling-1.svg' },
@@ -23,15 +26,15 @@ const sportarten = [
 
 const produkte = [
   { label: 'Sportswear', href: '/collections/personalisierte-sportbekleidung/', icon: 'teamwear-1.svg' },
-  { label: 'Schals', href: '/collections/personalisierte-fanschals/', icon: 'scarves-1.svg' },
-  { label: 'Mützen', href: '/collections/personalisierte-mutzen/', icon: 'beanies-3.svg' },
+  { label: 'Scarves', href: '/collections/personalisierte-fanschals/', icon: 'scarves-1.svg' },
+  { label: 'Beanies', href: '/collections/personalisierte-mutzen/', icon: 'beanies-3.svg' },
   { label: 'Kopfbedeckung', href: '/collections/kopfbedeckung/', icon: 'cap-1.svg' },
-  { label: 'Wimpel', href: '/collections/personalisierte-wimpel/', icon: 'pennants-3.svg' },
+  { label: 'Pennants', href: '/collections/personalisierte-wimpel/', icon: 'pennants-3.svg' },
   { label: 'Handtücher', href: '/collections/handtucher/', icon: 'towelst-1.svg' },
   { label: 'Flaggen', href: '/collections/flaggen/', icon: 'flags-1.svg' },
   { label: 'Schuhwerk', href: '/collections/schuhwerk/', icon: 'footwear-1.svg' },
   { label: 'Taschen', href: '/collections/taschen/', icon: 'sportsbag-1.svg' },
-  { label: 'Textilien', href: '/collections/personalisierte-textilien/', icon: 'textile-1.svg' },
+  { label: 'Textile', href: '/collections/personalisierte-textilien/', icon: 'textile-1.svg' },
   { label: 'Trinkflaschen', href: '/collections/trinkflaschen/', icon: 'drinkware-1.svg' },
   { label: 'Bälle', href: '/collections/balle/', icon: 'balls-1.svg' },
   { label: 'Zubehör', href: '/collections/zubehor/', icon: 'accessories-1.svg' },
@@ -126,7 +129,7 @@ const themen = [
 
     <!-- Section 234bc1b - 50% width - Search -->
     <div class="sticky-section sticky-search-section">
-      <ProductSearch client:load placeholder="Produkte suchen..." />
+      <ProductSearch client:idle placeholder="Produkte suchen..." />
     </div>
 
     <!-- Section df3bc94 - 25% width - Icons -->
@@ -366,7 +369,7 @@ const themen = [
     margin-left: 8px;
   }
 
-  /* Submenu - Grid layout to the right, no gap from main menu */
+  /* Submenu - Grid layout to the right, 3 columns with column flow */
   .sticky-submenu {
     display: none;
     position: absolute;
@@ -376,8 +379,10 @@ const themen = [
     margin: 0;
     padding: 5px 0;
     background: white;
-    width: 780px; /* exact width from staging */
-    grid-template-columns: repeat(4, 1fr);
+    width: 580px; /* 3 columns width */
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(4, auto);
+    grid-auto-flow: column;
     row-gap: 0;
     column-gap: 0;
     border-left: 1px solid #FAFAFA;

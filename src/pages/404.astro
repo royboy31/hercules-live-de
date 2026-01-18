@@ -25,7 +25,7 @@ import ProductSearch from '../components/ProductSearch';
 
     <!-- Product Search -->
     <div class="search-wrapper">
-      <ProductSearch client:load />
+      <ProductSearch client:idle />
     </div>
   </section>
 </BaseLayout>
@@ -67,8 +67,9 @@ import ProductSearch from '../components/ProductSearch';
   }
 
   .separator img {
-    width: 7px;
-    height: auto;
+    width: 6px;
+    height: 12px;
+    aspect-ratio: 6 / 12;
   }
 
   .breadcrumb .current {

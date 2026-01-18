@@ -1,133 +1,154 @@
-# CLS Optimization Summary
+# Core Web Vitals Summary - hercules-astro.pages.dev
 
-**Date:** 2026-01-14  
-**Site:** https://hercules-astro.pages.dev  
-**Task:** Check and fix ALL layout shifts (CLS issues)
+Tested: 2026-01-15
 
 ---
 
-## Result: NO FIXES NEEDED ✅
+## Performance Overview
 
-Your site already achieves a **perfect CLS score of 0.000** with zero layout shifts detected.
-
----
-
-## What Was Checked
-
-### 1. Main `<main class="flex-1">` Element
-- **Status:** ✅ Properly configured
-- **Implementation:** Uses flexbox with `flex-1` for natural content growth
-- **Location:** `/src/layouts/BaseLayout.astro` line 280
-
-### 2. About Image `/images/about-hercules.webp`
-- **Status:** ✅ Fully optimized
-- **Dimensions:** `width="600" height="400"` explicit attributes
-- **Aspect Ratio:** `aspect-ratio: 600 / 400` in CSS
-- **Location:** `/src/components/HerculesMerchandise.astro` lines 30-37
-
-### 3. Slider Heading `<h2 class="slide-heading">`
-- **Status:** ✅ Reserved space
-- **Implementation:** `min-height: 1.05em` in CSS
-- **Parent Container:** `min-height: 200px` on `.slide-contents`
-- **Location:** `/src/components/Slider.astro` lines 141, 153
-
-### 4. Product Images in TopPerformer Section
-- **Status:** ✅ All have dimensions
-- **Dimensions:** `width="225" height="225"` explicit attributes
-- **Container:** `aspect-ratio: 1 / 1` enforced in CSS
-- **Location:** `/src/components/TopPerformer.astro` lines 38-42
-
-### 5. Web Fonts Causing Text Reflow
-- **Status:** ✅ Completely prevented
-- **Implementation:**
-  - `font-display: optional` (no font swap)
-  - Metric-adjusted fallback fonts (Jost Fallback, Roboto Fallback)
-  - Font preload with `fetchpriority="high"`
-- **Locations:**
-  - `/src/layouts/BaseLayout.astro` lines 207-215
-  - `/src/styles/global.css` lines 6-22
-
----
-
-## PageSpeed Insights Results
-
-| Metric | Score | Status |
-|--------|-------|--------|
-| **CLS** | **0.000** | ✅ Perfect |
-| **Performance** | 80/100 | ✅ Good |
-| **LCP** | 4.4s | ⚠️ Acceptable (limited by 3G simulation) |
-| **FCP** | 2.6s | ✅ Good |
-| **TBT** | 0ms | ✅ Perfect |
-| **Speed Index** | 3.5s | ✅ Good |
-
-**Layout Shift Elements Detected:** None  
-**Unsized Images:** None (all images properly sized)  
-**Font Display Issues:** None
-
----
-
-## CLS Prevention Techniques Used
-
-1. ✅ **Explicit image dimensions** - All `<img>` tags have `width` and `height` attributes
-2. ✅ **CSS aspect-ratio** - Responsive images maintain aspect ratio
-3. ✅ **Reserved space for dynamic content** - `min-height` on slider elements
-4. ✅ **font-display: optional** - Prevents text reflow on font load
-5. ✅ **Metric-adjusted font fallbacks** - Fallback fonts match web font metrics
-6. ✅ **Content-visibility optimization** - Below-fold sections have intrinsic size
-7. ✅ **Deferred JavaScript** - Swiper initialization after main thread idle
-8. ✅ **LCP image preload** - Responsive preload for hero slider
-
----
-
-## Files Analyzed
-
-### Layout Files
-- ✅ `/src/layouts/BaseLayout.astro` - Font loading, preload, body structure
-- ✅ `/src/pages/index.astro` - Homepage structure
-
-### Component Files
-- ✅ `/src/components/Slider.astro` - Hero slider with fixed height
-- ✅ `/src/components/HerculesMerchandise.astro` - About image with dimensions
-- ✅ `/src/components/TopPerformer.astro` - Product images with dimensions
-
-### Style Files
-- ✅ `/src/styles/global.css` - Font fallbacks, content-visibility
-
----
-
-## Recommendation
-
-**No changes are required.** Your site implements all best practices for CLS prevention and achieves a perfect score.
-
-Continue following these practices for future pages:
-1. Always add `width` and `height` attributes to images
-2. Use `aspect-ratio` CSS for responsive images
-3. Reserve space with `min-height` for dynamic content
-4. Continue using `font-display: optional` for web fonts
-5. Keep metric-adjusted font fallbacks
-
----
-
-## Detailed Analysis
-
-For a comprehensive technical analysis of all CLS prevention measures, see:
-- **Full Report:** `/core-web-vitals/CLS_ANALYSIS.md`
-
-For raw PageSpeed Insights data, see:
-- **Raw JSON:** `/core-web-vitals/pagespeed-raw.json`
-
----
-
-## Verification
-
-To verify CLS score in the future, run:
-
-```bash
-curl -s "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https%3A%2F%2Fhercules-astro.pages.dev&key=AIzaSyCEBwlUlOrIxXcRLHCiUVInsAsDTunskC4&category=performance&strategy=mobile" | python3 -c "import json, sys; d=json.load(sys.stdin); print(f\"CLS: {d['lighthouseResult']['audits']['cumulative-layout-shift']['numericValue']:.3f}\")"
+```
+MOBILE SCORES                  DESKTOP SCORES
++---------------------------+  +---------------------------+
+| Performance:     93/100  |  | Performance:     99/100  |
+| Accessibility:   96/100  |  | Accessibility:   96/100  |
+| Best Practices:  96/100  |  | Best Practices:  96/100  |
+| SEO:            100/100  |  | SEO:            100/100  |
++---------------------------+  +---------------------------+
 ```
 
-Expected output: `CLS: 0.000`
+---
+
+## Core Web Vitals Comparison
+
+| Metric | Mobile | Desktop | Target | Mobile Status | Desktop Status |
+|--------|--------|---------|--------|---------------|----------------|
+| **LCP** (Largest Contentful Paint) | 2.5s | 0.7s | <2.5s | GREEN (at threshold) | GREEN |
+| **CLS** (Cumulative Layout Shift) | 0 | 0.003 | <0.1 | GREEN | GREEN |
+| **TBT** (Total Blocking Time) | 0ms | 0ms | <200ms | GREEN | GREEN |
+| **FCP** (First Contentful Paint) | 1.4s | 0.4s | <1.8s | GREEN | GREEN |
+| **Speed Index** | 5.5s | 1.3s | <3.4s | ORANGE | GREEN |
 
 ---
 
-**Status:** ✅ COMPLETE - Zero layout shifts achieved
+## Key Findings
+
+### STRENGTHS
+- Perfect CLS scores (no layout shifts)
+- Zero blocking time on both mobile and desktop
+- Excellent SEO (100/100)
+- Strong accessibility (96/100)
+- Fast server response time
+- Good use of modern WebP images
+- Efficient JavaScript execution
+
+### AREAS FOR IMPROVEMENT
+
+**1. Speed Index (Mobile: 5.5s)**
+- Target: <3.4s
+- Current: 5.5s (62% above target)
+- Impact: Medium priority
+- Cause: Progressive loading of slider images, render path optimization needed
+
+**2. LCP (Mobile: 2.5s)**
+- Target: <2.5s
+- Current: 2.5s (right at threshold)
+- Impact: Low priority (technically passing)
+- Cause: Large hero slider image (84.4 KB) not preloaded
+
+**3. Unused JavaScript (24.8 KB)**
+- File: client.D_Es0amM.js
+- Impact: Low priority
+- Cause: Astro client bundle contains unused code
+
+---
+
+## Optimization Opportunities
+
+### HIGH PRIORITY (Est. total improvement: +3-4 points)
+
+1. **Preload LCP Image**
+   - Add to `<head>`: `<link rel="preload" as="image" href="/images/slider/slide-2-scarves.webp" fetchpriority="high">`
+   - Expected: LCP 2.5s → 2.0s
+   - Impact: +1-2 points
+
+2. **Optimize Swiper.js Loading**
+   - Lazy load slider library with IntersectionObserver
+   - Expected: Speed Index improvement
+   - Impact: +1 point
+
+3. **Convert footer-bg.jpg to WebP**
+   - Current: 71.6 KB JPEG
+   - Expected: ~45 KB WebP (26 KB savings)
+   - Impact: +1 point
+
+### MEDIUM PRIORITY (Est. improvement: +1-2 points)
+
+4. **Reduce Unused JavaScript**
+   - Use client:visible or client:idle instead of client:load
+   - Remove 24.8 KB unused code
+   - Impact: +1 point
+
+5. **Optimize Slider Images**
+   - Generate responsive sizes for slider images
+   - Reduce slide-2-scarves.webp size
+   - Impact: +0.5 point
+
+### LOW PRIORITY (Marginal improvements)
+
+6. **Reduce Unused CSS**
+7. **Optimize Font Loading** (use font-display: swap)
+8. **Add Resource Hints** (preconnect, dns-prefetch)
+
+---
+
+## Resource Breakdown
+
+**Total Network Requests:** 70
+**Total Transfer Size:** 674.1 KB
+
+### Largest Resources:
+1. slide-2-scarves.webp - 84.4 KB (Image)
+2. footer-bg.jpg - 71.6 KB (Image) ← Should be WebP
+3. client.D_Es0amM.js - 57.5 KB (Script)
+4. slide-1-teamwear.webp - 50.4 KB (Image)
+5. design-herc-3-optimized.webp - 47.1 KB (Image)
+
+### Main Thread Work: 917ms
+- Other: 443ms (48%)
+- Script Evaluation: 198ms (22%)
+- Style & Layout: 157ms (17%)
+- Parse HTML & CSS: 49ms (5%)
+- Rendering: 44ms (5%)
+- Script Parsing: 26ms (3%)
+
+---
+
+## Expected Results After Optimization
+
+**Current Scores:**
+- Mobile: 93/100
+- Desktop: 99/100
+
+**After Priority 1 + 2 Optimizations:**
+- Mobile: 96-97/100
+- Desktop: 99-100/100
+
+**Key Metric Improvements:**
+- Mobile LCP: 2.5s → 2.0s
+- Mobile Speed Index: 5.5s → 3.8s
+- Bundle Size: 674 KB → 625 KB
+
+---
+
+## Next Steps
+
+1. Review detailed report: `core-web-vitals/detailed-reports/hercules-astro-pages-dev.md`
+2. Implement high priority optimizations first
+3. Re-test after each major change
+4. Document results in optimization-log.md
+
+---
+
+## Status: PRODUCTION READY
+
+The site is already performing excellently and provides a great user experience. The recommended optimizations will push the score from "excellent" to "exceptional" but are not critical for launch.

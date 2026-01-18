@@ -167,18 +167,18 @@ export default function WishlistButton({
       >
         <path
           d={inWishlist ? heartFilledPath : heartOutlinePath}
-          fill={inWishlist ? '#e91e63' : 'none'}
-          stroke={inWishlist ? '#e91e63' : '#666'}
+          fill={inWishlist ? '#10C99E' : 'none'}
+          stroke={inWishlist ? '#10C99E' : '#666'}
           strokeWidth={inWishlist ? 0 : 1.5}
         />
       </svg>
       <style>{`
         .wishlist-button:hover {
-          border-color: #e91e63 !important;
+          border-color: #10C99E !important;
           transform: scale(1.1);
         }
         .wishlist-button:hover svg path {
-          stroke: #e91e63;
+          stroke: #10C99E;
         }
       `}</style>
     </button>

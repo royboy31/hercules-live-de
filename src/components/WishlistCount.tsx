@@ -45,7 +45,7 @@ export default function WishlistCount({ className = '' }: WishlistCountProps) {
     position: 'absolute',
     top: '-6px',
     right: '-6px',
-    background: '#e91e63',
+    background: '#10C99E',
     color: 'white',
     fontSize: '11px',
     fontWeight: 600,

@@ -341,6 +341,7 @@ input[type="range"]::-ms-thumb {
     padding-bottom: 26px;
     border-radius: 20px;
     background-color: white;
+    position: relative;
 }
 
 /* Step indicator/header */
@@ -1083,4 +1084,91 @@ input[type="range"]::-webkit-slider-runnable-track {
     .kd-vision-content h3 {
         font-size: 22px;
     }
+}
+
+/* ==========================================
+   Loading Overlay & Spinner
+   ========================================== */
+
+/* Loading overlay - scoped to product-info section */
+.kd-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    border-radius: 20px;
+}
+
+.kd-loading-overlay .kd-loading-content {
+    text-align: center;
+}
+
+.kd-loading-overlay .kd-loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #E0E0E0;
+    border-top-color: #10C99E;
+    border-radius: 50%;
+    animation: kd-spin 0.8s linear infinite;
+    margin: 0 auto 20px auto;
+}
+
+.kd-loading-overlay .kd-loading-text {
+    font-family: 'Jost', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: #253461;
+    margin: 0;
+}
+
+.kd-loading-overlay .kd-loading-subtext {
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #787878;
+    margin-top: 8px;
+}
+
+/* Inline button spinner */
+.kd-btn-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: kd-spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+/* Spinner for outline button (quote button) */
+.kd-action-btns-wrapper .kd-single-action-btn:first-child button .kd-btn-spinner {
+    border-color: rgba(16, 201, 158, 0.3);
+    border-top-color: #10C99E;
+}
+
+/* Spinner animation */
+@keyframes kd-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Button loading state - prevent text jump */
+.kd-action-btns-wrapper button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
 }

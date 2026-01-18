@@ -3,10 +3,11 @@
  * CategoryProductCard - Product card for category archive pages
  * Matches WordPress WooCommerce styling from staging.hercules-merchandise.de
  *
- * PERFORMANCE: Uses pure CSS for thumbnail carousel (no Swiper.js)
- * - Eliminates ~70KB Swiper bundle from category pages
- * - Removes critical request chain dependency
- * - Uses CSS flexbox for horizontal scrolling thumbnails
+ * PERFORMANCE: Swiper thumbnails with lazy initialization
+ * - Swiper only initializes when card enters viewport (IntersectionObserver)
+ * - Uses FreeMode for smooth touch scrolling
+ * - Images remain lazy loaded
+ * - Graceful degradation: CSS flexbox works if JS fails
  */
 import WishlistButton from './WishlistButton.tsx';
 
@@ -135,27 +136,34 @@ const cardFeatures = product.card_features || [];
         />
       </div>
 
-      <!-- Thumbnail Row - Scrollable, Lazy Loaded -->
-      {galleryImages.length > 1 && (
-        <div class="kd-thumbnails" data-gallery={JSON.stringify(galleryImages)}>
-          {galleryImages.slice(0, 6).map((img, idx) => (
-            <button
-              type="button"
-              class={`kd-thumb-btn${idx === 0 ? ' active' : ''}`}
-              data-thumb-src={img.thumb}
-              data-main-src={img.main}
-              aria-label={`Thumbnail ${idx + 1}`}
-            >
-              <img
-                src={img.thumb}
-                alt=""
-                loading="lazy"
-                class="kd-thumb"
-                width="83"
-                height="83"
-              />
-            </button>
-          ))}
+      <!-- Thumbnail Swiper Carousel - Lazy Initialized -->
+      <!-- Show thumbnails even with 1 image so users see the gallery section -->
+      {galleryImages.length >= 1 && (
+        <div class="kd-thumbnails-wrapper">
+          <div class="swiper kd-thumb-swiper" data-gallery={JSON.stringify(galleryImages)}>
+            <div class="swiper-wrapper">
+              {galleryImages.slice(0, 6).map((img, idx) => (
+                <div class="swiper-slide">
+                  <button
+                    type="button"
+                    class={`kd-thumb-btn${idx === 0 ? ' active' : ''}`}
+                    data-thumb-src={img.thumb}
+                    data-main-src={img.main}
+                    aria-label={`Thumbnail ${idx + 1}`}
+                  >
+                    <img
+                      src={img.thumb}
+                      alt=""
+                      loading="lazy"
+                      class="kd-thumb"
+                      width="83"
+                      height="83"
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -260,35 +268,29 @@ const cardFeatures = product.card_features || [];
     aspect-ratio: 1/1;
   }
 
-  /* Thumbnail row - Scrollable flexbox */
-  .kd-thumbnails {
+  /* Thumbnail Swiper Carousel */
+  .kd-thumbnails-wrapper {
+    width: 100%;
+    padding: 4px 0;
+  }
+
+  .kd-thumb-swiper {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .kd-thumb-swiper .swiper-wrapper {
+    /* Flexbox fallback before Swiper initializes */
     display: flex;
     gap: 8px;
-    justify-content: flex-start;
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 4px 0;
-    scrollbar-width: thin;
-    scrollbar-color: #ddd transparent;
-    -webkit-overflow-scrolling: touch;
   }
 
-  .kd-thumbnails::-webkit-scrollbar {
-    height: 4px;
-  }
-
-  .kd-thumbnails::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .kd-thumbnails::-webkit-scrollbar-thumb {
-    background: #ddd;
-    border-radius: 2px;
+  .kd-thumb-swiper .swiper-slide {
+    width: auto !important;
+    flex-shrink: 0;
   }
 
   .kd-thumb-btn {
-    flex-shrink: 0;
     background: #F2F2F2;
     border-radius: 4px;
     border: 2px solid transparent;
@@ -400,13 +402,50 @@ const cardFeatures = product.card_features || [];
       width: 60px;
       height: 60px;
     }
+
+    .kd-thumb-swiper .swiper-wrapper {
+      gap: 6px;
+    }
   }
 </style>
 
 <script>
+  import Swiper from 'swiper';
+  import { FreeMode } from 'swiper/modules';
+  import 'swiper/css';
+
   /**
-   * Thumbnail click handler - Pure vanilla JS (no Swiper)
-   * Uses event delegation for efficient handling across all product cards
+   * Thumbnail Swiper Carousel with Lazy Initialization
+   * - Only initializes when product card enters viewport
+   * - Uses FreeMode for smooth touch scrolling
+   * - Maintains CSS flexbox fallback
+   */
+
+  // Track initialized swipers to avoid duplicates
+  const initializedSwipers = new WeakSet<Element>();
+
+  function initThumbnailSwiper(swiperEl: Element) {
+    if (initializedSwipers.has(swiperEl)) return;
+    initializedSwipers.add(swiperEl);
+
+    new Swiper(swiperEl as HTMLElement, {
+      modules: [FreeMode],
+      slidesPerView: 'auto',
+      spaceBetween: 8,
+      freeMode: {
+        enabled: true,
+        sticky: false,
+        momentumRatio: 0.5,
+        momentumBounce: false,
+      },
+      watchSlidesProgress: true,
+      grabCursor: true,
+      touchEventsTarget: 'container',
+    });
+  }
+
+  /**
+   * Thumbnail click handler - Event delegation for all product cards
    */
   function setupThumbnailClickHandlers() {
     document.addEventListener('click', (e) => {
@@ -419,17 +458,66 @@ const cardFeatures = product.card_features || [];
       const gallery = btn.closest('.kd-product-gallery');
       const mainImg = gallery?.querySelector('.kd-main-img') as HTMLImageElement;
       const mainSrc = (btn as HTMLElement).dataset.mainSrc;
-      const thumbnails = btn.closest('.kd-thumbnails');
+      const swiperEl = btn.closest('.kd-thumb-swiper');
 
       if (mainImg && mainSrc) {
         mainImg.src = mainSrc;
         // Update active state
-        thumbnails?.querySelectorAll('.kd-thumb-btn').forEach(t => t.classList.remove('active'));
+        swiperEl?.querySelectorAll('.kd-thumb-btn').forEach(t => t.classList.remove('active'));
         btn.classList.add('active');
       }
     });
   }
 
-  // Initialize immediately - no IntersectionObserver needed for CSS thumbnails
-  setupThumbnailClickHandlers();
+  /**
+   * Lazy initialization using IntersectionObserver
+   * Only initializes Swiper when product card enters viewport
+   */
+  function setupLazySwiper() {
+    const swiperElements = document.querySelectorAll('.kd-thumb-swiper');
+    if (!swiperElements.length) return;
+
+    // Use IntersectionObserver for lazy initialization
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              initThumbnailSwiper(entry.target);
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          rootMargin: '100px', // Initialize slightly before entering viewport
+          threshold: 0,
+        }
+      );
+
+      swiperElements.forEach((el) => observer.observe(el));
+    } else {
+      // Fallback: Initialize all immediately
+      swiperElements.forEach(initThumbnailSwiper);
+    }
+  }
+
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setupThumbnailClickHandlers();
+      // Defer Swiper initialization to after main content renders
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => setupLazySwiper(), { timeout: 2000 });
+      } else {
+        setTimeout(setupLazySwiper, 100);
+      }
+    });
+  } else {
+    setupThumbnailClickHandlers();
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => setupLazySwiper(), { timeout: 2000 });
+    } else {
+      setTimeout(setupLazySwiper, 100);
+    }
+  }
 </script>

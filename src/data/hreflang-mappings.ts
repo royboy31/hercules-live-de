@@ -194,7 +194,7 @@ export const PRODUCT_MAPPINGS: Record<string, Record<Locale, string>> = {
   'knoechelsocken': { de: 'knoechelsocken', en: 'ankle-socks', fr: 'soquettes' },
 
   // Scarves - Main Types
-  'personalisierter-fussballschal': { de: 'personalisierter-fussballschal', en: 'custom-football-scarf', fr: 'echarpe-personnalisee-jacquard' },
+  'personalisierter-fussballschal': { de: 'personalisierter-fussballschal', en: 'custom-football-scarf', fr: 'echarpe-hd-deluxe-personnalisee' },
   'individuell-gewebter-schal': { de: 'individuell-gewebter-schal', en: 'custom-woven-scarf', fr: 'echarpe-personnalisee-tissee' },
   'personalisierter-fleece-schal': { de: 'personalisierter-fleece-schal', en: 'custom-fleece-scarf', fr: 'echarpe-personnalisee-polaire' },
   'individuell-bedruckter-fanschal': { de: 'individuell-bedruckter-fanschal', en: 'custom-printed-scarves', fr: 'echarpe-personnalisee-sublimee' },
@@ -207,12 +207,12 @@ export const PRODUCT_MAPPINGS: Record<string, Record<Locale, string>> = {
   'personalisierter-autoschal': { de: 'personalisierter-autoschal', en: 'custom-car-scarves', fr: 'echarpes-personnalisee-voiture' },
   'personalisierter-schal-aus-recycelter-baumwolle': { de: 'personalisierter-schal-aus-recycelter-baumwolle', en: 'custom-recyled-cotton-scarves', fr: 'echarpe-personnalisee-coton-recycle' },
   'personalisierter-hd-deluxe-schal-mit-gewebten-aufnahern': { de: 'personalisierter-hd-deluxe-schal-mit-gewebten-aufnahern', en: 'custom-hd-deluxe-scarf-with-woven-badges', fr: 'echarpe-personnalisee-hd-deluxe-avec-badges' },
-  'individuell-gestrickter-schlauchschal': { de: 'individuell-gestrickter-schlauchschal', en: 'custom-knitted-neckwarmers-and-snoods', fr: 'tour-de-cou-personnalise-1' },
+  'individuell-gestrickter-schlauchschal': { de: 'individuell-gestrickter-schlauchschal', en: 'custom-knitted-neckwarmers-and-snoods', fr: 'tour-de-cou-personnalise' },
   'personalisierter-3-in-1-schal': { de: 'personalisierter-3-in-1-schal', en: 'custom-printed-multiscarf', fr: 'cache-cou-personnalise-foot' },
 
   // Towels
-  'personalisierte-handtucher': { de: 'personalisierte-handtucher', en: 'custom-jacquard-woven-towels', fr: 'serviette-personnalisee' },
-  'jacquard-webhandtuch': { de: 'jacquard-webhandtuch', en: 'custom-sublimated-towels', fr: 'serviette-tissee-jacquard' },
+  'personalisierte-handtucher': { de: 'personalisierte-handtucher', en: 'custom-sublimated-towels', fr: 'serviette-personnalisee' },
+  'jacquard-webhandtuch': { de: 'jacquard-webhandtuch', en: 'custom-jacquard-woven-towels', fr: 'serviette-tissee-jacquard' },
 
   // Pennants & Flags
   'individuell-gedruckter-wimpel': { de: 'individuell-gedruckter-wimpel', en: 'custom-printed-pennants', fr: 'fanion-personnalise-imprime' },
@@ -237,7 +237,7 @@ export const PRODUCT_MAPPINGS: Record<string, Record<Locale, string>> = {
   'gesichtsfarbe': { de: 'gesichtsfarbe', en: 'custom-face-paints-for-fans', fr: 'stick-maquillage' },
 
   // Accessories
-  'personalisiertes-schlusselband': { de: 'personalisiertes-schlusselband', en: 'custom-lanyard', fr: 'tour-de-cou-personnalise' },
+  'personalisiertes-schlusselband': { de: 'personalisiertes-schlusselband', en: 'custom-lanyard', fr: 'tour-de-cou-personnalise-1' },
   'personalisiertes-kissen': { de: 'personalisiertes-kissen', en: 'custom-woven-or-printed-pillow', fr: 'coussin-brode-personnalise' },
   'personalisiertes-stadiumkissen': { de: 'personalisiertes-stadiumkissen', en: 'custom-printed-stadium-cushions', fr: 'coussin-de-stade-personnalise' },
   'personalisierter-sport-schlusselanhanger': { de: 'personalisierter-sport-schlusselanhanger', en: 'custom-sports-keyring', fr: 'porte-cles-sport-personnalise' },

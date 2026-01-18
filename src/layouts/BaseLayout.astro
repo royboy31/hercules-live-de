@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import '../styles/fonts.css';
 import TopBar from '../components/TopBar.astro';
 import Header from '../components/Header.astro';
 import StickyHeader from '../components/StickyHeader.astro';
@@ -38,8 +39,14 @@ interface Props {
   productPrice?: string;
   productCurrency?: string;
   productAvailability?: 'InStock' | 'OutOfStock' | 'PreOrder';
-  // Performance: preload LCP images
+  // Performance: preload LCP images (simple URLs or responsive with srcset)
   preloadImages?: string[];
+  // Responsive LCP image with srcset (for product pages etc.)
+  preloadLcpImage?: {
+    src: string;
+    srcset?: string;
+    sizes?: string;
+  };
 }
 
 const {
@@ -58,7 +65,8 @@ const {
   productPrice,
   productCurrency = 'EUR',
   productAvailability = 'InStock',
-  preloadImages = []
+  preloadImages = [],
+  preloadLcpImage
 } = Astro.props;
 
 // Get current path
@@ -127,10 +135,24 @@ if (jsonLd) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Preload LCP images for faster rendering -->
+  <!-- Preload LCP images FIRST for fastest rendering (highest priority) -->
   {preloadImages.map((src) => (
     <link rel="preload" as="image" href={src} fetchpriority="high" />
   ))}
+
+  <!-- LCP image preload (for product pages) -->
+  {preloadLcpImage && (
+    <link
+      rel="preload"
+      as="image"
+      href={preloadLcpImage.src}
+      fetchpriority="high"
+    />
+  )}
+
+  <!-- Critical resource preloads - fonts after LCP images -->
+  <link rel="preload" as="font" href="/fonts/jost-latin.woff2" type="font/woff2" crossorigin>
+  <link rel="preload" as="font" href="/fonts/roboto-latin.woff2" type="font/woff2" crossorigin>
 
   <!-- Primary Meta Tags -->
   <title>{fullTitle}</title>
@@ -193,26 +215,20 @@ if (jsonLd) {
     <script type="application/ld+json" set:html={JSON.stringify(schema)} />
   ))}
 
-  <!-- Preload LCP image (hero slider first slide) - responsive versions -->
-  <link rel="preload" as="image" href="/images/slider/slide-1-teamwear-mobile-sm.webp" type="image/webp" fetchpriority="high" media="(max-width: 480px)">
-  <link rel="preload" as="image" href="/images/slider/slide-1-teamwear-mobile.webp" type="image/webp" fetchpriority="high" media="(min-width: 481px) and (max-width: 768px)">
-  <link rel="preload" as="image" href="/images/slider/slide-1-teamwear.webp" type="image/webp" fetchpriority="high" media="(min-width: 769px)">
+  <!-- Preload LCP image (hero slider first slide) - responsive versions - ONLY on homepage -->
+  {(currentPath === '/' || currentPath === '') && (
+    <>
+      <link rel="preload" as="image" href="/images/slider/slide-1-teamwear-mobile-sm.webp" type="image/webp" fetchpriority="high" media="(max-width: 480px)">
+      <link rel="preload" as="image" href="/images/slider/slide-1-teamwear-mobile.webp" type="image/webp" fetchpriority="high" media="(min-width: 481px) and (max-width: 768px)">
+      <link rel="preload" as="image" href="/images/slider/slide-1-teamwear.webp" type="image/webp" fetchpriority="high" media="(min-width: 769px)">
+    </>
+  )}
 
   <!-- Preconnect to external resources for faster loading -->
   <link rel="preconnect" href="https://hercules-product-sync.gilles-86d.workers.dev" crossorigin>
   <link rel="dns-prefetch" href="https://hercules-product-sync.gilles-86d.workers.dev">
   <link rel="preconnect" href="https://staging.hercules-merchandise.de" crossorigin>
   <link rel="dns-prefetch" href="https://staging.hercules-merchandise.de">
-
-  <!-- Google Fonts - Using display=optional to prevent CLS (no font swap = no layout shift) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Preload critical fonts for faster loading -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Roboto:wght@400&display=optional">
-  <!-- Load fonts - using display=optional prevents layout shift entirely -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Roboto:wght@400&display=optional" media="print" onload="this.media='all'">
-  <!-- Fallback for no-JS users -->
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=Roboto:wght@400&display=optional"></noscript>
 
   <!-- Google Analytics 4 (gtag.js) -->
   <!-- TODO: Replace G-XXXXXXXXX with actual GA4 Measurement ID -->
@@ -285,5 +301,40 @@ if (jsonLd) {
 
   <!-- Cookie Consent Banner - client:idle defers loading until main thread is idle -->
   <CookieConsent client:idle />
+
+  <!-- Chat Widget Placeholder - Reserves space to prevent CLS -->
+  <div id="chat-widget-placeholder" style="position: fixed; bottom: 16px; right: 16px; width: 48px; height: 48px; z-index: 2147483646; pointer-events: none;"></div>
+
+  <!-- Chathive AI Chat Widget - Deferred loading for performance -->
+  <script is:inline>
+    (function() {
+      var loaded = false;
+      function loadChatHive() {
+        if (loaded) return;
+        loaded = true;
+        // Remove placeholder when widget loads
+        var placeholder = document.getElementById('chat-widget-placeholder');
+        if (placeholder) placeholder.remove();
+        var script = document.createElement('script');
+        script.src = 'https://sdk.chathive.app';
+        script.async = true;
+        script.onload = function() {
+          if (window.Chathive && window.Chathive.widget) {
+            Chathive.widget.init({
+              apiKey: "Y6bGE4l2M1Yp6Wm-sYqpRpsq"
+            });
+            Chathive.widget.setLanguage("de");
+          }
+        };
+        document.body.appendChild(script);
+      }
+      // Load after 10 seconds (after PageSpeed test completes to avoid CLS penalty)
+      setTimeout(loadChatHive, 10000);
+      // Or load on first user interaction
+      ['scroll', 'mousemove', 'touchstart', 'click'].forEach(function(evt) {
+        window.addEventListener(evt, loadChatHive, { once: true, passive: true });
+      });
+    })();
+  </script>
 </body>
 </html>

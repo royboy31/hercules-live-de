@@ -94,6 +94,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }
     }
 
+    // Add Cloudflare tracking headers (server-side)
+    payload.ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || '';
+    payload.country = request.headers.get('CF-IPCountry') || '';
+    payload.city = request.headers.get('CF-IPCity') || ''; // Requires Cloudflare Pro+
+    payload.region = request.headers.get('CF-IPRegion') || '';
+
     // Add files array to payload (will be processed by worker)
     if (files.length > 0) {
       payload.uploadFiles = files;

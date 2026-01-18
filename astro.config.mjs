@@ -11,7 +11,33 @@ export default defineConfig({
   site: 'https://hercules-merchandise.de',
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    build: {
+      // Optimize bundle splitting
+      rollupOptions: {
+        output: {
+          // Manual chunk splitting for better caching
+          manualChunks: {
+            // React core - cached separately
+            'react-vendor': ['react', 'react-dom'],
+            // Interactive components - loaded on demand
+            'configurator': ['./src/components/ProductConfigurator.tsx'],
+          }
+        },
+        treeshake: {
+          moduleSideEffects: false,
+          propertyReadSideEffects: false
+        }
+      },
+      // Target modern browsers for smaller bundles
+      target: 'es2020',
+      // Inline small assets
+      assetsInlineLimit: 4096,
+      // Minimize CSS
+      cssMinify: true,
+      // Better minification
+      minify: 'esbuild'
+    }
   },
 
   integrations: [

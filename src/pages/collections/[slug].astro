@@ -7,6 +7,7 @@ import {
   siteConfig,
   getCollectionPageSchema,
   getBreadcrumbSchema,
+  getFAQSchema,
   truncateDescription,
   stripHtml
 } from '../../config/seo';
@@ -137,6 +138,12 @@ jsonLdSchemas.push(getBreadcrumbSchema([
   { name: 'Home', url: siteConfig.siteUrl },
   { name: category?.name || 'Kollektion', url: canonicalUrl }
 ]));
+
+// FAQ schema (if category has FAQ data)
+const faqSchema = getFAQSchema(category?.faq);
+if (faqSchema) {
+  jsonLdSchemas.push(faqSchema);
+}
 
 // Get LCP image URL for preloading (must match the actual src used in CategoryProductCard)
 // Note: No resize params as Cloudflare Image Resizing requires Pro plan
@@ -336,6 +343,9 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
 
   .breadcrumb .separator img {
     display: block;
+    width: 6px;
+    height: 12px;
+    aspect-ratio: 6 / 12;
   }
 
   /* Current page (last item) in light blue */
@@ -350,16 +360,18 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
   }
 
   .category-title {
-    font-family: 'Jost', sans-serif;
+    font-family: 'Jost', 'Jost Fallback', sans-serif;
     font-size: 35px;
     font-weight: 600;
     color: #253461;
     margin: 20px 0 20px 0;
     text-transform: uppercase;
+    line-height: 1.2;
+    min-height: 42px; /* Reserve space to prevent CLS */
   }
 
   .category-description {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Roboto', 'Roboto Fallback', sans-serif;
     font-size: 16px;
     font-weight: 400;
     line-height: 1.7em;

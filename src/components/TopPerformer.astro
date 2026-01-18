@@ -284,6 +284,7 @@ const { products } = Astro.props;
       slidesPerView: 1,
       spaceBetween: 20,
       loop: true,
+      initialSlide: 0,
       speed: 500,
       autoplay: {
         delay: 5000,
@@ -307,12 +308,8 @@ const { products } = Astro.props;
     });
   }
 
-  // Defer Swiper init to avoid blocking main thread
+  // Initialize Swiper when DOM is ready
   document.addEventListener('DOMContentLoaded', () => {
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(initSwiper, { timeout: 2000 });
-    } else {
-      setTimeout(initSwiper, 100);
-    }
+    initSwiper();
   });
 </script>

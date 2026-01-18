@@ -213,6 +213,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
   const [showDeliveryTooltip, setShowDeliveryTooltip] = useState(false);
   const [addToCartLoading, setAddToCartLoading] = useState(false);
   const [addToCartError, setAddToCartError] = useState<string | null>(null);
+  const [loadingAction, setLoadingAction] = useState<'quote' | 'cart' | null>(null);
 
   // Fetch product config on mount
   useEffect(() => {
@@ -426,6 +427,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
 
     setAddToCartLoading(true);
     setAddToCartError(null);
+    setLoadingAction(redirectTo);
 
     try {
       // Calculate prices using combined-tier interpolation (WordPress style)
@@ -489,11 +491,13 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
         const errorMsg = result.data || 'Ein Fehler ist aufgetreten';
         setAddToCartError(typeof errorMsg === 'string' ? errorMsg : 'Ein Fehler ist aufgetreten');
         setAddToCartLoading(false);
+        setLoadingAction(null);
       }
     } catch (error) {
       console.error('[ProductConfigurator] Add to cart error:', error);
       setAddToCartError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
       setAddToCartLoading(false);
+      setLoadingAction(null);
     }
   };
 
@@ -1065,6 +1069,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
             disabled={!canAddToCart || addToCartLoading}
             onClick={() => handleAddToCart('quote')}
           >
+            {addToCartLoading && <span className="kd-btn-spinner"></span>}
             {addToCartLoading ? 'Wird verarbeitet...' : 'Erstellen Sie Ihr Angebot'}
           </button>
           <small>Wir senden Ihnen ein PDF zu</small>
@@ -1075,6 +1080,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
             disabled={!canAddToCart || addToCartLoading}
             onClick={() => handleAddToCart('cart')}
           >
+            {addToCartLoading && <span className="kd-btn-spinner"></span>}
             {addToCartLoading ? 'Wird verarbeitet...' : 'In den Warenkorb'}
           </button>
           <small>Wenn Sie bereit sind zu bestellen</small>
@@ -1107,6 +1113,21 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
           config={config}
         />
       )}
+
+      {/* Loading Overlay - covers only the configurator */}
+      {addToCartLoading && (
+        <div className="kd-loading-overlay">
+          <div className="kd-loading-content">
+            <div className="kd-loading-spinner"></div>
+            <p className="kd-loading-text">
+              {loadingAction === 'quote'
+                ? 'Ihr Angebot wird erstellt...'
+                : 'Wird zum Warenkorb hinzugefügt...'}
+            </p>
+            <p className="kd-loading-subtext">Bitte warten Sie einen Moment</p>
+          </div>
+        </div>
+      )}
     </div>
 
     {/* Question Section - Hast du eine Frage? (Separate box) */}
@@ -1131,7 +1152,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     {/* Vision Section - Verwirklichen Sie Ihre Vision */}
     <div className="kd-vision-section">
       <div className="kd-vision-images">
-        <img src="/images/design/design-mockup.png" alt="Custom merchandise design" />
+        <img src="/images/design/design-mockup.webp" alt="Custom merchandise design" width="494" height="637" loading="lazy" />
       </div>
       <div className="kd-vision-content">
         <h3>VERWIRKLICHEN SIE IHRE VISION ERHALTEN SIE EIN INDIVIDUELLES DESIGN!</h3>

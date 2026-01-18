@@ -1,27 +1,6 @@
 {
   "products": [
     {
-      "id": 4280,
-      "name": "Personalisiertes Fußballtrikot",
-      "slug": "personalisiertes-fussballtrikot",
-      "image": "/images/products/Hercules_Merchandise_football_kit_99-19.webp",
-      "alt": "Hercules Merchandise football kit"
-    },
-    {
-      "id": 6721,
-      "name": "Personalisierter HD-Fußballschal",
-      "slug": "personalisierter-fussballschal",
-      "image": "/images/products/HerculesMerchandisecustomfootballscarf102_c547ca87-7aa5-4360-a060-bf1176e710a0-23.webp",
-      "alt": "Hercules Merchandise custom football scarf"
-    },
-    {
-      "id": 4253,
-      "name": "Personalisierte Standard-Mütze",
-      "slug": "custom-football-beanie-hats",
-      "image": "/images/products/HerculesMerchandisestandardknittedbeaniehat51-20.webp",
-      "alt": "Hercules Merchandise standard knitted beanie hat"
-    },
-    {
       "id": 10105,
       "name": "Basecap",
       "slug": "baseball-cap",
@@ -48,6 +27,27 @@
       "slug": "personalisierte-handtucher",
       "image": "/images/products/HerculesMerchandisetowels3-16.webp",
       "alt": "Hercules Merchandise towels"
+    },
+    {
+      "id": 4280,
+      "name": "Personalisiertes Fußballtrikot",
+      "slug": "personalisiertes-fussballtrikot",
+      "image": "/images/products/Hercules_Merchandise_football_kit_99-19.webp",
+      "alt": "Hercules Merchandise football kit"
+    },
+    {
+      "id": 6721,
+      "name": "Personalisierter HD-Fußballschal",
+      "slug": "personalisierter-fussballschal",
+      "image": "/images/products/HerculesMerchandisecustomfootballscarf102_c547ca87-7aa5-4360-a060-bf1176e710a0-23.webp",
+      "alt": "Hercules Merchandise custom football scarf"
+    },
+    {
+      "id": 4253,
+      "name": "Personalisierte Standard-Mütze",
+      "slug": "custom-football-beanie-hats",
+      "image": "/images/products/HerculesMerchandisestandardknittedbeaniehat51-20.webp",
+      "alt": "Hercules Merchandise standard knitted beanie hat"
     },
     {
       "id": 4213,

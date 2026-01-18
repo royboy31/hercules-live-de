@@ -49,6 +49,86 @@ const corsHeaders = {
 };
 
 // ============================================================================
+// TRACKING FIELD PARSERS
+// ============================================================================
+
+/**
+ * Parse user agent string to extract browser name and version
+ */
+function parseBrowser(userAgent: string): string {
+  if (!userAgent) return 'Unknown';
+
+  // Check for common browsers (order matters for accuracy)
+  if (userAgent.includes('Edg/')) {
+    const match = userAgent.match(/Edg\/(\d+)/);
+    return `Edge ${match?.[1] || ''}`.trim();
+  }
+  if (userAgent.includes('OPR/') || userAgent.includes('Opera')) {
+    const match = userAgent.match(/OPR\/(\d+)/);
+    return `Opera ${match?.[1] || ''}`.trim();
+  }
+  if (userAgent.includes('Chrome/') && !userAgent.includes('Chromium')) {
+    const match = userAgent.match(/Chrome\/(\d+)/);
+    return `Chrome ${match?.[1] || ''}`.trim();
+  }
+  if (userAgent.includes('Safari/') && !userAgent.includes('Chrome')) {
+    const match = userAgent.match(/Version\/(\d+)/);
+    return `Safari ${match?.[1] || ''}`.trim();
+  }
+  if (userAgent.includes('Firefox/')) {
+    const match = userAgent.match(/Firefox\/(\d+)/);
+    return `Firefox ${match?.[1] || ''}`.trim();
+  }
+
+  return 'Other';
+}
+
+/**
+ * Parse user agent string to extract OS name
+ */
+function parseOS(userAgent: string): string {
+  if (!userAgent) return 'Unknown';
+
+  if (userAgent.includes('Windows NT 10')) return 'Windows 10/11';
+  if (userAgent.includes('Windows NT 6.3')) return 'Windows 8.1';
+  if (userAgent.includes('Windows NT 6.2')) return 'Windows 8';
+  if (userAgent.includes('Windows NT 6.1')) return 'Windows 7';
+  if (userAgent.includes('Windows')) return 'Windows';
+  if (userAgent.includes('Mac OS X')) return 'macOS';
+  if (userAgent.includes('Android')) return 'Android';
+  if (userAgent.includes('iPhone') || userAgent.includes('iPad')) return 'iOS';
+  if (userAgent.includes('Linux')) return 'Linux';
+
+  return 'Unknown';
+}
+
+/**
+ * Determine device type from screen dimensions and user agent
+ */
+function parseDeviceType(screenWidth: string, userAgent: string): string {
+  const width = parseInt(screenWidth, 10);
+
+  // First check user agent for mobile/tablet indicators
+  if (userAgent) {
+    if (userAgent.includes('Mobile') || userAgent.includes('Android') && !userAgent.includes('Tablet')) {
+      return 'Mobile';
+    }
+    if (userAgent.includes('iPad') || userAgent.includes('Tablet')) {
+      return 'Tablet';
+    }
+  }
+
+  // Fall back to screen width
+  if (!isNaN(width)) {
+    if (width < 768) return 'Mobile';
+    if (width < 1024) return 'Tablet';
+    return 'Desktop';
+  }
+
+  return 'Unknown';
+}
+
+// ============================================================================
 // BREVO EMAIL FUNCTIONS
 // ============================================================================
 
@@ -604,6 +684,15 @@ interface ContactFormData {
   desiredDate: string;
   attributes: string;
   addons: string;
+  // Tracking fields
+  referrer: string;
+  browser: string;
+  os: string;
+  deviceType: string;
+  ip: string;
+  country: string;
+  city: string;
+  language: string;
 }
 
 async function handleContactForm(request: Request, env: Env): Promise<Response> {
@@ -641,6 +730,10 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
       filesString = uploadedFiles.map(f => `${f.name}: ${f.url}`).join('\n');
     }
 
+    // Parse tracking fields from request
+    const userAgent = (body as any).userAgent || '';
+    const screenWidth = (body as any).screenWidth || '';
+
     const contactData: ContactFormData = {
       name,
       email: body.email || '',
@@ -659,6 +752,15 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
       desiredDate: body.desiredDate || '',
       attributes: body.attributes || '',
       addons: body.addons || '',
+      // Tracking fields - parsed from request
+      referrer: (body as any).referrer || '(direct)',
+      browser: parseBrowser(userAgent),
+      os: parseOS(userAgent),
+      deviceType: parseDeviceType(screenWidth, userAgent),
+      ip: (body as any).ip || '',
+      country: (body as any).country || '',
+      city: (body as any).city || '',
+      language: (body as any).language || '',
     };
 
     // Validate required fields
@@ -674,7 +776,7 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
     let emailSuccess = false;
     let emailError = '';
 
-    // 1. Save to Google Sheets (with file URLs)
+    // 1. Save to Google Sheets (with file URLs and tracking fields)
     // Use formType as the type for proper sheet routing (quantity_request, expressdelivery, or contact)
     const sheetsResult = await saveToGoogleSheets(env, {
       type: contactData.formType || 'contact',
@@ -698,6 +800,15 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
       desiredDate: contactData.desiredDate,
       attributes: contactData.attributes,
       addons: contactData.addons,
+      // Tracking fields
+      referrer: contactData.referrer,
+      browser: contactData.browser,
+      os: contactData.os,
+      deviceType: contactData.deviceType,
+      ip: contactData.ip,
+      country: contactData.country,
+      city: contactData.city,
+      language: contactData.language,
     });
     googleSheetsSuccess = sheetsResult.success;
 

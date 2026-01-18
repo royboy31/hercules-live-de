@@ -1,6 +1,10 @@
 ---
 // Mobile slide-out menu with sliding submenus
 
+// Menu items (order from WordPress - column-first layout for desktop, list for mobile)
+// Column 1: Fußball, Rugby, Basketball, Laufen
+// Column 2: Field hockey, Volleyball, Handball, Radfahren
+// Column 3: Fitness, Golf, eSports
 const mobileMenuItems = {
   sportarten: {
     title: 'Sportarten',
@@ -9,7 +13,7 @@ const mobileMenuItems = {
       { label: 'Rugby', href: '/collections/rugby/', icon: 'Rugby-1.svg' },
       { label: 'Basketball', href: '/collections/basketball/', icon: 'Basketball-1.svg' },
       { label: 'Laufen', href: '/collections/laufen/', icon: 'running-1.svg' },
-      { label: 'Feldhockey', href: '/collections/feldhockey/', icon: 'field-hockey-1.svg' },
+      { label: 'Field hockey', href: '/collections/feldhockey/', icon: 'field-hockey-1.svg' },
       { label: 'Volleyball', href: '/collections/volleyball/', icon: 'volleyball-1.svg' },
       { label: 'Handball', href: '/collections/handball/', icon: 'handball-1.svg' },
       { label: 'Radfahren', href: '/collections/radfahren/', icon: 'cycling-1.svg' },
@@ -21,17 +25,17 @@ const mobileMenuItems = {
   produkte: {
     title: 'Produkte',
     items: [
-      { label: 'Sportbekleidung', href: '/collections/personalisierte-sportbekleidung/', icon: 'teamwear-1.svg' },
-      { label: 'Schals', href: '/collections/personalisierte-fanschals/', icon: 'scarves-1.svg' },
-      { label: 'Mützen', href: '/collections/personalisierte-mutzen/', icon: 'beanies-3.svg' },
+      { label: 'Sportswear', href: '/collections/personalisierte-sportbekleidung/', icon: 'teamwear-1.svg' },
+      { label: 'Scarves', href: '/collections/personalisierte-fanschals/', icon: 'scarves-1.svg' },
+      { label: 'Beanies', href: '/collections/personalisierte-mutzen/', icon: 'beanies-3.svg' },
       { label: 'Kopfbedeckung', href: '/collections/kopfbedeckung/', icon: 'cap-1.svg' },
-      { label: 'Wimpel', href: '/collections/personalisierte-wimpel/', icon: 'pennants-3.svg' },
+      { label: 'Pennants', href: '/collections/personalisierte-wimpel/', icon: 'pennants-3.svg' },
       { label: 'Handtücher', href: '/collections/handtucher/', icon: 'towelst-1.svg' },
       { label: 'Flaggen', href: '/collections/flaggen/', icon: 'flags-1.svg' },
       { label: 'Schuhwerk', href: '/collections/schuhwerk/', icon: 'footwear-1.svg' },
       { label: 'Taschen', href: '/collections/taschen/', icon: 'sportsbag-1.svg' },
-      { label: 'Textilien', href: '/collections/personalisierte-textilien/', icon: 'textile-1.svg' },
-      { label: 'Trinkgefäße', href: '/collections/trinkflaschen/', icon: 'drinkware-1.svg' },
+      { label: 'Textile', href: '/collections/personalisierte-textilien/', icon: 'textile-1.svg' },
+      { label: 'Trinkflaschen', href: '/collections/trinkflaschen/', icon: 'drinkware-1.svg' },
       { label: 'Bälle', href: '/collections/balle/', icon: 'balls-1.svg' },
       { label: 'Zubehör', href: '/collections/zubehor/', icon: 'accessories-1.svg' },
     ]
@@ -41,14 +45,14 @@ const mobileMenuItems = {
     items: [
       { label: 'Sommer', href: '/collections/sommer/', icon: 'summer-1.svg' },
       { label: 'Winter', href: '/collections/winter/', icon: 'winter-1.svg' },
-      { label: 'Nachhaltig', href: '/collections/nachhaltigkeit/', icon: 'sustainable-2.svg' },
-      { label: 'Made in Europa', href: '/collections/hergestellt-in-europa/', icon: 'made-in-europe-1.svg' },
+      { label: 'Nachhaltigkeit', href: '/collections/nachhaltigkeit/', icon: 'sustainable-2.svg' },
+      { label: 'Hergestellt in Europa', href: '/collections/hergestellt-in-europa/', icon: 'made-in-europe-1.svg' },
       { label: 'Mode', href: '/collections/mode/', icon: 'fashion-1.svg' },
       { label: 'Schulanfang', href: '/collections/schulanfang/', icon: 'back-to-school-1.svg' },
       { label: 'Tifo', href: '/collections/tifo/', icon: 'tifo-1.svg' },
       { label: 'Weihnachten', href: '/collections/weihnachten/', icon: 'christmas-1.svg' },
       { label: 'Kleine Preise', href: '/collections/kleine-preise/', icon: 'smallprices.svg' },
-      { label: 'Geschäft', href: '/collections/business/', icon: 'business.svg' },
+      { label: 'Business', href: '/collections/business/', icon: 'business.svg' },
       { label: 'Werbegeschenke', href: '/collections/werbegeschenke/', icon: 'giive-aways.svg' },
       { label: 'Kinder', href: '/collections/kinder/', icon: 'kids.svg' },
     ]
@@ -102,6 +106,16 @@ const mobileMenuItems = {
         </a>
         <a href="/collections/personalisierte-mutzen/" class="menu-item">
           <span class="menu-item-label">Mützen</span>
+        </a>
+
+        <!-- Wishlist Link -->
+        <a href="/wishlist/" class="menu-item wishlist-link">
+          <span class="menu-item-label">
+            <svg class="wishlist-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            Wunschliste
+          </span>
         </a>
 
         <!-- CTA Button -->
@@ -288,6 +302,22 @@ const mobileMenuItems = {
   .menu-arrow {
     color: #253461;
     flex-shrink: 0;
+  }
+
+  /* Wishlist Link */
+  .wishlist-link .menu-item-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .wishlist-icon {
+    color: #10C99E;
+    flex-shrink: 0;
+  }
+
+  .wishlist-link:hover .wishlist-icon {
+    fill: #10C99E;
   }
 
   /* CTA */

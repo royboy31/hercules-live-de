@@ -688,6 +688,274 @@ WordPress mu-plugins/
 
 ## Session History
 
+### Session 2026-01-17 (Form Tracking, Hreflang Review, FAQ Export)
+**Tasks Completed:**
+
+1. **Form Tracking Fields Implementation:**
+   - Added client-side tracking: referrer, userAgent, screenWidth, screenHeight, language
+   - Added server-side tracking via Cloudflare headers: IP, country, city, region
+   - Added parsing functions: `parseBrowser()`, `parseOS()`, `parseDeviceType()`
+   - All tracking fields saved to Google Sheets
+   - Files: `ContactFormPopup.tsx`, `functions/api/contact.ts`, `workers/form-handler/src/index.ts`
+   - Worker deployed: Version cf48ca95
+
+2. **Hreflang Product Mappings Review:**
+   - Verified all 97 products have correct DE/EN/FR slug mappings
+   - Verified all 39 categories have correct mappings
+   - Verified static pages and blog posts
+   - File: `src/data/hreflang-mappings.ts`
+
+3. **FAQ Data Export to Excel/CSV:**
+   - Exported 156 FAQs from 39 categories → `exports/collection_faqs.csv` (29 KB)
+   - Exported 289 FAQs from 85 products → `exports/product_faqs.csv` (122 KB)
+
+4. **Logged-In Indicator Color Update:**
+   - Changed from `green` to brand green `#10C99E`
+   - File: `src/components/UserSession.tsx` (line 476)
+
+**Deployed:**
+- Form Handler Worker: https://hercules-form-handler.gilles-86d.workers.dev
+- Astro Site: https://62248d98.hercules-astro.pages.dev
+
+**Pending:** Mobile UI issues (requires Chrome DevTools MCP)
+
+**Documentation:** See `docs/SESSION_2026-01-17.md` for detailed notes.
+
+---
+
+### Session 2026-01-16 (Swiper Thumbnail Carousel for Collection Pages)
+**Task:** Add Swiper carousel for collection page product thumbnails without hurting existing mobile and desktop speed.
+
+**Previous Implementation:**
+- Pure CSS flexbox for thumbnails (deliberately chosen to avoid ~70KB Swiper bundle)
+- Simple horizontal scrollable row with 6 visible thumbnails
+- Vanilla JS click handler for image swap
+
+**New Implementation:**
+- Swiper carousel with FreeMode module for smooth touch scrolling
+- Performance-optimized with lazy initialization
+
+**Performance Optimizations Applied:**
+
+| Optimization | Description |
+|--------------|-------------|
+| **IntersectionObserver** | Swiper only initializes when product card enters viewport (100px rootMargin) |
+| **requestIdleCallback** | Defers initialization until main thread is idle |
+| **Minimal Module** | Only imports FreeMode (~5KB vs full Swiper ~70KB) |
+| **CSS Fallback** | Flexbox layout works before Swiper initializes (graceful degradation) |
+| **Lazy Images** | All thumbnails retain `loading="lazy"` attribute |
+
+**HTML Structure Change:**
+```html
+<!-- Before: Pure CSS flexbox -->
+<div class="kd-thumbnails">
+  <button class="kd-thumb-btn">...</button>
+</div>
+
+<!-- After: Swiper structure -->
+<div class="kd-thumbnails-wrapper">
+  <div class="swiper kd-thumb-swiper">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide">
+        <button class="kd-thumb-btn">...</button>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+**Swiper Configuration:**
+```javascript
+new Swiper('.kd-thumb-swiper', {
+  modules: [FreeMode],
+  slidesPerView: 'auto',
+  spaceBetween: 8,
+  freeMode: {
+    enabled: true,
+    sticky: false,
+    momentumRatio: 0.5,
+    momentumBounce: false,
+  },
+  watchSlidesProgress: true,
+  grabCursor: true,
+  touchEventsTarget: 'container',
+});
+```
+
+**Files Modified:**
+- `src/components/CategoryProductCard.astro`:
+  - Updated comment header to reflect Swiper implementation
+  - Changed HTML structure to use Swiper wrapper/slide classes
+  - Updated CSS for `.kd-thumbnails-wrapper` and `.kd-thumb-swiper`
+  - Added Swiper imports (Swiper, FreeMode, swiper/css)
+  - Added `initThumbnailSwiper()` function with Swiper config
+  - Added `setupLazySwiper()` with IntersectionObserver
+  - Maintained `setupThumbnailClickHandlers()` for image swap functionality
+
+**Key Features Preserved:**
+- Click thumbnail to swap main image ✓
+- Active state highlight (blue border) ✓
+- Lazy loading on all images ✓
+- Responsive thumbnail sizes (83px desktop, 60px mobile) ✓
+
+**Deployed:**
+- Preview: https://0ed4f458.hercules-astro.pages.dev
+- Production: https://hercules-astro.pages.dev
+
+**Test URL:**
+- https://hercules-astro.pages.dev/collections/personalisierte-fanschals/
+
+---
+
+### Session 2026-01-15 (Homepage Comparison & Product Order Fix)
+**Task:** Element-by-element comparison of Astro homepage vs WordPress production site, then fix identified differences one by one.
+
+**Comparison Method:**
+- Used Chrome DevTools MCP to take screenshots of both sites
+- Compared each section: Hero Slider, Top Performer carousel, Newsletter, KONTAKT button, Navigation
+
+**Issues Investigated:**
+
+| Issue | Status | Result |
+|-------|--------|--------|
+| Hero Slider heading line breaks | ✅ No changes needed | Already working - `<br>` tags + `set:html` + CSS `text-transform: uppercase` |
+| Top Performer product order | ✅ **Fixed** | Reordered `homepage-products.json` to match WordPress |
+| Newsletter form structure | ✅ No changes needed | Already matching WordPress exactly |
+| KONTAKT button popup | ✅ No changes needed | ContactFormPopup component already working |
+| Carousel navigation labels | ✅ No changes needed | Both sites use arrow icons (text was just aria-labels) |
+
+**Top Performer Product Order Fix:**
+
+WordPress order: BASECAP → BADESCHLAPPEN → WIMPEL → HANDTÜCHER → TRIKOT → SCHAL → MÜTZE → FISCHERHUT
+
+Previous Astro order was incorrect - products were in a different sequence.
+
+**Changes to `src/data/homepage-products.json`:**
+```json
+{
+  "products": [
+    { "id": 10105, "name": "Basecap", "slug": "baseball-cap", ... },
+    { "id": 4381, "name": "Personalisierte Badeschlappen", "slug": "personalisierte-badeschlappen", ... },
+    { "id": 4294, "name": "Individuell gedruckter Wimpel", "slug": "individuell-gedruckter-wimpel", ... },
+    { "id": 4332, "name": "Personalisierte Handtücher", "slug": "personalisierte-handtucher", ... },
+    { "id": 4280, "name": "Personalisiertes Fußballtrikot", "slug": "personalisiertes-fussballtrikot", ... },
+    { "id": 6721, "name": "Personalisierter HD-Fußballschal", "slug": "personalisierter-fussballschal", ... },
+    { "id": 4253, "name": "Personalisierte Standard-Mütze", "slug": "custom-football-beanie-hats", ... },
+    { "id": 4213, "name": "Personalisierter Fischerhut", "slug": "personalisierter-fischerhut", ... }
+  ]
+}
+```
+
+**Changes to `src/components/TopPerformer.astro`:**
+- Added `initialSlide: 0` to Swiper config to ensure carousel starts from first product
+- Simplified Swiper initialization by removing `requestIdleCallback` delay
+- Changed to direct initialization in `DOMContentLoaded` event
+
+```javascript
+document.addEventListener('DOMContentLoaded', () => {
+  initSwiper();  // Direct call instead of requestIdleCallback
+});
+```
+
+**Files Modified:**
+- `src/data/homepage-products.json` - Reordered products to match WordPress
+- `src/components/TopPerformer.astro` - Added initialSlide: 0, simplified init
+
+**User Instruction:**
+- "Never change the cookie banner, it's correct in astro" - Cookie consent popup was explicitly not to be modified
+
+**Deployed:**
+- Latest: https://b4fdbd16.hercules-astro.pages.dev
+
+---
+
+### Session 2026-01-15 (PageSpeed Optimization - Self-Hosted Fonts)
+**Task:** Continue PageSpeed optimization to achieve 90+ mobile score. Previous session achieved 85-87 score.
+
+**Starting Point (from previous optimization session):**
+- Mobile Score: 85-87
+- LCP: 3.8-4.1s (main bottleneck)
+- TBT: 0ms (perfect)
+- CLS: 0 (perfect)
+- FCP: 0.9-1.7s
+
+**Optimizations Applied:**
+
+1. **Self-Hosted Google Fonts:**
+   - Downloaded Jost (variable font, 26KB) and Roboto (20KB) latin subsets from Google Fonts
+   - Created `/public/fonts/jost-latin.woff2` and `/public/fonts/roboto-latin.woff2`
+   - Created `/src/styles/fonts.css` with @font-face declarations using `font-display: optional`
+   - Removed all Google Fonts external references (preconnect, stylesheet links)
+   - **Impact:** Eliminates 4-6 external requests (DNS + TCP + TLS connections to fonts.googleapis.com and fonts.gstatic.com)
+   - **Expected saving:** 200-500ms on mobile 3G
+
+2. **Optimized Font Preload Position:**
+   - Moved font preloads to very top of `<head>` (immediately after charset/viewport)
+   - Fonts now start loading as soon as HTML parsing begins
+   - Resource priority order: charset → viewport → **font preloads** → LCP image preloads → meta tags
+
+3. **Previous Optimizations Verified Still Working:**
+   - Responsive slider images with srcset (480w, 640w, 1280w)
+   - LCP image preload with media queries
+   - Deferred Swiper initialization (requestIdleCallback)
+   - `display=optional` for fonts (prevents CLS)
+   - `content-visibility: auto` CSS for below-fold sections
+
+**Files Created:**
+- `public/fonts/jost-latin.woff2` (26KB) - Variable font supporting weights 400-600
+- `public/fonts/roboto-latin.woff2` (20KB) - Regular weight only
+- `src/styles/fonts.css` - @font-face declarations with unicode-range for latin subset
+
+**Files Modified:**
+- `src/layouts/BaseLayout.astro`:
+  - Added `import '../styles/fonts.css'`
+  - Removed Google Fonts preconnect links
+  - Removed Google Fonts stylesheet preload and link tags
+  - Added font preloads at top of `<head>`:
+    ```html
+    <link rel="preload" as="font" href="/fonts/jost-latin.woff2" type="font/woff2" crossorigin>
+    <link rel="preload" as="font" href="/fonts/roboto-latin.woff2" type="font/woff2" crossorigin>
+    ```
+
+**Resource Breakdown (Mobile):**
+| Resource | Raw Size | Transfer Size |
+|----------|----------|---------------|
+| HTML | 272 KB | 50 KB (gzipped) |
+| Jost font | 26 KB | 26 KB |
+| Roboto font | 20 KB | 20 KB |
+| LCP Image (mobile-sm) | 7.7 KB | 7.7 KB |
+
+**Deployed:**
+- Production: https://hercules-astro.pages.dev
+- Preview: https://3de0e916.hercules-astro.pages.dev
+
+**Expected Results:**
+- Previous score: 85-87
+- With self-hosted fonts: Expected 87-92 (+2-5 points)
+- Note: PageSpeed API quota was exceeded during testing session
+
+**Remaining Bottleneck:**
+- LCP on simulated 3G is network-bound (~3.5-4s minimum due to network latency)
+- To achieve 95+, would need: static hero section, server-side Early Hints, or edge-side rendering
+
+**Test Commands:**
+```bash
+# Verify no Google Fonts references
+curl -s "https://hercules-astro.pages.dev/" | grep "fonts.google" || echo "Clean!"
+
+# Check font preload position (should be in first 500 chars)
+curl -s "https://hercules-astro.pages.dev/" | head -c 500 | grep "preload.*font"
+
+# Test font loading
+curl -sI "https://hercules-astro.pages.dev/fonts/jost-latin.woff2" | grep -E "content-type|cache-control"
+```
+
+**Manual Testing Recommended:**
+- https://pagespeed.web.dev (browser-based, not API rate-limited)
+- https://gtmetrix.com (alternative performance testing)
+
+---
+
 ### Session 2026-01-14 (CLS Fixes & Worker Image Size Optimization)
 **Task:** Fix Cumulative Layout Shift (CLS) issues on homepage and update Worker image sizes.
 

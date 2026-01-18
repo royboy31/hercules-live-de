@@ -12,8 +12,12 @@ export default function CookieConsent() {
   useEffect(() => {
     const consentGiven = localStorage.getItem('cmplz_consent_given');
     if (!consentGiven) {
-      setIsVisible(true);
-      document.body.style.overflow = 'hidden';
+      // Delay showing the cookie banner to let the page load first
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+        document.body.style.overflow = 'hidden';
+      }, 1500); // 1.5 second delay
+      return () => clearTimeout(timer);
     } else {
       try {
         const savedPrefs = JSON.parse(localStorage.getItem('cmplz_preferences') || '{}');

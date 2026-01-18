@@ -11,6 +11,7 @@ import {
   siteConfig,
   getProductSchema,
   getBreadcrumbSchema,
+  getFAQSchema,
   truncateDescription,
   stripHtml
 } from '../../config/seo';
@@ -71,17 +72,39 @@ const getPriceRange = () => {
 const conditionalPrices = getConditionalPrices();
 const priceRange = getPriceRange();
 
-// Get gallery images - full size for main, WordPress thumbnails for gallery
+// Generate WordPress thumbnail URL at specific size
+const wpThumb = (url: string, size: number) => {
+  if (!url) return url;
+  return url.replace(/\.(jpg|jpeg|png|gif|webp)$/i, `-${size}x${size}.$1`);
+};
+
+// Generate Worker API image URL (cached on Cloudflare edge, served as WebP)
+const workerImage = (index: number) => `${WORKER_URL}/image/${slug}/${index}`;
+const workerThumb = (index: number) => `${WORKER_URL}/image/${slug}/${index}?size=thumb`;
+
+// Convert image URL to WebP format (WordPress fallback)
+const toWebP = (url: string) => {
+  if (!url || url.endsWith('.webp')) return url;
+  return url + '.webp';
+};
+
+// Get gallery images - Worker cached for fast LCP, WordPress for high-quality upgrade
 const getGalleryImages = () => {
   if (!product?.images?.length) return [];
   return product.images.map((img: any, index: number) => {
+    // Worker API images (cached on Cloudflare edge, WebP format) - fast but 361x361
+    const workerSrc = workerImage(index);
+    const workerThumbSrc = workerThumb(index);
+
+    // WordPress full-size URL - higher quality for progressive enhancement
     const fullSrc = img.src || img.local_src;
-    // Generate thumbnail URL from WordPress (use -100x100 version like WooCommerce)
-    const thumbSrc = fullSrc?.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '-100x100.$1') || fullSrc;
+
     return {
-      src: fullSrc,
+      src: workerSrc,           // Worker cached image for fast LCP (361x361)
+      srcFull: fullSrc,         // Full WordPress URL for high-quality upgrade
+      srcset: '',               // No srcset - we'll upgrade via JS after load
       alt: img.alt || product.name,
-      thumbnail: thumbSrc,
+      thumbnail: workerThumbSrc, // Thumbnail from Worker (fast)
     };
   });
 };
@@ -186,6 +209,12 @@ if (product) {
 
   // Breadcrumb schema
   jsonLdSchemas.push(getBreadcrumbSchema(breadcrumbItems));
+
+  // FAQ schema (if product has FAQ data)
+  const faqSchema = getFAQSchema(product.faq);
+  if (faqSchema) {
+    jsonLdSchemas.push(faqSchema);
+  }
 }
 ---
 
@@ -199,6 +228,9 @@ if (product) {
   productCurrency="EUR"
   productAvailability="InStock"
   jsonLd={jsonLdSchemas}
+  preloadLcpImage={galleryImages[0] ? {
+    src: galleryImages[0].src
+  } : undefined}
 >
   <div class="product-page">
     {error ? (
@@ -245,19 +277,25 @@ if (product) {
                     )}
                   </div>
 
-                  <!-- Main Image -->
+                  <!-- Main Image - Fast Worker cached image, upgrades to full quality after load -->
                   <div class="main-image">
                   <img
                     id="main-product-image"
                     src={galleryImages[0]?.src || '/images/placeholder.png'}
                     alt={product.name}
                     loading="eager"
+                    fetchpriority="high"
+                    width="600"
+                    height="600"
+                    data-full-src={galleryImages[0]?.srcFull}
+                    data-upgraded="false"
                   />
                   </div>
                 </div>
 
                 <!-- Thumbnails Gallery with Pagination -->
-                {galleryImages.length > 1 && (
+                <!-- Show thumbnails even with 1 image so users see the gallery section -->
+                {galleryImages.length >= 1 && (
                   <div class="thumbnail-gallery" id="thumbnail-gallery">
                     <ul class="thumbnail-list">
                       {galleryImages.map((img, index) => (
@@ -265,8 +303,12 @@ if (product) {
                           <img
                             src={img.thumbnail}
                             alt={img.alt}
-                            loading={index < 20 ? 'eager' : 'lazy'}
+                            loading={index < 4 ? 'eager' : 'lazy'}
+                            width="100"
+                            height="100"
                             data-full-src={img.src}
+                            data-full-srcset={img.srcset}
+                            data-original-src={img.srcFull}
                             data-index={index}
                           />
                         </li>
@@ -289,7 +331,7 @@ if (product) {
                 <ProductConfigurator
                   productSlug={slug as string}
                   workerUrl={WORKER_URL}
-                  client:load
+                  client:idle
                 />
 
               </div>
@@ -320,7 +362,7 @@ if (product) {
                 <ContactFormPopup
                   triggerType="button"
                   triggerText="Kostenloses Design anfordern"
-                  client:idle
+                  client:visible
                 />
               </div>
               <p class="design-description">
@@ -368,7 +410,7 @@ if (product) {
                   <ContactFormPopup
                     triggerType="button"
                     triggerText="Kontaktformular"
-                    client:idle
+                    client:visible
                   />
                 </div>
               </div>
@@ -638,7 +680,7 @@ if (product) {
     margin: 0;
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 10px;
   }
 
@@ -738,6 +780,7 @@ if (product) {
     gap: 20px;
     min-width: 0; /* Prevent grid blowout */
     height: fit-content;
+    min-height: 500px; /* Reserve space to prevent CLS during hydration */
   }
 
   /* Product Title - Inside gallery box */
@@ -1534,6 +1577,15 @@ if (product) {
     }
   }
 
+  /* Below-fold sections - defer rendering until near viewport */
+  .design-section-wrapper,
+  .faq-section,
+  .related-products-section,
+  .reviews-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 400px;
+  }
+
   /* Customer Reviews Section - "Was Kunden über uns sagen" - Matching homepage spacing */
   .reviews-section {
     width: 100%;
@@ -1579,6 +1631,32 @@ if (product) {
 </style>
 
 <script>
+  // Progressive Image Upgrade - Load high-quality image after page load
+  // This ensures fast LCP with cached 361px image, then upgrades to full quality
+  function upgradeMainImage() {
+    const mainImg = document.getElementById('main-product-image') as HTMLImageElement;
+    if (!mainImg || mainImg.dataset.upgraded === 'true') return;
+
+    const fullSrc = mainImg.dataset.fullSrc;
+    if (!fullSrc || fullSrc === mainImg.src) return;
+
+    // Preload the high-quality image
+    const highQualityImg = new Image();
+    highQualityImg.onload = () => {
+      // Swap to high-quality image once loaded
+      mainImg.src = fullSrc;
+      mainImg.dataset.upgraded = 'true';
+    };
+    highQualityImg.src = fullSrc;
+  }
+
+  // Upgrade after page is fully loaded (after LCP is measured)
+  if (document.readyState === 'complete') {
+    setTimeout(upgradeMainImage, 100);
+  } else {
+    window.addEventListener('load', () => setTimeout(upgradeMainImage, 100));
+  }
+
   // Thumbnail Gallery Pagination (WordPress style)
   const PAGE_SIZE = 20;
   let currentPage = 0;
@@ -1734,14 +1812,29 @@ if (product) {
   }
 
   // Thumbnail gallery interaction - click on li or img to swap main image
+  // Uses progressive enhancement: show Worker image fast, then upgrade to WordPress
   document.querySelectorAll('.thumbnail-item').forEach(item => {
     item.addEventListener('click', () => {
       const mainImg = document.getElementById('main-product-image') as HTMLImageElement;
       const img = item.querySelector('img') as HTMLImageElement;
-      const fullSrc = img?.dataset.fullSrc;
+      const workerSrc = img?.dataset.fullSrc;      // Worker cached 361px (fast)
+      const originalSrc = img?.dataset.originalSrc; // WordPress full quality
 
-      if (mainImg && fullSrc) {
-        mainImg.src = fullSrc;
+      if (mainImg && workerSrc) {
+        // Step 1: Immediately show Worker cached image (fast swap)
+        mainImg.src = workerSrc;
+        mainImg.dataset.fullSrc = originalSrc || workerSrc;
+        mainImg.dataset.upgraded = 'false';
+
+        // Step 2: Upgrade to high-quality WordPress image in background
+        if (originalSrc && originalSrc !== workerSrc) {
+          const highQualityImg = new Image();
+          highQualityImg.onload = () => {
+            mainImg.src = originalSrc;
+            mainImg.dataset.upgraded = 'true';
+          };
+          highQualityImg.src = originalSrc;
+        }
 
         // Update active state on li elements
         document.querySelectorAll('.thumbnail-item').forEach(t => t.classList.remove('active'));
@@ -1827,7 +1920,7 @@ if (product) {
     };
 
     // Defer until section is visible
-    const reviewsSection = trustIndexContainer.closest('.customer-reviews-section');
+    const reviewsSection = trustIndexContainer.closest('.reviews-section');
     if (reviewsSection && 'IntersectionObserver' in window) {
       const observer = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {

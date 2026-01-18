@@ -122,6 +122,13 @@ export default function ContactFormPopup({
       submitData.append('pageTitle', document.title);
       submitData.append('pageUrl', window.location.href);
 
+      // Tracking fields
+      submitData.append('referrer', document.referrer || '(direct)');
+      submitData.append('userAgent', navigator.userAgent);
+      submitData.append('screenWidth', String(window.screen.width));
+      submitData.append('screenHeight', String(window.screen.height));
+      submitData.append('language', navigator.language || '');
+
       // Add files
       formData.files.forEach((file, index) => {
         submitData.append(`file_${index}`, file);

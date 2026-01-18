@@ -17,12 +17,8 @@ export const siteConfig = {
     type: 'Organization',
     email: 'info@hercules-merchandise.de',
     phone: '+49 8001833745',
-    address: {
-      streetAddress: '8 Northumberland Avenue',
-      postalCode: 'WC2N 5BY',
-      addressLocality: 'London',
-      addressCountry: 'UK'
-    },
+    // No physical address for German site schema
+    address: null,
     openingHours: [
       { day: 'Monday', time: '09:00-17:00' },
       { day: 'Tuesday', time: '09:00-17:00' },
@@ -105,7 +101,7 @@ export const noindexPages = [
 
 // Generate Organization JSON-LD
 export function getOrganizationSchema() {
-  return {
+  const schema: any = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: siteConfig.organization.name,
@@ -114,15 +110,21 @@ export function getOrganizationSchema() {
     logo: `${siteConfig.siteUrl}${siteConfig.logo}`,
     email: siteConfig.organization.email,
     telephone: siteConfig.organization.phone,
-    address: {
+    sameAs: siteConfig.organization.sameAs,
+  };
+
+  // Only include address if configured
+  if (siteConfig.organization.address) {
+    schema.address = {
       '@type': 'PostalAddress',
       streetAddress: siteConfig.organization.address.streetAddress,
       postalCode: siteConfig.organization.address.postalCode,
       addressLocality: siteConfig.organization.address.addressLocality,
       addressCountry: siteConfig.organization.address.addressCountry,
-    },
-    sameAs: siteConfig.organization.sameAs,
-  };
+    };
+  }
+
+  return schema;
 }
 
 // Generate WebSite JSON-LD
@@ -261,6 +263,24 @@ export function getCollectionPageSchema(collection: {
       name: siteConfig.siteName,
       url: siteConfig.siteUrl,
     },
+  };
+}
+
+// Generate FAQPage JSON-LD (for pages with FAQ sections)
+export function getFAQSchema(faqs: Array<{ question: string; answer: string }>) {
+  if (!faqs || faqs.length === 0) return null;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(faq => ({
+      '@type': 'Question',
+      name: stripHtml(faq.question),
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: stripHtml(faq.answer),
+      },
+    })),
   };
 }
 

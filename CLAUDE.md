@@ -55,11 +55,55 @@ hercules-webhook-secret-2024
 - **Project Name:** hercules-astro
 - **URL:** https://hercules-astro.pages.dev
 - **Account ID:** 86dfa0e10ca766f79d5042548fc2776f
-- **Deploy Command:**
+- **GitHub Repo:** https://github.com/kamindu01/hercules-astro
+
+---
+## IMPORTANT: Deployment Protocol (GitHub Only)
+
+**NEVER deploy directly using `wrangler pages deploy`!**
+
+All deployments MUST go through GitHub to prevent conflicts between local and remote code.
+
+### Standard Deployment Process:
 ```bash
 cd "/home/kamindu/Headerless Herculess site/astro-hercules"
-npm run build && CLOUDFLARE_API_TOKEN="ZN0wjGH08jqnYCOvlpNH5Y-z--3FeL-63fnLndQp" CLOUDFLARE_ACCOUNT_ID="86dfa0e10ca766f79d5042548fc2776f" npx wrangler pages deploy dist/ --project-name=hercules-astro --commit-dirty=true
+
+# 1. Stage all changes
+git add -A
+
+# 2. Commit with descriptive message
+git commit -m "Description of changes"
+
+# 3. Push to GitHub (triggers automatic deployment)
+git push origin main
 ```
+
+### Quick Deploy (One-liner):
+```bash
+git add -A && git commit -m "Your commit message" && git push origin main
+```
+
+### Check Deployment Status:
+```bash
+# View recent GitHub Actions runs
+gh run list --limit 5
+
+# Watch a specific run
+gh run watch
+```
+
+### Why GitHub-Only Deployments?
+- Prevents conflicts between local changes and auto-deployments
+- Product sync webhooks trigger GitHub Actions (not local builds)
+- Single source of truth for all code
+- Full deployment history in GitHub Actions
+
+### Auto-Deployment Triggers:
+1. **Push to main** - Any commit to main branch
+2. **Product Sync Webhook** - WooCommerce product updates (5-min debounce)
+3. **Manual Workflow** - `gh workflow run deploy.yml --ref main`
+
+---
 
 ## Edge Router Deployment (Gilles's Account)
 ```bash

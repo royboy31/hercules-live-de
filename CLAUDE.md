@@ -732,6 +732,80 @@ WordPress mu-plugins/
 
 ## Session History
 
+### Session 2026-01-18 (Hreflang Fixes, FAQ Schema, GitHub-Only Deployment)
+**Tasks Completed:**
+
+1. **Hreflang Mapping Fixes:**
+   - Fixed HD Scarf FR mapping: `echarpe-personnalisee-jacquard` → `echarpe-hd-deluxe-personnalisee`
+   - Fixed Snood FR mapping: `tour-de-cou-personnalise-1` → `tour-de-cou-personnalise`
+   - Fixed Lanyard FR mapping: `tour-de-cou-personnalise` → `tour-de-cou-personnalise-1`
+   - Fixed Sublimated Towel EN mapping: `custom-jacquard-woven-towels` → `custom-sublimated-towels`
+   - Fixed Jacquard Towel EN mapping: `custom-sublimated-towels` → `custom-jacquard-woven-towels`
+   - File: `src/data/hreflang-mappings.ts`
+
+2. **FAQ Schema Verification:**
+   - Confirmed FAQ schema present on collection pages (FAQPage JSON-LD)
+   - Verified via Chrome DevTools MCP on live site
+
+3. **GitHub-Only Deployment Configuration:**
+   - **Problem:** Conflicts occurred when GitHub Actions deployed older code while local had newer changes
+   - **Solution:** Enforced GitHub-only deployment workflow
+   - **Changes Made:**
+     - Updated `CLAUDE.md` with "IMPORTANT: Deployment Protocol (GitHub Only)" section
+     - Created `scripts/deploy.sh` - Interactive deployment script
+     - Added `npm run deploy` command to `package.json`
+   - **Benefits:**
+     - Single source of truth (GitHub)
+     - No more conflicts between local and auto-deployments
+     - Product sync webhooks trigger correct code
+     - Full deployment history in GitHub Actions
+
+4. **Synced All Recent Changes to GitHub:**
+   - Committed 58 files with all recent updates
+   - Commit: `6ed6b56` - "Fix hreflang mappings, FAQ schema, and sync all recent updates"
+   - Includes: hreflang fixes, self-hosted fonts, form tracking, FAQ exports, etc.
+
+**Verified on Production:**
+| Item | Status |
+|------|--------|
+| HD Scarf FR hreflang | ✅ `echarpe-hd-deluxe-personnalisee` |
+| Snood FR hreflang | ✅ `tour-de-cou-personnalise` |
+| Lanyard FR hreflang | ✅ `tour-de-cou-personnalise-1` |
+| Sublimated Towel EN hreflang | ✅ `custom-sublimated-towels` |
+| Jacquard Towel EN hreflang | ✅ `custom-jacquard-woven-towels` |
+| FAQ Schema on collections | ✅ FAQPage JSON-LD present |
+
+**Deployment Protocol (NEW):**
+```bash
+# NEVER use direct wrangler deploy!
+# Always deploy through GitHub:
+
+# Option 1: Use deploy script
+npm run deploy
+
+# Option 2: Manual
+git add -A && git commit -m "message" && git push origin main
+
+# Check status
+gh run list --limit 5
+```
+
+**Root Cause of Deployment Conflicts:**
+- Multiple deployment sources (manual CLI + GitHub Actions)
+- Local changes not committed before GitHub Actions triggered
+- Auto-rebuild from product webhooks deployed older GitHub code
+
+**Prevention Measures:**
+- All deployments now go through GitHub only
+- `scripts/deploy.sh` ensures commits before push
+- Documentation updated to prevent future issues
+
+**Deployed:**
+- Production: https://cff8b025.hercules-astro.pages.dev (via GitHub Actions)
+- Commit: `dae15c3` - "Add deploy script for GitHub-only deployments"
+
+---
+
 ### Session 2026-01-17 (Form Tracking, Hreflang Review, FAQ Export)
 **Tasks Completed:**
 

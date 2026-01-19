@@ -23,7 +23,6 @@
 .offer-table * {
     border: none;
     background: transparent !important;
-    color: #253461;
 }
 
 /* Image Selector */
@@ -557,6 +556,7 @@ input[type="range"]::-ms-thumb {
     padding: 4px 10px 4px 0;
     text-align: left;
     vertical-align: top;
+    color: #253461;
 }
 
 .offer-table tr td:last-child {
@@ -567,6 +567,7 @@ input[type="range"]::-ms-thumb {
     padding: 4px 0 4px 10px;
     text-align: right;
     vertical-align: top;
+    color: #469ADC;
 }
 
 /* Action buttons wrapper */

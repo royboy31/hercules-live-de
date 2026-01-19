@@ -547,6 +547,11 @@ input[type="range"]::-ms-thumb {
 }
 
 /* Offer table styling */
+.offer-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
 .offer-table tr td:first-child {
     font-family: Jost;
     font-weight: 400;
@@ -557,6 +562,7 @@ input[type="range"]::-ms-thumb {
     text-align: left;
     vertical-align: top;
     color: #253461;
+    width: 65%;
 }
 
 .offer-table tr td:last-child {
@@ -568,6 +574,7 @@ input[type="range"]::-ms-thumb {
     text-align: left;
     vertical-align: top;
     color: #253461;
+    width: 35%;
 }
 
 /* Action buttons wrapper */

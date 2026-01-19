@@ -565,9 +565,9 @@ input[type="range"]::-ms-thumb {
     font-size: 16px;
     line-height: 174%;
     padding: 4px 0 4px 10px;
-    text-align: right;
+    text-align: left;
     vertical-align: top;
-    color: #469ADC;
+    color: #253461;
 }
 
 /* Action buttons wrapper */

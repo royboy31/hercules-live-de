@@ -277,6 +277,22 @@ if (product) {
                     )}
                   </div>
 
+                  <!-- Gallery Navigation Arrows -->
+                  {galleryImages.length > 1 && (
+                    <>
+                      <button class="gallery-arrow gallery-arrow-prev" id="gallery-prev" aria-label="Vorheriges Bild">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                      </button>
+                      <button class="gallery-arrow gallery-arrow-next" id="gallery-next" aria-label="Nächstes Bild">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                      </button>
+                    </>
+                  )}
+
                   <!-- Main Image - Fast Worker cached image, upgrades to full quality after load -->
                   <div class="main-image">
                   <img
@@ -666,6 +682,64 @@ if (product) {
     object-fit: contain;
   }
 
+  /* Gallery Navigation Arrows */
+  .gallery-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 15;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #dcdcdc;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: #253461;
+  }
+
+  .gallery-arrow:hover {
+    background-color: #253461;
+    color: white;
+    border-color: #253461;
+  }
+
+  .gallery-arrow-prev {
+    left: 10px;
+  }
+
+  .gallery-arrow-next {
+    right: 10px;
+  }
+
+  .gallery-arrow svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .gallery-arrow {
+      width: 32px;
+      height: 32px;
+    }
+
+    .gallery-arrow svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .gallery-arrow-prev {
+      left: 5px;
+    }
+
+    .gallery-arrow-next {
+      right: 5px;
+    }
+  }
+
   /* Thumbnail Gallery - WordPress/WooCommerce style */
   .thumbnail-gallery {
     margin-top: 1em;
@@ -940,10 +1014,10 @@ if (product) {
 
   /* Design Section - "Wie bekomme ich ein Design?" - WordPress Elementor post-511 style */
   .design-section-wrapper {
-    margin-top: 50px;
+    margin-top: 35px;
     background: url('/images/footer-bg-1.jpg') center center / cover no-repeat;
     position: relative;
-    padding: 55px 20px 40px 20px;
+    padding: 40px 20px 35px 20px;
   }
 
   .design-section-container {
@@ -1296,7 +1370,7 @@ if (product) {
 
   /* FAQ Section Styles - Card style matching product description */
   .faq-section {
-    padding: 40px 0;
+    padding: 30px 0;
     background: #ffffff;
   }
 
@@ -1849,6 +1923,48 @@ if (product) {
       openLightbox(index);
     });
   });
+
+  // Gallery Arrow Navigation
+  const galleryPrevBtn = document.getElementById('gallery-prev');
+  const galleryNextBtn = document.getElementById('gallery-next');
+  const allThumbnails = document.querySelectorAll('.thumbnail-item');
+
+  function getCurrentGalleryIndex(): number {
+    const activeItem = document.querySelector('.thumbnail-item.active img') as HTMLImageElement;
+    return activeItem ? parseInt(activeItem.dataset.index || '0') : 0;
+  }
+
+  function navigateGallery(direction: number) {
+    const currentIndex = getCurrentGalleryIndex();
+    let newIndex = currentIndex + direction;
+
+    // Loop around
+    if (newIndex < 0) {
+      newIndex = allThumbnails.length - 1;
+    } else if (newIndex >= allThumbnails.length) {
+      newIndex = 0;
+    }
+
+    // Click the thumbnail at the new index to trigger image swap
+    const targetThumbnail = allThumbnails[newIndex] as HTMLElement;
+    if (targetThumbnail) {
+      targetThumbnail.click();
+    }
+  }
+
+  if (galleryPrevBtn) {
+    galleryPrevBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent lightbox from opening
+      navigateGallery(-1);
+    });
+  }
+
+  if (galleryNextBtn) {
+    galleryNextBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent lightbox from opening
+      navigateGallery(1);
+    });
+  }
 
   // Lightbox controls
   if (lightboxClose) {

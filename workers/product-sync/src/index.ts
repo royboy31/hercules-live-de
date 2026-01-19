@@ -935,9 +935,10 @@ async function syncSingleProduct(env: Env, productId: number): Promise<SyncedPro
   );
 
   // Cache thumbnail image in KV (600x600 for higher quality display)
+  // Force refresh on webhook updates to ensure image changes are captured
   if (product.slug && product.images?.[0]?.src) {
     const thumbnailUrl = product.images[0].src.replace(/(\.[^.]+)$/, '-600x600$1');
-    await syncImageToKV(env.PRODUCTS_KV, thumbnailUrl, product.slug);
+    await syncImageToKV(env.PRODUCTS_KV, thumbnailUrl, product.slug, 0, true);
   }
 
   // Update index

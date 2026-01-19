@@ -562,7 +562,7 @@ input[type="range"]::-ms-thumb {
     text-align: left;
     vertical-align: top;
     color: #253461;
-    width: 40%;
+    width: 50%;
 }
 
 .offer-table tr td:last-child {
@@ -574,7 +574,7 @@ input[type="range"]::-ms-thumb {
     text-align: left;
     vertical-align: top;
     color: #253461;
-    width: 60%;
+    width: 50%;
 }
 
 /* Action buttons wrapper */

@@ -16,14 +16,13 @@
 }
 
 .offer-table {
-    max-width: calc(100% - 40px);
-    margin: 0 20px;
+    width: 100%;
+    border-collapse: collapse;
 }
 
 .offer-table * {
     border: none;
     background: transparent !important;
-    padding: 9px;
     color: #253461;
 }
 
@@ -538,27 +537,36 @@ input[type="range"]::-ms-thumb {
 
 /* Variation summary section */
 .variation-summary {
-    padding: 13px 21px 15px 21px;
+    padding: 13px 20px 15px 20px;
     font-family: 'Jost';
     font-size: 16px;
     border-bottom: 1px solid #DFDFDF;
+}
+
+.variation-summary .your-offer-title {
+    margin: 0 0 10px 0;
 }
 
 /* Offer table styling */
 .offer-table tr td:first-child {
     font-family: Jost;
     font-weight: 400;
-    font-style: Regular;
     font-size: 16px;
     line-height: 174%;
     letter-spacing: 0%;
-    padding: 0;
-    width: 40% !important;
+    padding: 4px 10px 4px 0;
+    text-align: left;
+    vertical-align: top;
 }
 
-.offer-table tr td {
-    padding-top: 0;
-    padding-bottom: 0;
+.offer-table tr td:last-child {
+    font-family: Jost;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 174%;
+    padding: 4px 0 4px 10px;
+    text-align: right;
+    vertical-align: top;
 }
 
 /* Action buttons wrapper */
@@ -849,14 +857,15 @@ input[type="range"]::-webkit-slider-runnable-track {
     background: none !important;
     border: none !important;
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 5px 0 0 0 !important;
     color: #469ADC !important;
     text-decoration: underline !important;
     cursor: pointer !important;
     font-family: 'Jost', sans-serif !important;
     font-size: 14px !important;
     font-weight: 400 !important;
-    display: block !important;
+    display: inline-block !important;
+    text-align: right !important;
 }
 
 .offer-table .kd-express-link:hover {

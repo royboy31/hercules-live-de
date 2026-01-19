@@ -578,7 +578,7 @@ input[type="range"]::-ms-thumb {
 }
 
 /* Free value styling (Kostenlos) - green text */
-.offer-table .kd-free-value {
+.offer-table tr td.kd-free-value {
     color: #10A380;
 }
 

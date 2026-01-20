@@ -903,6 +903,16 @@ input[type="range"]::-webkit-slider-runnable-track {
 
 /* Mobile responsive */
 @media (max-width: 767px) {
+    /* Prevent horizontal scroll on steps */
+    .pearl-step {
+        overflow-x: hidden;
+    }
+
+    .pearl-step h3 {
+        overflow: hidden;
+        max-width: 100%;
+    }
+
     .pearl-step.collapsed.selected .kd-selected-step-info {
         width: 80% !important;
     }
@@ -913,15 +923,28 @@ input[type="range"]::-webkit-slider-runnable-track {
 
     /* Collapsed step layout on mobile - adjust column widths */
     .pearl-step.collapsed .kd-prod-attribute-title-wrapper {
-        width: 55% !important;
+        width: 50% !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pearl-step.collapsed .kd-prod-attribute-title-wrapper span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
     }
 
     .pearl-step.collapsed .kd-selected-val {
         width: 25% !important;
+        flex-shrink: 0;
     }
 
     .pearl-step.collapsed .kd-selected-chng-btn {
-        width: 20% !important;
+        width: 25% !important;
+        min-width: unset !important;
+        flex-shrink: 0;
     }
 
     .box-selector-item {

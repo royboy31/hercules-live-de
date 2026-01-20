@@ -932,7 +932,12 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                 <h4 className="specific-qty-title">Oder wählen Sie eine bestimmte Menge</h4>
 
                 <div className="kd-range-slider-container">
-                  <div className="kd-qty-display">{tempQuantity}</div>
+                  <div
+                    className="kd-qty-display"
+                    style={{
+                      left: `calc(${((tempQuantity - quantityRange.min) / (quantityRange.max - quantityRange.min)) * 100}% + ${8 - ((tempQuantity - quantityRange.min) / (quantityRange.max - quantityRange.min)) * 16}px)`
+                    }}
+                  >{tempQuantity}</div>
                   <input
                     type="range"
                     min={quantityRange.min}

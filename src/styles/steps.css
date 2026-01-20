@@ -179,7 +179,7 @@ input[type="range"]::-ms-thumb {
     line-height: 100%;
     letter-spacing: 0%;
     color: #253461;
-    padding-bottom: 20px;
+    padding-bottom: 8px;
 }
 
 /* Contact/Quote button - smaller and more compact */
@@ -732,7 +732,7 @@ input[type="range"]::-webkit-slider-runnable-track {
 /* Quantity controls */
 .kd-range-slider-container {
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     padding-top: 0px;
 }
 

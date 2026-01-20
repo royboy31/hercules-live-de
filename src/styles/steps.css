@@ -180,8 +180,8 @@ input[type="range"]::-ms-thumb {
     letter-spacing: 0%;
     color: #253461;
     margin-top: 8px;
-    margin-bottom: 16px;
-    padding-bottom: 20px;
+    margin-bottom: 0;
+    padding-bottom: 8px;
 }
 
 /* Contact/Quote button - smaller and more compact */
@@ -735,8 +735,8 @@ input[type="range"]::-webkit-slider-runnable-track {
 .kd-range-slider-container {
     position: relative;
     margin-bottom: 10px;
-    margin-top: 15px;
-    padding-top: 25px;
+    margin-top: 0;
+    padding-top: 20px;
 }
 
 .kd-qty-display {
@@ -756,12 +756,13 @@ input[type="range"]::-webkit-slider-runnable-track {
 
 .kd-range-ticks {
     position: relative;
-    margin-top: 20px; /* More space between slider and tick lines */
+    margin-top: 8px;
     padding: 0;
     /* Account for slider thumb width (16px) - thumb center moves from 8px to (width-8px) */
     width: calc(100% - 16px);
     margin-left: 8px;
-    height: 50px; /* Height for absolutely positioned tick labels */
+    height: 30px; /* Height for absolutely positioned tick labels */
+    margin-bottom: 20px;
 }
 
 .kd-qty-controls {

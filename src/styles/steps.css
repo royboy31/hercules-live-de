@@ -761,14 +761,15 @@ input[type="range"]::-webkit-slider-runnable-track {
     /* Account for slider thumb width (16px) - thumb center moves from 8px to (width-8px) */
     width: calc(100% - 16px);
     margin-left: 8px;
-    height: 30px; /* Height for absolutely positioned tick labels */
-    margin-bottom: 20px;
+    height: 25px; /* Height for absolutely positioned tick labels */
+    margin-bottom: 0;
 }
 
 .kd-qty-controls {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-top: 12px;
 }
 
 .kd-qty-input {

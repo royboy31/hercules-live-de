@@ -51,6 +51,12 @@ CLOUDFLARE_ACCOUNT_ID=d6d3df04acc98efe34f43e42636a3dfc
 hercules-webhook-secret-2024
 ```
 
+### Brevo (Sendinblue) API Key
+```
+BREVO_API_KEY=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
+```
+Used by: Astro form-handler worker, WordPress Easy WP SMTP
+
 ## Cloudflare Pages Deployment (Gilles's Account)
 - **Project Name:** hercules-astro
 - **URL:** https://hercules-astro.pages.dev

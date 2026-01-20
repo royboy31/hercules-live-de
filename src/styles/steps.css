@@ -402,6 +402,7 @@ input[type="range"]::-ms-thumb {
     margin: 0;
     color: #253461;
     display: flex;
+    align-items: center;
 }
 
 .pearl-step h3 button:hover {

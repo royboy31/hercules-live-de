@@ -20,6 +20,6 @@ bucket_name = "hercules-form-uploads"
 [vars]
 SENDER_EMAIL = "info@hercules-merchandise.de"
 SENDER_NAME = "Hercules Merchandise"
-COMPANY_EMAIL = "kamindudushmantha@gmail.com"
+COMPANY_EMAIL = "info@hercules-merchandise.de"
 # Public URL for R2 bucket (served via this worker's /files/ endpoint)
 R2_PUBLIC_URL = "https://hercules-form-handler.gilles-86d.workers.dev/files"

@@ -850,14 +850,18 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
           <h3>
             {maxVisibleStep !== quantityStepIndex && quantitySelected > 0 ? (
               <>
-                <span>{quantityStepIndex + 1}: Wählen Sie Ihre Menge (Die angezeigten Preise sind netto)</span>
+                <div className="kd-prod-attribute-title-wrapper">
+                  <span>{quantityStepIndex + 1}: Wählen Sie Ihre Menge (Die angezeigten Preise sind netto)</span>
+                </div>
                 <span className="kd-selected-val">{quantitySelected}</span>
                 <button type="button" className="kd-selected-chng-btn" onClick={(e) => { e.stopPropagation(); setMaxVisibleStep(quantityStepIndex); }}>
                   Ändern
                 </button>
               </>
             ) : (
-              <span>{quantityStepIndex + 1}: Wählen Sie Ihre Menge (Die angezeigten Preise sind netto)</span>
+              <div className="kd-prod-attribute-title-wrapper">
+                <span>{quantityStepIndex + 1}: Wählen Sie Ihre Menge (Die angezeigten Preise sind netto)</span>
+              </div>
             )}
           </h3>
 

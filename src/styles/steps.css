@@ -769,7 +769,7 @@ input[type="range"]::-webkit-slider-runnable-track {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 12px;
+    margin-top: 20px;
 }
 
 .kd-qty-input {

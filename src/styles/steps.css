@@ -911,6 +911,19 @@ input[type="range"]::-webkit-slider-runnable-track {
         width: 20% !important;
     }
 
+    /* Collapsed step layout on mobile - adjust column widths */
+    .pearl-step.collapsed .kd-prod-attribute-title-wrapper {
+        width: 55% !important;
+    }
+
+    .pearl-step.collapsed .kd-selected-val {
+        width: 25% !important;
+    }
+
+    .pearl-step.collapsed .kd-selected-chng-btn {
+        width: 20% !important;
+    }
+
     .box-selector-item {
         width: 48%;
     }

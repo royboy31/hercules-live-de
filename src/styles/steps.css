@@ -974,6 +974,28 @@ input[type="range"]::-webkit-slider-runnable-track {
     .kd-qty-input {
         width: 120px !important;
     }
+
+    /* Quantity tier rows on mobile - prevent price cutoff */
+    .kd-radio-option > div:first-child {
+        width: 25% !important;
+        min-width: 50px;
+    }
+
+    .kd-radio-meta {
+        width: 75% !important;
+        overflow: visible;
+    }
+
+    .kd-radio-meta .save {
+        margin-right: 10px !important;
+        width: auto;
+        font-size: 10px;
+    }
+
+    .kd-radio-meta span:last-child {
+        min-width: 50px;
+        text-align: right;
+    }
 }
 
 /* ==========================================

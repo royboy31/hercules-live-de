@@ -3042,3 +3042,38 @@ Products stored in KV with structure:
 - SSH access via Combell: `ssh combel` (host alias at 136.144.235.35)
 - REST API meta filter installed at: `/wp-content/mu-plugins/pearl-rest-api-meta.php`
 - WooCommerce REST API credentials in `.env` file
+
+---
+
+## Changelog
+
+### 2026-01-20: Offer Table Styling Fixes
+
+**Fixed offer table column alignment and "Kostenlos" green color**
+
+1. **Offer Table Column Widths** (50%/50%)
+   - Changed from 40%/60% to match WordPress production site
+   - File: `src/styles/steps.css` (lines ~560-575)
+   - CSS rules:
+     ```css
+     .offer-table tr td:first-child { width: 50%; }
+     .offer-table tr td:last-child { width: 50%; }
+     ```
+
+2. **"Kostenlos" Green Color** (#10A380)
+   - Made "Kostenlos" text green to match WordPress production site
+   - Color extracted from production: `rgb(16, 163, 128)` = `#10A380`
+   - File: `src/styles/steps.css` (lines ~580-583)
+   - **CSS Specificity Issue Fixed**: Initial selector `.offer-table .kd-free-value` was overridden by `.offer-table tr td:last-child` (higher specificity). Changed to `.offer-table tr td.kd-free-value` to match specificity.
+   - CSS rule:
+     ```css
+     .offer-table tr td.kd-free-value {
+         color: #10A380;
+     }
+     ```
+   - Component: `src/components/ProductConfigurator.tsx` already had `className="kd-free-value"` on "Kostenlos" cells
+
+**Commits:**
+- "Fix offer table column alignment to match step rows (50%/50%)"
+- "Add green color (#10A380) for Kostenlos text in offer table"
+- "Fix Kostenlos green color CSS specificity"

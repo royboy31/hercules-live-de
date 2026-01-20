@@ -924,7 +924,48 @@ async function syncSingleProduct(env: Env, productId: number): Promise<SyncedPro
     false // Don't sync images - no R2 bucket
   );
 
-  // Store in KV
+  // Cache ALL gallery images in KV (same logic as batch sync)
+  // Force refresh on webhook updates to ensure image changes are captured
+  // Cache both main (361x361) and thumb (100x100) versions
+  let cachedImageCount = 0;
+  if (product.slug && product.images?.length > 0) {
+    const imagesToCache = Math.min(product.images.length, MAX_GALLERY_IMAGES);
+    for (let i = 0; i < imagesToCache; i++) {
+      const img = product.images[i];
+      if (img?.src) {
+        // Cache main size (361x361) for category cards
+        const mainUrl = img.src.replace(/(\.[^.]+)$/, '-361x361$1');
+        let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, true, 'full');
+        if (!mainSuccess && img.src !== mainUrl) {
+          // Fallback to 300x300, then 600x600, then original
+          const fallback300 = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
+          mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback300, product.slug, i, true, 'full');
+          if (!mainSuccess) {
+            const fallback600 = img.src.replace(/(\.[^.]+)$/, '-600x600$1');
+            mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback600, product.slug, i, true, 'full');
+          }
+        }
+
+        // Cache thumbnail (100x100) for thumbnail carousels
+        const thumbUrl = img.src.replace(/(\.[^.]+)$/, '-100x100$1');
+        let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, true, 'thumb');
+        if (!thumbSuccess && img.src !== thumbUrl) {
+          // Fallback to 83x83 if 100x100 doesn't exist
+          const fallback83 = img.src.replace(/(\.[^.]+)$/, '-83x83$1');
+          thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback83, product.slug, i, true, 'thumb');
+        }
+
+        if (mainSuccess || thumbSuccess) {
+          cachedImageCount++;
+        }
+      }
+    }
+  }
+
+  // Update product with cached image count
+  syncedProduct.cached_image_count = cachedImageCount;
+
+  // Store in KV with updated cached_image_count
   await env.PRODUCTS_KV.put(
     `product:${product.id}`,
     JSON.stringify(syncedProduct)
@@ -934,12 +975,7 @@ async function syncSingleProduct(env: Env, productId: number): Promise<SyncedPro
     JSON.stringify(syncedProduct)
   );
 
-  // Cache thumbnail image in KV (600x600 for higher quality display)
-  // Force refresh on webhook updates to ensure image changes are captured
-  if (product.slug && product.images?.[0]?.src) {
-    const thumbnailUrl = product.images[0].src.replace(/(\.[^.]+)$/, '-600x600$1');
-    await syncImageToKV(env.PRODUCTS_KV, thumbnailUrl, product.slug, 0, true);
-  }
+  console.log(`Synced product ${productId} with ${cachedImageCount} cached images`);
 
   // Update index
   const indexStr = await env.PRODUCTS_KV.get('product:index');

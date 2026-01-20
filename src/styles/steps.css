@@ -732,8 +732,8 @@ input[type="range"]::-webkit-slider-runnable-track {
 /* Quantity controls */
 .kd-range-slider-container {
     position: relative;
-    margin-bottom: 50px;
-    padding-top: 30px;
+    margin-bottom: 20px;
+    padding-top: 0px;
 }
 
 .kd-qty-display {

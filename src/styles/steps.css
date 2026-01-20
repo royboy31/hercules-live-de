@@ -909,7 +909,7 @@ input[type="range"]::-webkit-slider-runnable-track {
     }
 
     .pearl-step h3 {
-        overflow: hidden;
+        flex-wrap: nowrap;
         max-width: 100%;
     }
 
@@ -923,10 +923,12 @@ input[type="range"]::-webkit-slider-runnable-track {
 
     /* Collapsed step layout on mobile - adjust column widths */
     .pearl-step.collapsed .kd-prod-attribute-title-wrapper {
-        width: 50% !important;
+        width: 45% !important;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        flex-shrink: 1;
+        min-width: 0;
     }
 
     .pearl-step.collapsed .kd-prod-attribute-title-wrapper span {
@@ -937,8 +939,9 @@ input[type="range"]::-webkit-slider-runnable-track {
     }
 
     .pearl-step.collapsed .kd-selected-val {
-        width: 25% !important;
+        width: 30% !important;
         flex-shrink: 0;
+        text-align: center;
     }
 
     .pearl-step.collapsed .kd-selected-chng-btn {

@@ -407,7 +407,7 @@ export default function UserSession({ type }: UserSessionProps) {
                 {/* Buttons */}
                 <div style={buttonsContainerStyle}>
                   <a
-                    href="/quote-generator/"
+                    href="/angebotsgenerator/"
                     style={viewCartBtnStyle}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = '#469adc';
@@ -421,7 +421,7 @@ export default function UserSession({ type }: UserSessionProps) {
                     Angebotsgenerator
                   </a>
                   <a
-                    href="/cart/"
+                    href="/warenkorb/"
                     style={checkoutBtnStyle}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = 'transparent';

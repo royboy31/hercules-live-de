@@ -19,7 +19,7 @@ const NO_CACHE_PATHS = [
   '/my-account',
   '/mein-konto',
   '/quote-generator',  // Quote generator uses WC session - must not be cached
-  '/angebot-anfragen', // German quote request page
+  '/angebotsgenerator', // German quote generator page
   '/wp-admin',
   '/wp-login.php',
   '/wp-json',  // REST API should never be cached
@@ -59,8 +59,8 @@ const WORDPRESS_PATHS = [
   // Contact & Quote pages
   '/kontakt',
   '/kontaktieren-sie-uns',
-  '/angebot-anfragen',
-  '/quote-generator',  // Quote generator page for getting quotes
+  '/angebotsgenerator', // German quote generator
+  '/quote-generator',  // English quote generator (legacy)
 
   // About & Info pages
   '/uber-uns',

@@ -483,9 +483,9 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
         // Small delay to let user see the cart update, then redirect
         setTimeout(() => {
           if (redirectTo === 'quote') {
-            window.location.href = '/quote-generator/';
+            window.location.href = '/angebotsgenerator/';
           } else {
-            window.location.href = '/cart/';
+            window.location.href = '/warenkorb/';
           }
         }, 500);
       } else {

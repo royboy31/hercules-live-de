@@ -91,8 +91,8 @@ export const robotsConfig = {
 // Pages that should be noindex
 export const noindexPages = [
   '/search',
-  '/cart',
-  '/checkout',
+  '/warenkorb',
+  '/kasse',
   '/my-account',
   '/warenkorb',
   '/kasse',

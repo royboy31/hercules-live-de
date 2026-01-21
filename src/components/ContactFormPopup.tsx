@@ -759,21 +759,24 @@ export default function ContactFormPopup({
           color: #253461;
         }
 
-        /* Trigger Styles */
+        /* Trigger Styles - matching WordPress LIVE site exactly */
         .contact-trigger-button {
           display: inline-flex;
           align-items: center;
-          padding: 10px 28px;
-          background: #10C99E;
-          color: white;
-          font-family: 'Jost', sans-serif;
-          font-size: 16px;
-          font-weight: 400;
+          padding: 10px 30px;
+          background-color: #10C99E;
+          color: #FFFFFF;
+          font-family: 'Jost', Sans-serif;
+          font-size: 15px;
+          font-weight: 500;
+          text-transform: uppercase;
           text-decoration: none;
-          border: none;
+          border-style: solid;
+          border-width: 1px;
+          border-color: #10C99E;
           border-radius: 50px;
           cursor: pointer;
-          transition: background 0.2s;
+          transition: all 0.25s ease-in-out;
         }
 
         .contact-trigger-button:hover {

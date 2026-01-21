@@ -453,14 +453,6 @@ function getContactFormEmailHtml(data: {
 
     <p>Wir werden uns so schnell wie möglich bei Ihnen melden.</p>
 
-    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:20px;">
-      <tr>
-        <td style="text-align:center;">
-          <a class="btn btn-green" href="${SITE_URL}/kontakt/">Weitere Fragen?</a>
-        </td>
-      </tr>
-    </table>
-
     ${getEmailFooter()}
   </div>
 </body>

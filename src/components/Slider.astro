@@ -308,32 +308,42 @@ const slides = [
 
   @media (max-width: 768px) {
     .hero-swiper {
-      height: 400px;
+      height: 200px;
     }
 
     .slide-inner {
-      padding: 30px;
+      padding: 10px 40px 20px;
+    }
+
+    .slide-contents {
+      min-height: auto;
     }
 
     .slide-heading {
-      font-size: 32px;
+      font-size: 21px;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      min-height: auto;
     }
 
     .slide-description {
-      font-size: 14px;
-      margin-bottom: 20px;
+      font-size: 12px;
+      line-height: 1.4;
+      margin-bottom: 12px;
+      min-height: auto;
     }
 
     .slide-button {
-      padding: 12px 30px;
-      font-size: 12px;
+      padding: 15px 30px;
+      font-size: 10px;
     }
 
     .swiper-button-prev,
     .swiper-button-next {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       left: 10px;
+      background: transparent;
     }
 
     .swiper-button-next {
@@ -343,8 +353,17 @@ const slides = [
 
     .swiper-button-prev svg,
     .swiper-button-next svg {
-      width: 20px;
-      height: 20px;
+      width: 25px;
+      height: 25px;
+    }
+
+    .swiper-pagination {
+      bottom: 5px;
+    }
+
+    :global(.hero-swiper .swiper-pagination-bullet) {
+      width: 12px !important;
+      height: 12px !important;
     }
 
     .hero-tagline {

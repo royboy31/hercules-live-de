@@ -35,7 +35,7 @@
   Cache-Control: public, max-age=0, must-revalidate
 
 # Collection pages
-/collections/*
+/kollektionen/*
   Cache-Control: public, max-age=0, must-revalidate
 
 # Product pages

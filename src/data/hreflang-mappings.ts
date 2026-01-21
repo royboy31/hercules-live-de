@@ -282,9 +282,9 @@ export function getHreflangUrls(dePath: string, pageType: 'page' | 'collection' 
       const deSlug = match[1];
       const mapping = CATEGORY_MAPPINGS[deSlug];
       if (mapping) {
-        result.de = `${DOMAINS.de}/collections/${mapping.de}/`;
-        result.en = `${DOMAINS.en}/collections/${mapping.en}/`;
-        result.fr = `${DOMAINS.fr}/collections/${mapping.fr}/`;
+        result.de = `${DOMAINS.de}/kollektionen/${mapping.de}/`;
+        result.en = `${DOMAINS.en}/kollektionen/${mapping.en}/`;
+        result.fr = `${DOMAINS.fr}/kollektionen/${mapping.fr}/`;
       } else {
         // Fallback to shop for unmapped categories
         result.en = `${DOMAINS.en}/shop/`;

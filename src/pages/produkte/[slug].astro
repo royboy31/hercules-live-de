@@ -178,7 +178,7 @@ if (product?.categories?.[0]) {
   const catSlug = typeof cat === 'string' ? cat : cat.slug;
   breadcrumbItems.push({
     name: catName,
-    url: `${siteConfig.siteUrl}/collections/${catSlug}/`
+    url: `${siteConfig.siteUrl}/kollektionen/${catSlug}/`
   });
 }
 if (product) {
@@ -248,7 +248,7 @@ if (product) {
             <span class="separator"><svg xmlns="http://www.w3.org/2000/svg" width="6" height="12" viewBox="0 0 6 12" fill="none"><path d="M6 6L0.75 11.1962L0.75 0.803848L6 6Z" fill="#469ADC"></path></svg></span>
             {product.categories?.[0] && (
               <>
-                <a href={`/collections/${product.categories[0].slug}/`}>{product.categories[0].name}</a>
+                <a href={`/kollektionen/${product.categories[0].slug}/`}>{product.categories[0].name}</a>
                 <span class="separator"><svg xmlns="http://www.w3.org/2000/svg" width="6" height="12" viewBox="0 0 6 12" fill="none"><path d="M6 6L0.75 11.1962L0.75 0.803848L6 6Z" fill="#469ADC"></path></svg></span>
               </>
             )}

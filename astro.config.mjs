@@ -75,7 +75,7 @@ export default defineConfig({
           return { ...item, changefreq: 'weekly', priority: 0.9 };
         }
         // Higher priority for category pages
-        if (item.url.includes('/collections/')) {
+        if (item.url.includes('/kollektionen/')) {
           return { ...item, changefreq: 'weekly', priority: 0.8 };
         }
         // Higher priority for blog posts

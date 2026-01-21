@@ -78,7 +78,7 @@ const WORDPRESS_PATHS = [
 // Paths that should always go to Astro
 const ASTRO_PATHS = [
   '/',
-  '/collections',
+  '/kollektionen',
   '/blogs',
   '/produkte',  // Product detail pages (Astro version)
   '/wishlist',  // Wishlist page (localStorage-based, no WordPress)

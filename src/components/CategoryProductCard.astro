@@ -124,14 +124,16 @@ const cardFeatures = product.card_features || [];
 
     <!-- Product Gallery -->
     <div class="kd-product-gallery" data-product-slug={product.slug}>
-      <!-- Main Image -->
+      <!-- Main Image - Progressive Loading: thumbnail first, then high-quality -->
       <div class="kd-main-image">
         <img
-          src={workerImageUrl}
+          src={`${workerImageUrl}?size=thumb`}
+          data-full-src={workerImageUrl}
+          data-upgraded="false"
           alt={product.name}
           loading={isAboveFold ? "eager" : "lazy"}
           fetchpriority={isLCPCandidate ? "high" : "auto"}
-          class="kd-main-img"
+          class="kd-main-img kd-progressive-img"
           width="361"
           height="361"
         />
@@ -267,6 +269,16 @@ const cardFeatures = product.card_features || [];
     border-radius: 10px;
     object-fit: contain;
     aspect-ratio: 1/1;
+  }
+
+  /* Progressive Image Loading - blur-to-sharp transition */
+  .kd-progressive-img {
+    filter: blur(8px);
+    transition: filter 0.3s ease-out;
+  }
+
+  .kd-progressive-img[data-upgraded="true"] {
+    filter: blur(0);
   }
 
   /* Thumbnail Swiper Carousel */
@@ -417,6 +429,63 @@ const cardFeatures = product.card_features || [];
   import 'swiper/css';
 
   /**
+   * Progressive Image Loading
+   * - Loads thumbnail (100x100) first for fast initial paint
+   * - Upgrades to high-quality image (361x361) when entering viewport
+   * - Smooth blur-to-sharp transition
+   */
+
+  // Track upgraded images to avoid duplicates
+  const upgradedImages = new WeakSet<Element>();
+
+  function upgradeImage(img: HTMLImageElement) {
+    if (upgradedImages.has(img)) return;
+
+    const fullSrc = img.dataset.fullSrc;
+    if (!fullSrc || img.dataset.upgraded === 'true') return;
+
+    upgradedImages.add(img);
+
+    // Create a new image to preload the high-quality version
+    const highQualityImg = new Image();
+    highQualityImg.onload = () => {
+      // Only swap if this image hasn't been changed by thumbnail click
+      if (img.src.includes('?size=thumb') || img.src === fullSrc.replace(/\?.*$/, '') + '?size=thumb') {
+        img.src = fullSrc;
+      }
+      img.dataset.upgraded = 'true';
+    };
+    highQualityImg.src = fullSrc;
+  }
+
+  function setupProgressiveImageLoading() {
+    const progressiveImages = document.querySelectorAll('.kd-progressive-img');
+    if (!progressiveImages.length) return;
+
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              upgradeImage(entry.target as HTMLImageElement);
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        {
+          rootMargin: '50px', // Start loading slightly before entering viewport
+          threshold: 0,
+        }
+      );
+
+      progressiveImages.forEach((img) => observer.observe(img));
+    } else {
+      // Fallback: Upgrade all images immediately
+      progressiveImages.forEach((img) => upgradeImage(img as HTMLImageElement));
+    }
+  }
+
+  /**
    * Thumbnail Swiper Carousel with Lazy Initialization
    * - Only initializes when product card enters viewport
    * - Uses FreeMode for smooth touch scrolling
@@ -448,6 +517,7 @@ const cardFeatures = product.card_features || [];
 
   /**
    * Thumbnail click handler - Event delegation for all product cards
+   * Uses progressive loading: shows blurred thumbnail first, then upgrades
    */
   function setupThumbnailClickHandlers() {
     document.addEventListener('click', (e) => {
@@ -460,10 +530,29 @@ const cardFeatures = product.card_features || [];
       const gallery = btn.closest('.kd-product-gallery');
       const mainImg = gallery?.querySelector('.kd-main-img') as HTMLImageElement;
       const mainSrc = (btn as HTMLElement).dataset.mainSrc;
+      const thumbSrc = (btn as HTMLElement).dataset.thumbSrc;
       const swiperEl = btn.closest('.kd-thumb-swiper');
 
       if (mainImg && mainSrc) {
-        mainImg.src = mainSrc;
+        // Progressive loading: show thumbnail first (blurred), then upgrade
+        if (thumbSrc) {
+          mainImg.src = thumbSrc;
+          mainImg.dataset.upgraded = 'false';
+          mainImg.dataset.fullSrc = mainSrc;
+
+          // Preload and upgrade to high-quality
+          const highQualityImg = new Image();
+          highQualityImg.onload = () => {
+            mainImg.src = mainSrc;
+            mainImg.dataset.upgraded = 'true';
+          };
+          highQualityImg.src = mainSrc;
+        } else {
+          // Fallback: load high-quality directly
+          mainImg.src = mainSrc;
+          mainImg.dataset.upgraded = 'true';
+        }
+
         // Update active state
         swiperEl?.querySelectorAll('.kd-thumb-btn').forEach(t => t.classList.remove('active'));
         btn.classList.add('active');
@@ -507,6 +596,8 @@ const cardFeatures = product.card_features || [];
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       setupThumbnailClickHandlers();
+      // Setup progressive image loading immediately for fast upgrade
+      setupProgressiveImageLoading();
       // Defer Swiper initialization to after main content renders
       if ('requestIdleCallback' in window) {
         requestIdleCallback(() => setupLazySwiper(), { timeout: 2000 });
@@ -516,6 +607,8 @@ const cardFeatures = product.card_features || [];
     });
   } else {
     setupThumbnailClickHandlers();
+    // Setup progressive image loading immediately for fast upgrade
+    setupProgressiveImageLoading();
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => setupLazySwiper(), { timeout: 2000 });
     } else {

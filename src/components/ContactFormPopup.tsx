@@ -766,8 +766,8 @@ export default function ContactFormPopup({
           justify-content: center;
           min-width: 152px;
           padding: 10px 30px;
-          background-color: #10C99E;
-          color: #FFFFFF;
+          background-color: #10C99E !important;
+          color: #FFFFFF !important;
           font-family: 'Jost', Sans-serif;
           font-size: 15px;
           font-weight: 500;
@@ -783,7 +783,8 @@ export default function ContactFormPopup({
         }
 
         .contact-trigger-button:hover {
-          background: #0eb58d;
+          background: #0eb58d !important;
+          color: #FFFFFF !important;
         }
 
         .contact-trigger-icon {

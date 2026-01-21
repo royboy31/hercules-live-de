@@ -336,6 +336,7 @@ export default function ExpressDeliveryPopup({
                   value={formData.desiredDate}
                   onChange={handleInputChange}
                   required
+                  min={new Date().toISOString().split('T')[0]}
                   style={{ marginTop: '10px', padding: '5px', width: '100%' }}
                 />
               </div>

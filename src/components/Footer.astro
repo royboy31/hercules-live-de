@@ -506,8 +506,8 @@ import ContactFormPopup from './ContactFormPopup.tsx';
     transition: all 0.3s ease;
   }
 
-  .language-current:hover {
-    color: #469ADC;
+  .language-switcher:hover .language-current {
+    border-radius: 20px 20px 0 0;
   }
 
   .language-current img {
@@ -524,18 +524,18 @@ import ContactFormPopup from './ContactFormPopup.tsx';
 
   .language-dropdown {
     position: absolute;
-    bottom: 100%;
+    top: 100%;
+    left: 0;
     right: 0;
     background: white;
     list-style: none;
     margin: 0;
-    padding: 10px 0;
-    min-width: 200px;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    padding: 0;
+    min-width: 100%;
+    box-shadow: none;
+    border-radius: 0 0 20px 20px;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(10px);
     transition: all 0.3s ease;
     z-index: 100;
   }
@@ -543,23 +543,26 @@ import ContactFormPopup from './ContactFormPopup.tsx';
   .language-switcher:hover .language-dropdown {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
   }
 
   .language-dropdown li a {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 15px;
-    font-family: 'Roboto', sans-serif;
-    font-size: 14px;
-    color: #253461;
+    padding: 7px 34px;
+    font-family: 'Jost', sans-serif;
+    font-size: 16px;
+    color: #0056B3;
     text-decoration: none;
     transition: background 0.3s ease;
   }
 
   .language-dropdown li a:hover {
     background: #F5F5F5;
+  }
+
+  .language-dropdown li:last-child a {
+    border-radius: 0 0 20px 20px;
   }
 
   .language-dropdown li a img {

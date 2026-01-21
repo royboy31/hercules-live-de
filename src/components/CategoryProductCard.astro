@@ -63,12 +63,15 @@ const galleryImages = (product.images || []).slice(0, imageCount).map((img, inde
   return {
     thumb: `${baseUrl}?size=thumb`,  // 100x100 cached thumbnail (~2-5KB)
     main: baseUrl,                    // 361x361 cached main image (~10-15KB)
+    original: img.src,                // Original WordPress URL (full resolution ~1000x1000)
     alt: img.alt || product.name
   };
 });
 
-// Worker main image URL - 361x361 cached image
+// Worker main image URL - 361x361 cached image (fast initial load)
 const workerImageUrl = `${WORKER_URL}/image/${product.slug}`;
+// Original WordPress URL - full resolution for high-quality upgrade
+const originalImageUrl = product.images?.[0]?.src || workerImageUrl;
 
 // Format price - just show the base price like WooCommerce does
 let priceDisplay = '';
@@ -124,11 +127,11 @@ const cardFeatures = product.card_features || [];
 
     <!-- Product Gallery -->
     <div class="kd-product-gallery" data-product-slug={product.slug}>
-      <!-- Main Image - Progressive Loading: thumbnail first, then high-quality -->
+      <!-- Main Image - Progressive Loading: Worker cached (361x361) first, then original WordPress (1000x1000) -->
       <div class="kd-main-image">
         <img
-          src={`${workerImageUrl}?size=thumb`}
-          data-full-src={workerImageUrl}
+          src={workerImageUrl}
+          data-full-src={originalImageUrl}
           data-upgraded="false"
           alt={product.name}
           loading={isAboveFold ? "eager" : "lazy"}
@@ -152,6 +155,7 @@ const cardFeatures = product.card_features || [];
                     class={`kd-thumb-btn${idx === 0 ? ' active' : ''}`}
                     data-thumb-src={img.thumb}
                     data-main-src={img.main}
+                    data-original-src={img.original}
                     aria-label={`Thumbnail ${idx + 1}`}
                   >
                     <img
@@ -271,14 +275,9 @@ const cardFeatures = product.card_features || [];
     aspect-ratio: 1/1;
   }
 
-  /* Progressive Image Loading - blur-to-sharp transition */
+  /* Progressive Image Loading - smooth transition when upgrading to high-res */
   .kd-progressive-img {
-    filter: blur(8px);
-    transition: filter 0.3s ease-out;
-  }
-
-  .kd-progressive-img[data-upgraded="true"] {
-    filter: blur(0);
+    transition: opacity 0.2s ease-out;
   }
 
   /* Thumbnail Swiper Carousel */
@@ -430,9 +429,9 @@ const cardFeatures = product.card_features || [];
 
   /**
    * Progressive Image Loading
-   * - Loads thumbnail (100x100) first for fast initial paint
-   * - Upgrades to high-quality image (361x361) when entering viewport
-   * - Smooth blur-to-sharp transition
+   * - Loads Worker cached image (361x361) first for fast initial paint
+   * - Upgrades to original WordPress image (1000x1000) when entering viewport
+   * - Matches single product page behavior
    */
 
   // Track upgraded images to avoid duplicates
@@ -444,15 +443,18 @@ const cardFeatures = product.card_features || [];
     const fullSrc = img.dataset.fullSrc;
     if (!fullSrc || img.dataset.upgraded === 'true') return;
 
+    // Don't upgrade if fullSrc is the same as current (Worker URL)
+    if (img.src === fullSrc) {
+      img.dataset.upgraded = 'true';
+      return;
+    }
+
     upgradedImages.add(img);
 
-    // Create a new image to preload the high-quality version
+    // Create a new image to preload the high-quality original WordPress image
     const highQualityImg = new Image();
     highQualityImg.onload = () => {
-      // Only swap if this image hasn't been changed by thumbnail click
-      if (img.src.includes('?size=thumb') || img.src === fullSrc.replace(/\?.*$/, '') + '?size=thumb') {
-        img.src = fullSrc;
-      }
+      img.src = fullSrc;
       img.dataset.upgraded = 'true';
     };
     highQualityImg.src = fullSrc;
@@ -517,7 +519,7 @@ const cardFeatures = product.card_features || [];
 
   /**
    * Thumbnail click handler - Event delegation for all product cards
-   * Uses progressive loading: shows blurred thumbnail first, then upgrades
+   * Uses progressive loading: Worker cached (361x361) first, then original WordPress (1000x1000)
    */
   function setupThumbnailClickHandlers() {
     document.addEventListener('click', (e) => {
@@ -529,27 +531,25 @@ const cardFeatures = product.card_features || [];
 
       const gallery = btn.closest('.kd-product-gallery');
       const mainImg = gallery?.querySelector('.kd-main-img') as HTMLImageElement;
-      const mainSrc = (btn as HTMLElement).dataset.mainSrc;
-      const thumbSrc = (btn as HTMLElement).dataset.thumbSrc;
+      const mainSrc = (btn as HTMLElement).dataset.mainSrc;        // Worker cached 361x361
+      const originalSrc = (btn as HTMLElement).dataset.originalSrc; // Original WordPress 1000x1000
       const swiperEl = btn.closest('.kd-thumb-swiper');
 
       if (mainImg && mainSrc) {
-        // Progressive loading: show thumbnail first (blurred), then upgrade
-        if (thumbSrc) {
-          mainImg.src = thumbSrc;
-          mainImg.dataset.upgraded = 'false';
-          mainImg.dataset.fullSrc = mainSrc;
+        // Show Worker cached image immediately (fast, 361x361)
+        mainImg.src = mainSrc;
+        mainImg.dataset.upgraded = 'false';
+        mainImg.dataset.fullSrc = originalSrc || mainSrc;
 
-          // Preload and upgrade to high-quality
+        // Preload and upgrade to original WordPress image (1000x1000)
+        if (originalSrc && originalSrc !== mainSrc) {
           const highQualityImg = new Image();
           highQualityImg.onload = () => {
-            mainImg.src = mainSrc;
+            mainImg.src = originalSrc;
             mainImg.dataset.upgraded = 'true';
           };
-          highQualityImg.src = mainSrc;
+          highQualityImg.src = originalSrc;
         } else {
-          // Fallback: load high-quality directly
-          mainImg.src = mainSrc;
           mainImg.dataset.upgraded = 'true';
         }
 

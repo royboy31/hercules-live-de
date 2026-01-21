@@ -763,12 +763,15 @@ export default function ContactFormPopup({
         .contact-trigger-button {
           display: inline-flex;
           align-items: center;
+          justify-content: center;
+          min-width: 152px;
           padding: 10px 30px;
           background-color: #10C99E;
           color: #FFFFFF;
           font-family: 'Jost', Sans-serif;
           font-size: 15px;
           font-weight: 500;
+          line-height: 1;
           text-transform: uppercase;
           text-decoration: none;
           border-style: solid;

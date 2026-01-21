@@ -370,16 +370,17 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     if (!matchedVariation || quantitySelected <= 0) return null;
 
     // Use combined-tier interpolation (WordPress style)
-    const pricePerPiece = getInterpolatedPriceWithAddons(
+    // Round to 2 decimal places to match displayed price
+    const pricePerPiece = Math.round(getInterpolatedPriceWithAddons(
       matchedVariation.conditional_prices,
       quantitySelected,
       visibleAddons,
       selectedAddons
-    );
+    ) * 100) / 100;
 
-    const totalExclVat = pricePerPiece * quantitySelected;
+    const totalExclVat = Math.round(pricePerPiece * quantitySelected * 100) / 100;
     const taxMultiplier = config ? 1 + (config.tax_percent / 100) : 1.19;
-    const totalInclVat = totalExclVat * taxMultiplier;
+    const totalInclVat = Math.round(totalExclVat * taxMultiplier * 100) / 100;
 
     return {
       pricePerPiece,

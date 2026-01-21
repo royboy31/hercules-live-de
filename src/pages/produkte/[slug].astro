@@ -262,8 +262,10 @@ if (product) {
             <div class="product-grid">
               <!-- Left Column: Gallery -->
               <div class="product-gallery">
-                <!-- Product Title inside gallery like WordPress -->
-                <h1 class="product-title">{product.name}</h1>
+                <!-- Product Title wrapper - edge-to-edge border like WordPress -->
+                <div class="product-title-wrapper">
+                  <h1 class="product-title">{product.name}</h1>
+                </div>
 
                 <!-- Main Image Container (badges positioned inside) -->
                 <div class="main-image-container">
@@ -857,23 +859,32 @@ if (product) {
     min-height: 500px; /* Reserve space to prevent CLS during hydration */
   }
 
+  /* Product Title Wrapper - Edge-to-edge border like WordPress */
+  .product-title-wrapper {
+    margin: -20px -20px 20px -20px; /* Extend to gallery edges */
+    padding: 20px 24px 15px 25px; /* WordPress exact padding */
+    border-bottom: 1px solid #DCDCDC;
+  }
+
   /* Product Title - Inside gallery box */
   .product-title {
     font-family: 'Jost', sans-serif;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 500;
+    line-height: 15px;
     color: #253461;
     margin: 0;
-    padding-bottom: 15px;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #e6e6e6;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
 
   @media (max-width: 768px) {
+    .product-title-wrapper {
+      margin: -20px -20px 15px -20px; /* Match gallery padding on mobile too */
+      padding: 15px 20px 12px 20px;
+    }
     .product-title {
-      font-size: 16px;
+      font-size: 14px;
+      line-height: 14px;
     }
   }
 

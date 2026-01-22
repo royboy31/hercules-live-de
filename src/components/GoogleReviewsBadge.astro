@@ -3,7 +3,7 @@
  * Dynamic Google Reviews Badge
  * Fetches rating data at build time and renders an SVG badge
  * Matches the design of the original static badge (306x36px)
- * Design: Google "G" logo + 5 gold stars (no text, transparent background)
+ * Design: Google "G" logo + Rating number + 5 gold stars (transparent background)
  */
 import { getGooglePlaceData } from '../lib/google-places';
 
@@ -22,6 +22,9 @@ const { rating, reviewCount, url } = placeData;
 const fullStars = Math.floor(rating);
 const partialStar = rating % 1;
 const emptyStars = 5 - fullStars - (partialStar > 0 ? 1 : 0);
+
+// Format rating for display (e.g., 4.9 or 5.0)
+const ratingDisplay = rating % 1 === 0 ? rating.toFixed(1) : rating.toString();
 
 // Calculate aspect ratio for responsive sizing (306x36 original)
 const aspectRatio = 306 / 36;
@@ -48,12 +51,17 @@ const height = Math.round(width / aspectRatio);
       </svg>
     </g>
 
-    <!-- 5 Stars (each ~50px wide with spacing, starting after G logo) -->
-    <g transform="translate(56, 0)">
+    <!-- Rating Number (e.g., "5.0") - white text for dark background -->
+    <text x="46" y="26" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="400" fill="#FFFFFF">
+      {ratingDisplay}
+    </text>
+
+    <!-- 5 Stars (starting after rating number) -->
+    <g transform="translate(86, 0)">
       {/* Full Stars */}
       {[...Array(fullStars)].map((_, i) => (
-        <g transform={`translate(${i * 50}, 0)`}>
-          <svg width="46" height="36" viewBox="0 0 24 24">
+        <g transform={`translate(${i * 44}, 0)`}>
+          <svg width="40" height="36" viewBox="0 0 24 24">
             <path fill="#FBBC04" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
           </svg>
         </g>
@@ -61,8 +69,8 @@ const height = Math.round(width / aspectRatio);
 
       {/* Partial Star (if any) */}
       {partialStar > 0 && (
-        <g transform={`translate(${fullStars * 50}, 0)`}>
-          <svg width="46" height="36" viewBox="0 0 24 24">
+        <g transform={`translate(${fullStars * 44}, 0)`}>
+          <svg width="40" height="36" viewBox="0 0 24 24">
             <defs>
               <linearGradient id={`partialStar-${Math.round(partialStar * 10)}`}>
                 <stop offset={`${partialStar * 100}%`} stop-color="#FBBC04"/>
@@ -76,8 +84,8 @@ const height = Math.round(width / aspectRatio);
 
       {/* Empty Stars */}
       {[...Array(emptyStars)].map((_, i) => (
-        <g transform={`translate(${(fullStars + (partialStar > 0 ? 1 : 0) + i) * 50}, 0)`}>
-          <svg width="46" height="36" viewBox="0 0 24 24">
+        <g transform={`translate(${(fullStars + (partialStar > 0 ? 1 : 0) + i) * 44}, 0)`}>
+          <svg width="40" height="36" viewBox="0 0 24 24">
             <path fill="#E8EAED" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
           </svg>
         </g>

@@ -78,46 +78,49 @@ const themen = [
 
         <!-- Dropdown Navigation -->
         <nav class="sticky-dropdown-nav" id="sticky-dropdown-nav" aria-hidden="true">
-          <!-- Left Column: Logo + Main Menu -->
-          <div class="dropdown-left-column">
-            <div class="dropdown-logo-header">
-              <img
-                src="/images/hercules-logo-original1.webp"
-                alt="Hercules Merchandise"
-                class="dropdown-logo"
-                width="176"
-                height="78"
-              />
-            </div>
-            <ul class="sticky-nav-list">
-              <li class="sticky-nav-item has-submenu" data-submenu="sportarten">
-                <button class="sticky-nav-link" aria-expanded="false">
-                  Sports
-                  <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
-                </button>
-              </li>
-              <li class="sticky-nav-item has-submenu" data-submenu="produkte">
-                <button class="sticky-nav-link" aria-expanded="false">
-                  Products
-                  <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
-                </button>
-              </li>
-              <li class="sticky-nav-item has-submenu" data-submenu="themen">
-                <button class="sticky-nav-link" aria-expanded="false">
-                  Themes
-                  <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
-                </button>
-              </li>
-            </ul>
+          <!-- Logo Header - full width with divider -->
+          <div class="dropdown-logo-header">
+            <img
+              src="/images/hercules-logo-original1.webp"
+              alt="Hercules Merchandise"
+              class="dropdown-logo"
+              width="176"
+              height="78"
+            />
           </div>
 
-          <!-- Right Column: Submenus -->
-          <div class="dropdown-right-column">
-            <!-- Header spacer to match logo area height -->
-            <div class="dropdown-right-header">
-              <span class="submenu-title">SPORTS</span>
+          <!-- Content area with two columns -->
+          <div class="dropdown-content">
+            <!-- Left Column: Main Menu -->
+            <div class="dropdown-left-column">
+              <ul class="sticky-nav-list">
+                <li class="sticky-nav-item has-submenu" data-submenu="sportarten">
+                  <button class="sticky-nav-link" aria-expanded="false">
+                    Sports
+                    <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
+                  </button>
+                </li>
+                <li class="sticky-nav-item has-submenu" data-submenu="produkte">
+                  <button class="sticky-nav-link" aria-expanded="false">
+                    Products
+                    <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
+                  </button>
+                </li>
+                <li class="sticky-nav-item has-submenu" data-submenu="themen">
+                  <button class="sticky-nav-link" aria-expanded="false">
+                    Themes
+                    <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
+                  </button>
+                </li>
+              </ul>
             </div>
-            <div class="dropdown-submenu-container">
+
+            <!-- Right Column: Submenu Title + Items -->
+            <div class="dropdown-right-column">
+              <div class="submenu-title-wrapper">
+                <span class="submenu-title">SPORTS</span>
+              </div>
+              <div class="dropdown-submenu-container">
               <ul class="sticky-submenu" id="submenu-sportarten">
               {sportarten.map((item) => (
                 <li>
@@ -148,6 +151,7 @@ const themen = [
                 </li>
               ))}
             </ul>
+              </div>
             </div>
           </div>
         </nav>
@@ -338,7 +342,7 @@ const themen = [
     display: block;
   }
 
-  /* Dropdown Navigation - Two column layout */
+  /* Dropdown Navigation - Column layout with logo header */
   .sticky-dropdown-nav {
     position: absolute;
     top: 100%;
@@ -351,7 +355,7 @@ const themen = [
     transition: all 0.3s ease;
     z-index: 100;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     min-height: 450px;
   }
 
@@ -360,16 +364,7 @@ const themen = [
     visibility: visible;
   }
 
-  /* Left Column: Logo + Main Menu */
-  .dropdown-left-column {
-    width: 240px;
-    min-width: 240px;
-    border-right: 1px solid #E5E7EB;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Logo header in dropdown */
+  /* Logo header - full width at top */
   .dropdown-logo-header {
     padding: 25px;
     border-bottom: 1px solid #E5E7EB;
@@ -380,7 +375,23 @@ const themen = [
     width: auto;
   }
 
-  /* Right Column: Submenus */
+  /* Content area - two columns below logo */
+  .dropdown-content {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+  }
+
+  /* Left Column: Main Menu */
+  .dropdown-left-column {
+    width: 240px;
+    min-width: 240px;
+    border-right: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Right Column: Submenu Title + Items */
   .dropdown-right-column {
     flex: 1;
     min-width: 500px;
@@ -388,14 +399,9 @@ const themen = [
     flex-direction: column;
   }
 
-  /* Right column header - matches logo area height */
-  .dropdown-right-header {
-    padding: 25px;
-    border-bottom: 1px solid #E5E7EB;
-    display: flex;
-    align-items: center;
-    min-height: 105px;
-    box-sizing: border-box;
+  /* Submenu title wrapper - no border */
+  .submenu-title-wrapper {
+    padding: 20px 25px;
   }
 
   .submenu-title {
@@ -409,7 +415,7 @@ const themen = [
   /* Submenu container */
   .dropdown-submenu-container {
     flex: 1;
-    padding: 25px;
+    padding: 0 25px 25px 25px;
   }
 
   /* Main menu list - vertical on left */
@@ -693,7 +699,7 @@ const themen = [
 
   // Get all submenus in the right column - scoped to sticky dropdown
   const submenus = dropdownNav?.querySelectorAll('.sticky-submenu') || [];
-  const submenuTitle = dropdownNav?.querySelector('.submenu-title');
+  const submenuTitle = dropdownNav?.querySelector('.submenu-title-wrapper .submenu-title');
 
   // Submenu titles mapping
   const submenuTitles: Record<string, string> = {

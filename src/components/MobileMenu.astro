@@ -1,13 +1,12 @@
 ---
-// Mobile slide-out menu with sliding submenus
+// Mobile slide-out menu with two-panel side-by-side layout
+// Matches the design: Left panel (categories), Right panel (submenu with icons)
 
-// Menu items (order from WordPress - column-first layout for desktop, list for mobile)
-// Column 1: Fußball, Rugby, Basketball, Laufen
-// Column 2: Field hockey, Volleyball, Handball, Radfahren
-// Column 3: Fitness, Golf, eSports
+// Menu items with icons
 const mobileMenuItems = {
   sportarten: {
     title: 'Sportarten',
+    titleEn: 'SPORTS',
     items: [
       { label: 'Fußball', href: '/kollektionen/fussball/', icon: 'Football.svg' },
       { label: 'Rugby', href: '/kollektionen/rugby/', icon: 'Rugby-1.svg' },
@@ -24,12 +23,13 @@ const mobileMenuItems = {
   },
   produkte: {
     title: 'Produkte',
+    titleEn: 'PRODUCTS',
     items: [
       { label: 'Sportswear', href: '/kollektionen/personalisierte-sportbekleidung/', icon: 'teamwear-1.svg' },
-      { label: 'Scarves', href: '/kollektionen/personalisierte-fanschals/', icon: 'scarves-1.svg' },
-      { label: 'Beanies', href: '/kollektionen/personalisierte-mutzen/', icon: 'beanies-3.svg' },
+      { label: 'Schals', href: '/kollektionen/personalisierte-fanschals/', icon: 'scarves-1.svg' },
+      { label: 'Mützen', href: '/kollektionen/personalisierte-mutzen/', icon: 'beanies-3.svg' },
       { label: 'Kopfbedeckung', href: '/kollektionen/kopfbedeckung/', icon: 'cap-1.svg' },
-      { label: 'Pennants', href: '/kollektionen/personalisierte-wimpel/', icon: 'pennants-3.svg' },
+      { label: 'Wimpel', href: '/kollektionen/personalisierte-wimpel/', icon: 'pennants-3.svg' },
       { label: 'Handtücher', href: '/kollektionen/handtucher/', icon: 'towelst-1.svg' },
       { label: 'Flaggen', href: '/kollektionen/flaggen/', icon: 'flags-1.svg' },
       { label: 'Schuhwerk', href: '/kollektionen/schuhwerk/', icon: 'footwear-1.svg' },
@@ -42,6 +42,7 @@ const mobileMenuItems = {
   },
   themen: {
     title: 'Themen',
+    titleEn: 'THEMES',
     items: [
       { label: 'Sommer', href: '/kollektionen/sommer/', icon: 'summer-1.svg' },
       { label: 'Winter', href: '/kollektionen/winter/', icon: 'winter-1.svg' },
@@ -65,98 +66,96 @@ const mobileMenuItems = {
   <div class="mobile-menu-overlay" id="mobile-menu-overlay"></div>
 
   <div class="mobile-menu-panel">
-    <!-- Main Menu Panel -->
-    <div class="menu-panel main-panel" id="main-panel">
-      <!-- Header -->
-      <div class="mobile-menu-header">
+    <!-- Top Bar with Search -->
+    <div class="mobile-top-bar">
+      <button id="mobile-menu-close" class="top-bar-btn hamburger-btn" aria-label="Menu schließen">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <div class="mobile-search-wrapper">
+        <input type="text" placeholder="Search products..." class="mobile-search-input" id="mobile-search-input" />
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+      </div>
+
+      <button class="top-bar-btn contact-btn" id="mobile-contact-btn" aria-label="Kontakt">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Logo Section -->
+    <div class="mobile-logo-section">
+      <a href="/">
         <img
           src="/images/hercules-logo-original1.webp"
           alt="Hercules Merchandise"
-          class="menu-logo"
+          class="mobile-menu-logo"
           width="176"
           height="78"
         />
-        <button id="mobile-menu-close" class="close-btn" aria-label="Menu schließen">
-          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
+      </a>
+    </div>
 
-      <!-- Main Menu Items -->
-      <div class="menu-content">
-        {Object.entries(mobileMenuItems).map(([key, menu]) => (
-          <button class="menu-item has-submenu" data-submenu={key}>
-            <span class="menu-item-label">{menu.title}</span>
-            <svg class="menu-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+    <!-- Two-Panel Layout -->
+    <div class="panels-container">
+      <!-- Left Panel: Main Categories -->
+      <div class="left-panel">
+        {Object.entries(mobileMenuItems).map(([key, menu], index) => (
+          <button
+            class={`category-btn ${index === 0 ? 'active' : ''}`}
+            data-category={key}
+          >
+            <span class="category-label">{menu.title.toUpperCase()}</span>
+            <svg class="category-arrow" width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1.5 1L6.5 6L1.5 11"/>
             </svg>
           </button>
         ))}
+      </div>
 
-        <!-- Direct Links -->
-        <a href="/kollektionen/personalisierte-sportbekleidung/" class="menu-item">
-          <span class="menu-item-label">Sportbekleidung</span>
-        </a>
-        <a href="/kollektionen/personalisierte-fanschals/" class="menu-item">
-          <span class="menu-item-label">Schals</span>
-        </a>
-        <a href="/kollektionen/kopfbedeckung/" class="menu-item">
-          <span class="menu-item-label">Kopfbedeckung</span>
-        </a>
-        <a href="/kollektionen/personalisierte-mutzen/" class="menu-item">
-          <span class="menu-item-label">Mützen</span>
-        </a>
-
-        <!-- Wishlist Link -->
-        <a href="/wishlist/" class="menu-item wishlist-link">
-          <span class="menu-item-label">
-            <svg class="wishlist-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
-            Wunschliste
-          </span>
-        </a>
-
-        <!-- CTA Button -->
-        <div class="menu-cta">
-          <a href="/kontaktieren-sie-uns" class="cta-button">Kontakt</a>
-        </div>
+      <!-- Right Panel: Submenu Items -->
+      <div class="right-panel">
+        {Object.entries(mobileMenuItems).map(([key, menu], index) => (
+          <div class={`submenu-panel ${index === 0 ? 'active' : ''}`} data-submenu={key}>
+            <div class="submenu-title">{menu.title.toUpperCase()}</div>
+            <div class="submenu-grid">
+              {menu.items.map((item) => (
+                <a href={item.href} class="submenu-item">
+                  <img
+                    src={`/images/menu/${item.icon}`}
+                    alt=""
+                    class="submenu-icon"
+                    width="24"
+                    height="24"
+                  />
+                  <span class="submenu-label">{item.label}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
 
-    <!-- Submenu Panels -->
-    {Object.entries(mobileMenuItems).map(([key, menu]) => (
-      <div class="menu-panel sub-panel" id={`submenu-${key}`} data-panel={key}>
-        <!-- Submenu Header -->
-        <div class="submenu-header">
-          <button class="back-btn" data-back={key}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-            <span>Zurück</span>
-          </button>
-          <button class="close-btn submenu-close" aria-label="Menu schließen">
-            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Submenu Title -->
-        <div class="submenu-title">{menu.title}</div>
-
-        <!-- Submenu Items -->
-        <div class="submenu-content">
-          {menu.items.map((item) => (
-            <a href={item.href} class="submenu-item">
-              <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kategorie Icon`} class="submenu-icon" />
-              <span>{item.label}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-    ))}
+    <!-- Bottom Links -->
+    <div class="mobile-bottom-links">
+      <a href="/wishlist/" class="bottom-link">
+        <svg class="bottom-link-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+        <span>Wunschliste</span>
+      </a>
+      <a href="/kontaktieren-sie-uns" class="bottom-link cta-link">
+        <span>Kontakt</span>
+      </a>
+    </div>
   </div>
 </div>
 
@@ -194,12 +193,14 @@ const mobileMenuItems = {
     position: absolute;
     top: 0;
     left: 0;
-    width: 85%;
-    max-width: 400px;
+    width: 100%;
+    max-width: 480px;
     height: 100%;
     background: white;
     transform: translateX(-100%);
     transition: transform 0.3s;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
   }
 
@@ -207,200 +208,175 @@ const mobileMenuItems = {
     transform: translateX(0);
   }
 
-  /* Menu Panels */
-  .menu-panel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: white;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s ease;
-  }
-
-  .main-panel {
-    transform: translateX(0);
-  }
-
-  .main-panel.slide-out {
-    transform: translateX(-100%);
-  }
-
-  .sub-panel {
-    transform: translateX(100%);
-  }
-
-  .sub-panel.active {
-    transform: translateX(0);
-  }
-
-  /* Header */
-  .mobile-menu-header {
+  /* Top Bar */
+  .mobile-top-bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 15px 20px;
-    border-bottom: 1px solid #e5e7eb;
+    gap: 12px;
+    padding: 12px 15px;
+    background: #F4F4F4;
   }
 
-  .menu-logo {
-    height: 40px;
-    width: auto;
-  }
-
-  .close-btn {
+  .top-bar-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: none;
+    width: 44px;
+    height: 44px;
     border: none;
-    color: #253461;
+    border-radius: 10px;
     cursor: pointer;
-  }
-
-  .close-btn:hover {
-    color: #469ADC;
-  }
-
-  /* Menu Content */
-  .menu-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px 0;
-  }
-
-  .menu-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 15px 20px;
-    background: none;
-    border: none;
-    border-bottom: 1px solid #f0f0f0;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .menu-item:hover {
-    background-color: #f9fafb;
-  }
-
-  .menu-item-label {
-    font-family: 'Jost', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-    color: #253461;
-    text-transform: uppercase;
-  }
-
-  .menu-arrow {
-    color: #253461;
     flex-shrink: 0;
   }
 
-  /* Wishlist Link */
-  .wishlist-link .menu-item-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  .hamburger-btn {
+    background: #253461;
+    color: white;
   }
 
-  .wishlist-icon {
-    color: #10C99E;
-    flex-shrink: 0;
-  }
-
-  .wishlist-link:hover .wishlist-icon {
-    fill: #10C99E;
-  }
-
-  /* CTA */
-  .menu-cta {
-    padding: 20px;
-  }
-
-  .cta-button {
-    display: block;
-    width: 100%;
-    padding: 14px 20px;
+  .contact-btn {
     background: #10C99E;
     color: white;
+  }
+
+  .mobile-search-wrapper {
+    flex: 1;
+    position: relative;
+  }
+
+  .mobile-search-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 40px 0 15px;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
     font-family: 'Jost', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-    text-align: center;
-    text-decoration: none;
-    text-transform: uppercase;
-    border-radius: 50px;
-    transition: background-color 0.2s;
+    font-size: 15px;
+    background: white;
   }
 
-  .cta-button:hover {
-    background: #0eb58d;
+  .mobile-search-input::placeholder {
+    color: #9CA3AF;
   }
 
-  /* Submenu Header */
-  .submenu-header {
+  .mobile-search-wrapper .search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #253461;
+    pointer-events: none;
+  }
+
+  /* Logo Section */
+  .mobile-logo-section {
+    padding: 15px 20px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+
+  .mobile-menu-logo {
+    height: 50px;
+    width: auto;
+  }
+
+  /* Two-Panel Layout */
+  .panels-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* Left Panel */
+  .left-panel {
+    width: 140px;
+    flex-shrink: 0;
+    background: #FAFAFA;
+    border-right: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+  }
+
+  .category-btn {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 15px 20px;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    width: 100%;
+    padding: 18px 15px;
     background: none;
     border: none;
-    color: #253461;
+    border-left: 3px solid transparent;
     font-family: 'Jost', sans-serif;
     font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 5px 0;
-  }
-
-  .back-btn:hover {
-    color: #469ADC;
-  }
-
-  /* Submenu Title */
-  .submenu-title {
-    padding: 20px;
-    font-family: 'Jost', sans-serif;
-    font-size: 20px;
     font-weight: 600;
     color: #253461;
-    text-transform: uppercase;
-    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
   }
 
-  /* Submenu Content */
-  .submenu-content {
+  .category-btn:hover {
+    background: #F0F0F0;
+  }
+
+  .category-btn.active {
+    background: white;
+    border-left-color: #253461;
+  }
+
+  .category-label {
+    flex: 1;
+  }
+
+  .category-arrow {
+    color: #253461;
+    flex-shrink: 0;
+  }
+
+  /* Right Panel */
+  .right-panel {
     flex: 1;
     overflow-y: auto;
-    padding: 10px 0;
+    background: white;
+  }
+
+  .submenu-panel {
+    display: none;
+    padding: 20px;
+  }
+
+  .submenu-panel.active {
+    display: block;
+  }
+
+  .submenu-title {
+    font-family: 'Jost', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #253461;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+
+  .submenu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 15px;
   }
 
   .submenu-item {
     display: flex;
     align-items: center;
-    gap: 15px;
-    padding: 12px 20px;
+    gap: 10px;
+    padding: 12px 8px;
     text-decoration: none;
+    border-radius: 8px;
     transition: background-color 0.2s;
   }
 
   .submenu-item:hover {
-    background-color: #f9fafb;
+    background: #F5F5F5;
   }
 
   .submenu-icon {
@@ -410,15 +386,81 @@ const mobileMenuItems = {
     flex-shrink: 0;
   }
 
-  .submenu-item span {
+  .submenu-label {
     font-family: 'Jost', sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 400;
     color: #253461;
+    line-height: 1.3;
   }
 
-  .submenu-item:hover span {
+  .submenu-item:hover .submenu-label {
     color: #469ADC;
+  }
+
+  /* Bottom Links */
+  .mobile-bottom-links {
+    display: flex;
+    gap: 15px;
+    padding: 15px 20px;
+    border-top: 1px solid #E5E7EB;
+    background: white;
+  }
+
+  .bottom-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #253461;
+    text-decoration: none;
+    border: 1px solid #E5E7EB;
+    border-radius: 50px;
+    transition: all 0.2s;
+  }
+
+  .bottom-link:hover {
+    border-color: #253461;
+  }
+
+  .bottom-link-icon {
+    color: #10C99E;
+  }
+
+  .cta-link {
+    background: #10C99E;
+    color: white;
+    border-color: #10C99E;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .cta-link:hover {
+    background: #0eb58d;
+    border-color: #0eb58d;
+  }
+
+  /* Responsive adjustments for very small screens */
+  @media (max-width: 360px) {
+    .left-panel {
+      width: 120px;
+    }
+
+    .category-btn {
+      padding: 15px 10px;
+      font-size: 13px;
+    }
+
+    .submenu-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .submenu-item {
+      padding: 10px 5px;
+    }
   }
 </style>
 
@@ -427,7 +469,11 @@ const mobileMenuItems = {
   const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
   const mobileMenuClose = document.getElementById('mobile-menu-close');
   const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
-  const mainPanel = document.getElementById('main-panel');
+  const mobileContactBtn = document.getElementById('mobile-contact-btn');
+
+  // Category switching
+  const categoryBtns = document.querySelectorAll('.category-btn');
+  const submenuPanels = document.querySelectorAll('.submenu-panel');
 
   // Open menu
   mobileMenuToggle?.addEventListener('click', () => {
@@ -437,50 +483,60 @@ const mobileMenuItems = {
   // Close menu function
   function closeMenu() {
     document.body.classList.remove('mobile-menu-open');
-    // Reset panels after animation
-    setTimeout(() => {
-      mainPanel?.classList.remove('slide-out');
-      document.querySelectorAll('.sub-panel').forEach(panel => {
-        panel.classList.remove('active');
-      });
-    }, 300);
   }
 
   // Close menu buttons
   mobileMenuClose?.addEventListener('click', closeMenu);
   mobileMenuOverlay?.addEventListener('click', closeMenu);
 
-  // All close buttons in submenus
-  document.querySelectorAll('.submenu-close').forEach(btn => {
-    btn.addEventListener('click', closeMenu);
-  });
-
-  // Open submenu
-  document.querySelectorAll('.has-submenu').forEach(btn => {
+  // Category switching (show corresponding submenu)
+  categoryBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      const submenuId = btn.getAttribute('data-submenu');
-      const submenu = document.getElementById(`submenu-${submenuId}`);
+      const category = btn.getAttribute('data-category');
 
-      mainPanel?.classList.add('slide-out');
-      submenu?.classList.add('active');
+      // Update active category button
+      categoryBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Show corresponding submenu panel
+      submenuPanels.forEach(panel => {
+        if (panel.getAttribute('data-submenu') === category) {
+          panel.classList.add('active');
+        } else {
+          panel.classList.remove('active');
+        }
+      });
     });
   });
 
-  // Back button
-  document.querySelectorAll('.back-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const panelId = btn.getAttribute('data-back');
-      const submenu = document.getElementById(`submenu-${panelId}`);
-
-      mainPanel?.classList.remove('slide-out');
-      submenu?.classList.remove('active');
-    });
+  // Contact button - open contact form popup if available
+  mobileContactBtn?.addEventListener('click', () => {
+    // Try to trigger the contact form popup
+    const contactFormTrigger = document.querySelector('[data-contact-popup-trigger]');
+    if (contactFormTrigger) {
+      contactFormTrigger.click();
+    } else {
+      // Fallback: navigate to contact page
+      window.location.href = '/kontaktieren-sie-uns';
+    }
+    closeMenu();
   });
 
   // Close menu on escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeMenu();
+    }
+  });
+
+  // Mobile search functionality
+  const mobileSearchInput = document.getElementById('mobile-search-input');
+  mobileSearchInput?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const query = mobileSearchInput.value.trim();
+      if (query) {
+        window.location.href = `/?s=${encodeURIComponent(query)}`;
+      }
     }
   });
 </script>

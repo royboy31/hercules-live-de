@@ -113,7 +113,12 @@ const themen = [
 
           <!-- Right Column: Submenus -->
           <div class="dropdown-right-column">
-            <ul class="sticky-submenu" id="submenu-sportarten">
+            <!-- Header spacer to match logo area height -->
+            <div class="dropdown-right-header">
+              <span class="submenu-title">SPORTS</span>
+            </div>
+            <div class="dropdown-submenu-container">
+              <ul class="sticky-submenu" id="submenu-sportarten">
               {sportarten.map((item) => (
                 <li>
                   <a href={item.href}>
@@ -143,6 +148,7 @@ const themen = [
                 </li>
               ))}
             </ul>
+            </div>
           </div>
         </nav>
       </div>
@@ -378,6 +384,31 @@ const themen = [
   .dropdown-right-column {
     flex: 1;
     min-width: 500px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Right column header - matches logo area height */
+  .dropdown-right-header {
+    padding: 20px;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    min-height: 90px;
+    box-sizing: border-box;
+  }
+
+  .submenu-title {
+    font-family: 'Jost', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #253461;
+    text-transform: uppercase;
+  }
+
+  /* Submenu container */
+  .dropdown-submenu-container {
+    flex: 1;
     padding: 20px;
   }
 
@@ -662,15 +693,27 @@ const themen = [
 
   // Get all submenus in the right column
   const submenus = document.querySelectorAll('.dropdown-right-column .sticky-submenu');
+  const submenuTitle = document.querySelector('.submenu-title');
+
+  // Submenu titles mapping
+  const submenuTitles: Record<string, string> = {
+    'sportarten': 'SPORTS',
+    'produkte': 'PRODUCTS',
+    'themen': 'THEMES'
+  };
 
   // Function to show a specific submenu
   function showSubmenu(submenuId: string | null) {
     // Hide all submenus
     submenus.forEach(sub => sub.classList.remove('active'));
-    // Show the target submenu
+    // Show the target submenu and update title
     if (submenuId) {
       const targetSubmenu = document.getElementById(`submenu-${submenuId}`);
       targetSubmenu?.classList.add('active');
+      // Update the title
+      if (submenuTitle) {
+        submenuTitle.textContent = submenuTitles[submenuId] || 'MENU';
+      }
     }
   }
 

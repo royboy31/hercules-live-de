@@ -26,14 +26,14 @@ const emptyStars = 5 - fullStars - (partialStar > 0 ? 1 : 0);
 // Format rating for display (e.g., 4.9 or 5.0)
 const ratingDisplay = rating % 1 === 0 ? rating.toFixed(1) : rating.toString();
 
-// Calculate aspect ratio for responsive sizing (306x36 original)
-const aspectRatio = 306 / 36;
+// Calculate aspect ratio for responsive sizing (306x50 to fit larger text)
+const aspectRatio = 306 / 50;
 const height = Math.round(width / aspectRatio);
 ---
 
 <a href={url} target="_blank" rel="noopener noreferrer" class:list={["google-reviews-badge", className]} title={`${rating} Sterne aus ${reviewCount}+ Bewertungen`}>
   <svg
-    viewBox="0 0 306 36"
+    viewBox="0 0 306 50"
     width={width}
     height={height}
     xmlns="http://www.w3.org/2000/svg"
@@ -41,9 +41,9 @@ const height = Math.round(width / aspectRatio);
     aria-label={`Google Bewertungen: ${rating} von 5 Sternen`}
     preserveAspectRatio="xMidYMid meet"
   >
-    <!-- Google "G" Logo (36x36) -->
+    <!-- Google "G" Logo (50x50 to match text height) -->
     <g transform="translate(0, 0)">
-      <svg width="36" height="36" viewBox="0 0 24 24">
+      <svg width="50" height="50" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -51,13 +51,13 @@ const height = Math.round(width / aspectRatio);
       </svg>
     </g>
 
-    <!-- Rating Number (e.g., "5.0") - Jost font, 25px, weight 900 -->
-    <text x="42" y="26" font-family="Jost, sans-serif" font-size="25" font-weight="900" fill="#FFFFFF">
+    <!-- Rating Number (e.g., "5.0") - Jost font, 25px rendered (50px in viewBox to account for 50% scaling), weight 900 -->
+    <text x="56" y="40" font-family="Jost, sans-serif" font-size="50" font-weight="900" fill="#FFFFFF">
       {ratingDisplay}
     </text>
 
     <!-- 5 Stars (larger, overlapping to match original) -->
-    <g transform="translate(88, -4)">
+    <g transform="translate(108, 3)">
       {/* Full Stars */}
       {[...Array(fullStars)].map((_, i) => (
         <g transform={`translate(${i * 40}, 0)`}>

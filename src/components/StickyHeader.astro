@@ -686,14 +686,14 @@ const themen = [
     }
   });
 
-  // Hamburger menu toggle
+  // Hamburger menu toggle - scoped to sticky header only
   const menuToggle = document.getElementById('sticky-menu-toggle');
   const dropdownNav = document.getElementById('sticky-dropdown-nav');
-  const navItems = document.querySelectorAll('.sticky-nav-item.has-submenu');
+  const navItems = dropdownNav?.querySelectorAll('.sticky-nav-item.has-submenu') || [];
 
-  // Get all submenus in the right column
-  const submenus = document.querySelectorAll('.dropdown-right-column .sticky-submenu');
-  const submenuTitle = document.querySelector('.submenu-title');
+  // Get all submenus in the right column - scoped to sticky dropdown
+  const submenus = dropdownNav?.querySelectorAll('.sticky-submenu') || [];
+  const submenuTitle = dropdownNav?.querySelector('.submenu-title');
 
   // Submenu titles mapping
   const submenuTitles: Record<string, string> = {

@@ -707,8 +707,9 @@ const themen = [
     // Hide all submenus
     submenus.forEach(sub => sub.classList.remove('active'));
     // Show the target submenu and update title
-    if (submenuId) {
-      const targetSubmenu = document.getElementById(`submenu-${submenuId}`);
+    if (submenuId && dropdownNav) {
+      // Use querySelector scoped to dropdownNav instead of global getElementById
+      const targetSubmenu = dropdownNav.querySelector(`#submenu-${submenuId}`);
       targetSubmenu?.classList.add('active');
       // Update the title
       if (submenuTitle) {

@@ -51,17 +51,17 @@ const height = Math.round(width / aspectRatio);
       </svg>
     </g>
 
-    <!-- Rating Number (e.g., "5.0") - white text for dark background -->
-    <text x="46" y="26" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="400" fill="#FFFFFF">
+    <!-- Rating Number (e.g., "5.0") - white text, larger size -->
+    <text x="44" y="28" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="400" fill="#FFFFFF">
       {ratingDisplay}
     </text>
 
-    <!-- 5 Stars (starting after rating number) -->
-    <g transform="translate(86, 0)">
+    <!-- 5 Stars (larger, no gaps between them) -->
+    <g transform="translate(90, -2)">
       {/* Full Stars */}
       {[...Array(fullStars)].map((_, i) => (
-        <g transform={`translate(${i * 44}, 0)`}>
-          <svg width="40" height="36" viewBox="0 0 24 24">
+        <g transform={`translate(${i * 42}, 0)`}>
+          <svg width="44" height="40" viewBox="0 0 24 24">
             <path fill="#FBBC04" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
           </svg>
         </g>
@@ -69,8 +69,8 @@ const height = Math.round(width / aspectRatio);
 
       {/* Partial Star (if any) */}
       {partialStar > 0 && (
-        <g transform={`translate(${fullStars * 44}, 0)`}>
-          <svg width="40" height="36" viewBox="0 0 24 24">
+        <g transform={`translate(${fullStars * 42}, 0)`}>
+          <svg width="44" height="40" viewBox="0 0 24 24">
             <defs>
               <linearGradient id={`partialStar-${Math.round(partialStar * 10)}`}>
                 <stop offset={`${partialStar * 100}%`} stop-color="#FBBC04"/>
@@ -84,8 +84,8 @@ const height = Math.round(width / aspectRatio);
 
       {/* Empty Stars */}
       {[...Array(emptyStars)].map((_, i) => (
-        <g transform={`translate(${(fullStars + (partialStar > 0 ? 1 : 0) + i) * 44}, 0)`}>
-          <svg width="40" height="36" viewBox="0 0 24 24">
+        <g transform={`translate(${(fullStars + (partialStar > 0 ? 1 : 0) + i) * 42}, 0)`}>
+          <svg width="44" height="40" viewBox="0 0 24 24">
             <path fill="#E8EAED" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
           </svg>
         </g>

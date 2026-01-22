@@ -1,0 +1,40 @@
+{
+  "reviews": [
+    {
+      "author": "Marco Schmidt",
+      "rating": 5,
+      "text": "Hervorragende Qualität und schnelle Lieferung! Die Fanschals sind perfekt geworden. Sehr empfehlenswert!",
+      "time": "vor 2 Wochen"
+    },
+    {
+      "author": "Julia Weber",
+      "rating": 5,
+      "text": "Super Service und tolle Beratung. Die Trikots für unser Team sind fantastisch. Werden definitiv wieder bestellen!",
+      "time": "vor 1 Monat"
+    },
+    {
+      "author": "Thomas Müller",
+      "rating": 5,
+      "text": "Professionelle Abwicklung von Anfang bis Ende. Die Qualität der Merchandise-Artikel hat uns begeistert.",
+      "time": "vor 1 Monat"
+    },
+    {
+      "author": "Anna Fischer",
+      "rating": 5,
+      "text": "Schnelle Kommunikation und faire Preise. Die personalisierten Mützen sind ein Hit bei unseren Fans!",
+      "time": "vor 2 Monaten"
+    },
+    {
+      "author": "Stefan Bauer",
+      "rating": 5,
+      "text": "Erstklassige Arbeit! Das Design-Team hat unsere Vorstellungen perfekt umgesetzt. Sehr zufrieden!",
+      "time": "vor 2 Monaten"
+    },
+    {
+      "author": "Lisa Hoffmann",
+      "rating": 5,
+      "text": "Tolle Produkte, faire Preise und super netter Kundenservice. Kann ich nur weiterempfehlen!",
+      "time": "vor 3 Monaten"
+    }
+  ]
+}

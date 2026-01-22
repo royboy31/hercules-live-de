@@ -41,9 +41,9 @@ const height = Math.round(width / aspectRatio);
     aria-label={`Google Bewertungen: ${rating} von 5 Sternen`}
     preserveAspectRatio="xMidYMid meet"
   >
-    <!-- Google "G" Logo (50x50 to match text height) -->
-    <g transform="translate(0, 0)">
-      <svg width="50" height="50" viewBox="0 0 24 24">
+    <!-- Google "G" Logo (36x36, smaller) -->
+    <g transform="translate(0, 7)">
+      <svg width="36" height="36" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -52,16 +52,16 @@ const height = Math.round(width / aspectRatio);
     </g>
 
     <!-- Rating Number (e.g., "5.0") - Jost font, 20px rendered (40px in viewBox to account for 50% scaling), weight 900 -->
-    <text x="56" y="35" font-family="Jost, sans-serif" font-size="40" font-weight="900" fill="#FFFFFF">
+    <text x="42" y="35" font-family="Jost, sans-serif" font-size="40" font-weight="900" fill="#FFFFFF">
       {ratingDisplay}
     </text>
 
-    <!-- 5 Stars (positioned after the number, no overlap) -->
-    <g transform="translate(115, 7)">
+    <!-- 5 Stars (5px gap from number, bigger stars) -->
+    <g transform="translate(110, 5)">
       {/* Full Stars */}
       {[...Array(fullStars)].map((_, i) => (
-        <g transform={`translate(${i * 36}, 0)`}>
-          <svg width="36" height="36" viewBox="0 0 24 24">
+        <g transform={`translate(${i * 38}, 0)`}>
+          <svg width="40" height="40" viewBox="0 0 24 24">
             <path fill="#FBBC04" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
           </svg>
         </g>
@@ -69,8 +69,8 @@ const height = Math.round(width / aspectRatio);
 
       {/* Partial Star (if any) */}
       {partialStar > 0 && (
-        <g transform={`translate(${fullStars * 36}, 0)`}>
-          <svg width="36" height="36" viewBox="0 0 24 24">
+        <g transform={`translate(${fullStars * 38}, 0)`}>
+          <svg width="40" height="40" viewBox="0 0 24 24">
             <defs>
               <linearGradient id={`partialStar-${Math.round(partialStar * 10)}`}>
                 <stop offset={`${partialStar * 100}%`} stop-color="#FBBC04"/>
@@ -84,8 +84,8 @@ const height = Math.round(width / aspectRatio);
 
       {/* Empty Stars */}
       {[...Array(emptyStars)].map((_, i) => (
-        <g transform={`translate(${(fullStars + (partialStar > 0 ? 1 : 0) + i) * 36}, 0)`}>
-          <svg width="36" height="36" viewBox="0 0 24 24">
+        <g transform={`translate(${(fullStars + (partialStar > 0 ? 1 : 0) + i) * 38}, 0)`}>
+          <svg width="40" height="40" viewBox="0 0 24 24">
             <path fill="#E8EAED" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
           </svg>
         </g>

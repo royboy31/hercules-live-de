@@ -3,7 +3,7 @@
  * Dynamic Google Reviews Badge
  * Fetches rating data at build time and renders an SVG badge
  * Matches the design of the original static badge (306x36px)
- * Design: Google "G" logo + Rating number + 5 stars
+ * Design: Google "G" logo + 5 gold stars (no text, transparent background)
  */
 import { getGooglePlaceData } from '../lib/google-places';
 
@@ -23,17 +23,14 @@ const fullStars = Math.floor(rating);
 const partialStar = rating % 1;
 const emptyStars = 5 - fullStars - (partialStar > 0 ? 1 : 0);
 
-// Format rating for display (e.g., 4.9 or 5.0)
-const ratingDisplay = rating % 1 === 0 ? rating.toFixed(1) : rating.toString();
-
-// Calculate aspect ratio for responsive sizing
+// Calculate aspect ratio for responsive sizing (306x36 original)
 const aspectRatio = 306 / 36;
 const height = Math.round(width / aspectRatio);
 ---
 
 <a href={url} target="_blank" rel="noopener noreferrer" class:list={["google-reviews-badge", className]} title={`${rating} Sterne aus ${reviewCount}+ Bewertungen`}>
   <svg
-    viewBox="0 0 156 28"
+    viewBox="0 0 306 36"
     width={width}
     height={height}
     xmlns="http://www.w3.org/2000/svg"
@@ -41,12 +38,9 @@ const height = Math.round(width / aspectRatio);
     aria-label={`Google Bewertungen: ${rating} von 5 Sternen`}
     preserveAspectRatio="xMidYMid meet"
   >
-    <!-- White background -->
-    <rect x="0" y="0" width="156" height="28" rx="4" ry="4" fill="#FFFFFF"/>
-
-    <!-- Google "G" Logo -->
-    <g transform="translate(6, 4)">
-      <svg width="20" height="20" viewBox="0 0 24 24">
+    <!-- Google "G" Logo (36x36) -->
+    <g transform="translate(0, 0)">
+      <svg width="36" height="36" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -54,17 +48,12 @@ const height = Math.round(width / aspectRatio);
       </svg>
     </g>
 
-    <!-- Rating Number (e.g., "4.9") -->
-    <text x="30" y="19" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700" fill="#3C4043">
-      {ratingDisplay}
-    </text>
-
-    <!-- 5 Stars -->
-    <g transform="translate(54, 4)">
+    <!-- 5 Stars (each ~50px wide with spacing, starting after G logo) -->
+    <g transform="translate(56, 0)">
       {/* Full Stars */}
       {[...Array(fullStars)].map((_, i) => (
-        <g transform={`translate(${i * 20}, 0)`}>
-          <svg width="20" height="20" viewBox="0 0 24 24">
+        <g transform={`translate(${i * 50}, 0)`}>
+          <svg width="46" height="36" viewBox="0 0 24 24">
             <path fill="#FBBC04" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
           </svg>
         </g>
@@ -72,8 +61,8 @@ const height = Math.round(width / aspectRatio);
 
       {/* Partial Star (if any) */}
       {partialStar > 0 && (
-        <g transform={`translate(${fullStars * 20}, 0)`}>
-          <svg width="20" height="20" viewBox="0 0 24 24">
+        <g transform={`translate(${fullStars * 50}, 0)`}>
+          <svg width="46" height="36" viewBox="0 0 24 24">
             <defs>
               <linearGradient id={`partialStar-${Math.round(partialStar * 10)}`}>
                 <stop offset={`${partialStar * 100}%`} stop-color="#FBBC04"/>
@@ -87,8 +76,8 @@ const height = Math.round(width / aspectRatio);
 
       {/* Empty Stars */}
       {[...Array(emptyStars)].map((_, i) => (
-        <g transform={`translate(${(fullStars + (partialStar > 0 ? 1 : 0) + i) * 20}, 0)`}>
-          <svg width="20" height="20" viewBox="0 0 24 24">
+        <g transform={`translate(${(fullStars + (partialStar > 0 ? 1 : 0) + i) * 50}, 0)`}>
+          <svg width="46" height="36" viewBox="0 0 24 24">
             <path fill="#E8EAED" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
           </svg>
         </g>

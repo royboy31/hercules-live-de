@@ -141,6 +141,7 @@ const themen = [
               </ul>
             </li>
           </ul>
+          </div>
         </nav>
       </div>
     </div>
@@ -301,6 +302,17 @@ const themen = [
     color: #00AEEF;
   }
 
+  /* Triangle indicator next to ALL CATEGORIES */
+  .category-triangle {
+    margin-left: 8px;
+    transition: transform 0.3s ease;
+  }
+
+  .sticky-dropdown-nav.active ~ .all-categories-text .category-triangle,
+  .sticky-menu-wrapper:has(.sticky-dropdown-nav.active) .category-triangle {
+    transform: rotate(180deg);
+  }
+
   .elementor-menu-toggle .menu-icon-close {
     display: none;
   }
@@ -313,7 +325,7 @@ const themen = [
     display: block;
   }
 
-  /* Dropdown Navigation - Horizontal layout matching WordPress Elementor b71ac43 */
+  /* Dropdown Navigation - Vertical layout with logo on top */
   .sticky-dropdown-nav {
     position: absolute;
     top: 100%;
@@ -327,11 +339,30 @@ const themen = [
     transition: all 0.3s ease;
     z-index: 100;
     display: flex;
+    flex-direction: column;
   }
 
   .sticky-dropdown-nav.active {
     opacity: 1;
     visibility: visible;
+  }
+
+  /* Logo header in dropdown */
+  .dropdown-logo-header {
+    padding: 20px;
+    border-bottom: 1px solid #E5E7EB;
+    background: #FAFAFA;
+  }
+
+  .dropdown-logo {
+    height: 50px;
+    width: auto;
+  }
+
+  /* Menu content wrapper - horizontal layout for menu + submenu */
+  .dropdown-menu-content {
+    display: flex;
+    position: relative;
   }
 
   /* Main menu list - vertical on left */
@@ -342,8 +373,8 @@ const themen = [
     display: flex;
     flex-direction: column;
     gap: 0;
-    width: 204px; /* exact width from staging */
-    min-width: 204px;
+    width: 220px; /* wider for larger text */
+    min-width: 220px;
   }
 
   .sticky-nav-item {
@@ -355,12 +386,13 @@ const themen = [
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    height: 50px; /* exact from staging */
-    padding: 15px 20px; /* 15px vertical padding */
+    height: 56px; /* increased for more spacing */
+    padding: 18px 20px; /* increased vertical padding */
     background: transparent;
     border: none;
+    border-bottom: 1px solid #F0F0F0;
     font-family: 'Jost', sans-serif;
-    font-size: 15px; /* --n-menu-title-font-size */
+    font-size: 16px; /* increased font size */
     font-weight: 500;
     color: #253461; /* --e-global-color-secondary */
     cursor: pointer;
@@ -391,7 +423,7 @@ const themen = [
   .sticky-submenu {
     display: none;
     position: absolute;
-    left: 204px; /* exact width of main menu - no gap */
+    left: 220px; /* matches main menu width */
     top: 0;
     list-style: none;
     margin: 0;
@@ -413,9 +445,9 @@ const themen = [
   .sticky-submenu li a {
     display: flex;
     align-items: center;
-    gap: 0;
-    height: 39px; /* exact from staging */
-    padding: 0 15px;
+    gap: 12px;
+    height: 48px; /* increased for more spacing */
+    padding: 0 20px;
     color: #253461;
     text-decoration: none;
     font-family: 'Jost', sans-serif;
@@ -432,10 +464,9 @@ const themen = [
   }
 
   .sticky-submenu li a img {
-    width: 17px; /* --e-icon-list-icon-size */
-    height: 17px;
+    width: 24px; /* larger icons */
+    height: 24px;
     object-fit: contain;
-    margin-right: calc(17px * 0.25); /* icon-margin formula */
   }
 
   /* Sticky header contact popup trigger - matching original green button */

@@ -94,19 +94,11 @@
     min-height: 300px;
   }
 
-  /* Hide TrustIndex logo and branding */
+  /* Hide only TrustIndex branding link at bottom */
   :global(.ti-widget a[href*="trustindex"]),
-  :global(.ti-widget .ti-footer),
-  :global(.ti-widget .source-Google),
-  :global(.ti-widget .ti-logo),
-  :global([class*="trustindex"]:not(.reviews-widget)),
   :global(.ti-widget a[title*="Trustindex"]),
   :global(.ti-widget a[title*="trustindex"]) {
     display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    height: 0 !important;
-    overflow: hidden !important;
   }
 
   /* Tablet */

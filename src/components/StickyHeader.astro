@@ -69,12 +69,12 @@ const themen = [
             <path d="M742 167L500 408 258 167C246 154 233 150 217 150 196 150 179 158 167 167 154 179 150 196 150 212 150 229 154 242 171 254L408 500 167 742C138 771 138 800 167 829 196 858 225 858 254 829L496 587 738 829C750 842 767 846 783 846 800 846 817 842 829 829 842 817 846 804 846 783 846 767 842 750 829 737L588 500 833 258C863 229 863 200 833 171 804 137 775 137 742 167Z" fill="currentColor"/>
           </svg>
         </button>
-        <span class="all-categories-text">
-          ALL CATEGORIES
+        <button class="all-categories-text" id="all-categories-toggle">
+          ALLE KATEGORIEN
           <svg class="category-triangle" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-        </span>
+        </button>
 
         <!-- Dropdown Navigation -->
         <nav class="sticky-dropdown-nav" id="sticky-dropdown-nav" aria-hidden="true">
@@ -184,7 +184,7 @@ const themen = [
     top: 0;
     left: 0;
     right: 0;
-    background: #FFFFFF;
+    background: #F4F4F4;
     z-index: 1000;
     box-shadow: 0px 9px 10px 0px rgba(0, 0, 0, 0.05);
     transform: translateY(-100%);
@@ -286,8 +286,14 @@ const themen = [
     fill: #FFFFFF;
   }
 
-  /* ALL CATEGORIES text - matching WordPress b71ac43 */
+  /* ALLE KATEGORIEN button - matching WordPress b71ac43 */
   .all-categories-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    padding: 0;
     font-family: 'Jost', sans-serif;
     font-size: 15px;
     font-weight: 500;
@@ -302,13 +308,12 @@ const themen = [
     color: #00AEEF;
   }
 
-  /* Triangle indicator next to ALL CATEGORIES */
+  /* Triangle indicator next to ALLE KATEGORIEN */
   .category-triangle {
-    margin-left: 8px;
     transition: transform 0.3s ease;
+    flex-shrink: 0;
   }
 
-  .sticky-dropdown-nav.active ~ .all-categories-text .category-triangle,
   .sticky-menu-wrapper:has(.sticky-dropdown-nav.active) .category-triangle {
     transform: rotate(180deg);
   }
@@ -651,10 +656,11 @@ const themen = [
   const dropdownNav = document.getElementById('sticky-dropdown-nav');
   const navItems = document.querySelectorAll('.sticky-nav-item.has-submenu');
 
-  menuToggle?.addEventListener('click', () => {
-    const isActive = menuToggle.classList.toggle('active');
+  // Function to toggle dropdown menu
+  function toggleDropdownMenu() {
+    const isActive = menuToggle?.classList.toggle('active');
     dropdownNav?.classList.toggle('active');
-    menuToggle.setAttribute('aria-expanded', isActive.toString());
+    menuToggle?.setAttribute('aria-expanded', (isActive || false).toString());
     dropdownNav?.setAttribute('aria-hidden', (!isActive).toString());
 
     // Show first submenu by default when menu opens
@@ -670,7 +676,14 @@ const themen = [
         button?.setAttribute('aria-expanded', 'false');
       });
     }
-  });
+  }
+
+  // Hamburger menu toggle
+  menuToggle?.addEventListener('click', toggleDropdownMenu);
+
+  // ALLE KATEGORIEN text also toggles dropdown
+  const allCategoriesToggle = document.getElementById('all-categories-toggle');
+  allCategoriesToggle?.addEventListener('click', toggleDropdownMenu);
 
   // Submenu hover behavior - show submenu on hover
   navItems.forEach(item => {

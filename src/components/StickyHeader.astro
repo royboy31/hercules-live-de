@@ -69,11 +69,29 @@ const themen = [
             <path d="M742 167L500 408 258 167C246 154 233 150 217 150 196 150 179 158 167 167 154 179 150 196 150 212 150 229 154 242 171 254L408 500 167 742C138 771 138 800 167 829 196 858 225 858 254 829L496 587 738 829C750 842 767 846 783 846 800 846 817 842 829 829 842 817 846 804 846 783 846 767 842 750 829 737L588 500 833 258C863 229 863 200 833 171 804 137 775 137 742 167Z" fill="currentColor"/>
           </svg>
         </button>
-        <span class="all-categories-text">ALL CATEGORIES</span>
+        <span class="all-categories-text">
+          ALL CATEGORIES
+          <svg class="category-triangle" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
 
         <!-- Dropdown Navigation -->
         <nav class="sticky-dropdown-nav" id="sticky-dropdown-nav" aria-hidden="true">
-          <ul class="sticky-nav-list">
+          <!-- Logo Header -->
+          <div class="dropdown-logo-header">
+            <img
+              src="/images/hercules-logo-original1.webp"
+              alt="Hercules Merchandise"
+              class="dropdown-logo"
+              width="176"
+              height="78"
+            />
+          </div>
+
+          <!-- Menu Content -->
+          <div class="dropdown-menu-content">
+            <ul class="sticky-nav-list">
             <li class="sticky-nav-item has-submenu">
               <button class="sticky-nav-link" aria-expanded="false">
                 Sports

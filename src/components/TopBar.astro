@@ -1,6 +1,7 @@
 ---
 // Top bar - EXACT match to WordPress Elementor header
 // Container: 1280px, Icons: 23px #23C3FF, Text: Jost 14px/500, Gap: 50px
+import GoogleReviewsBadge from './GoogleReviewsBadge.astro';
 ---
 
 <div class="top-bar" id="header-top-bar">
@@ -36,10 +37,10 @@
         </li>
       </ul>
 
-      <!-- Google Reviews - Right Side (306x36px) -->
-      <a href="#review-section" class="google-reviews google-reviews-link">
-        <img src="/images/googke-rev-5-2.png" alt="Hercules Merchandise Google Bewertungen 4.9 Sterne" width="306" height="36" />
-      </a>
+      <!-- Google Reviews - Right Side (Dynamic Badge) -->
+      <div class="google-reviews google-reviews-link">
+        <GoogleReviewsBadge width={154} />
+      </div>
     </div>
   </div>
 </div>

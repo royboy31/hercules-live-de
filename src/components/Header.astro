@@ -6,6 +6,7 @@ import ProductSearch from './ProductSearch.tsx';
 import UserSession from './UserSession.tsx';
 import ContactFormPopup from './ContactFormPopup.tsx';
 import WishlistCount from './WishlistCount.tsx';
+import GoogleReviewsBadge from './GoogleReviewsBadge.astro';
 
 // Sportarten menu items with icons (order from WordPress - column-first layout)
 // Column 1: Fußball, Rugby, Basketball, Laufen
@@ -183,12 +184,10 @@ const directLinks = [
 
 <!-- Mobile Header -->
 <header class="mobile-header" id="mobile-header">
-  <!-- Top Bar - Google Reviews (Dark Blue Background) -->
+  <!-- Top Bar - Google Reviews (Dark Blue Background) - Dynamic Badge -->
   <div class="mobile-topbar">
     <div class="mobile-topbar-reviews">
-      <a href="#review-section" class="google-reviews-link">
-        <img src="/images/google-reviews.png" alt="Google Bewertungen 4.9 Sterne" width="306" height="36" />
-      </a>
+      <GoogleReviewsBadge class="google-reviews-link" />
     </div>
   </div>
 
@@ -618,7 +617,8 @@ const directLinks = [
     display: inline-block;
   }
 
-  .mobile-topbar-reviews img {
+  .mobile-topbar-reviews img,
+  .mobile-topbar-reviews svg {
     max-width: 100%;
     height: auto;
     aspect-ratio: 306 / 36;

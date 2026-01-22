@@ -78,69 +78,71 @@ const themen = [
 
         <!-- Dropdown Navigation -->
         <nav class="sticky-dropdown-nav" id="sticky-dropdown-nav" aria-hidden="true">
-          <!-- Logo Header -->
-          <div class="dropdown-logo-header">
-            <img
-              src="/images/hercules-logo-original1.webp"
-              alt="Hercules Merchandise"
-              class="dropdown-logo"
-              width="176"
-              height="78"
-            />
+          <!-- Left Column: Logo + Main Menu -->
+          <div class="dropdown-left-column">
+            <div class="dropdown-logo-header">
+              <img
+                src="/images/hercules-logo-original1.webp"
+                alt="Hercules Merchandise"
+                class="dropdown-logo"
+                width="176"
+                height="78"
+              />
+            </div>
+            <ul class="sticky-nav-list">
+              <li class="sticky-nav-item has-submenu" data-submenu="sportarten">
+                <button class="sticky-nav-link" aria-expanded="false">
+                  Sports
+                  <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
+                </button>
+              </li>
+              <li class="sticky-nav-item has-submenu" data-submenu="produkte">
+                <button class="sticky-nav-link" aria-expanded="false">
+                  Products
+                  <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
+                </button>
+              </li>
+              <li class="sticky-nav-item has-submenu" data-submenu="themen">
+                <button class="sticky-nav-link" aria-expanded="false">
+                  Themes
+                  <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
+                </button>
+              </li>
+            </ul>
           </div>
 
-          <!-- Menu Content -->
-          <div class="dropdown-menu-content">
-            <ul class="sticky-nav-list">
-            <li class="sticky-nav-item has-submenu">
-              <button class="sticky-nav-link" aria-expanded="false">
-                Sports
-                <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
-              </button>
-              <ul class="sticky-submenu">
-                {sportarten.map((item) => (
-                  <li>
-                    <a href={item.href}>
-                      <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kategorie Icon`} width="36" height="36" loading="lazy" />
-                      <span>{item.label}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </li>
-            <li class="sticky-nav-item has-submenu">
-              <button class="sticky-nav-link" aria-expanded="false">
-                Products
-                <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
-              </button>
-              <ul class="sticky-submenu">
-                {produkte.map((item) => (
-                  <li>
-                    <a href={item.href}>
-                      <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kategorie Icon`} width="36" height="36" loading="lazy" />
-                      <span>{item.label}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </li>
-            <li class="sticky-nav-item has-submenu">
-              <button class="sticky-nav-link" aria-expanded="false">
-                Themes
-                <svg class="submenu-arrow" viewBox="0 0 256 512" xmlns="http://www.w3.org/2000/svg"><path d="M224.3 273l-136 136c-9.4 9.4-24.6 9.4-33.9 0l-22.6-22.6c-9.4-9.4-9.4-24.6 0-33.9l96.4-96.4-96.4-96.4c-9.4-9.4-9.4-24.6 0-33.9L54.3 103c9.4-9.4 24.6-9.4 33.9 0l136 136c9.5 9.4 9.5 24.6.1 34z" fill="currentColor"/></svg>
-              </button>
-              <ul class="sticky-submenu">
-                {themen.map((item) => (
-                  <li>
-                    <a href={item.href}>
-                      <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kollektion Icon`} width="36" height="36" loading="lazy" />
-                      <span>{item.label}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          </ul>
+          <!-- Right Column: Submenus -->
+          <div class="dropdown-right-column">
+            <ul class="sticky-submenu" id="submenu-sportarten">
+              {sportarten.map((item) => (
+                <li>
+                  <a href={item.href}>
+                    <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kategorie Icon`} width="36" height="36" loading="lazy" />
+                    <span>{item.label}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <ul class="sticky-submenu" id="submenu-produkte">
+              {produkte.map((item) => (
+                <li>
+                  <a href={item.href}>
+                    <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kategorie Icon`} width="36" height="36" loading="lazy" />
+                    <span>{item.label}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <ul class="sticky-submenu" id="submenu-themen">
+              {themen.map((item) => (
+                <li>
+                  <a href={item.href}>
+                    <img src={`/images/menu/${item.icon}`} alt={`${item.label} Kollektion Icon`} width="36" height="36" loading="lazy" />
+                    <span>{item.label}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         </nav>
       </div>
@@ -330,21 +332,21 @@ const themen = [
     display: block;
   }
 
-  /* Dropdown Navigation - Vertical layout with logo on top */
+  /* Dropdown Navigation - Two column layout */
   .sticky-dropdown-nav {
     position: absolute;
     top: 100%;
     left: 0;
-    background: white;
-    box-shadow: 0px 23px 4px -21px rgba(0, 0, 0, 0.18);
-    border-top: 1px solid #FAFAFA;
+    background: #FFFFFF;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(0);
     transition: all 0.3s ease;
     z-index: 100;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    min-height: 400px;
   }
 
   .sticky-dropdown-nav.active {
@@ -352,11 +354,19 @@ const themen = [
     visibility: visible;
   }
 
+  /* Left Column: Logo + Main Menu */
+  .dropdown-left-column {
+    width: 220px;
+    min-width: 220px;
+    border-right: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+  }
+
   /* Logo header in dropdown */
   .dropdown-logo-header {
     padding: 20px;
     border-bottom: 1px solid #E5E7EB;
-    background: #FAFAFA;
   }
 
   .dropdown-logo {
@@ -364,10 +374,11 @@ const themen = [
     width: auto;
   }
 
-  /* Menu content wrapper - horizontal layout for menu + submenu */
-  .dropdown-menu-content {
-    display: flex;
-    position: relative;
+  /* Right Column: Submenus */
+  .dropdown-right-column {
+    flex: 1;
+    min-width: 500px;
+    padding: 20px;
   }
 
   /* Main menu list - vertical on left */
@@ -378,8 +389,7 @@ const themen = [
     display: flex;
     flex-direction: column;
     gap: 0;
-    width: 220px; /* wider for larger text */
-    min-width: 220px;
+    flex: 1;
   }
 
   .sticky-nav-item {
@@ -424,26 +434,20 @@ const themen = [
     margin-left: 8px;
   }
 
-  /* Submenu - Grid layout to the right, 3 columns with column flow */
+  /* Submenu - Grid layout in right column */
   .sticky-submenu {
     display: none;
-    position: absolute;
-    left: 220px; /* matches main menu width */
-    top: 0;
     list-style: none;
     margin: 0;
-    padding: 5px 0;
-    background: white;
-    width: 580px; /* 3 columns width */
+    padding: 0;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(4, auto);
     grid-auto-flow: column;
     row-gap: 0;
     column-gap: 0;
-    border-left: 1px solid #FAFAFA;
   }
 
-  .sticky-nav-item.active .sticky-submenu {
+  .sticky-submenu.active {
     display: grid;
   }
 
@@ -656,6 +660,20 @@ const themen = [
   const dropdownNav = document.getElementById('sticky-dropdown-nav');
   const navItems = document.querySelectorAll('.sticky-nav-item.has-submenu');
 
+  // Get all submenus in the right column
+  const submenus = document.querySelectorAll('.dropdown-right-column .sticky-submenu');
+
+  // Function to show a specific submenu
+  function showSubmenu(submenuId: string | null) {
+    // Hide all submenus
+    submenus.forEach(sub => sub.classList.remove('active'));
+    // Show the target submenu
+    if (submenuId) {
+      const targetSubmenu = document.getElementById(`submenu-${submenuId}`);
+      targetSubmenu?.classList.add('active');
+    }
+  }
+
   // Function to toggle dropdown menu
   function toggleDropdownMenu() {
     const isActive = menuToggle?.classList.toggle('active');
@@ -668,6 +686,9 @@ const themen = [
       navItems[0].classList.add('active');
       const firstButton = navItems[0].querySelector('.sticky-nav-link');
       firstButton?.setAttribute('aria-expanded', 'true');
+      // Show first submenu
+      const firstSubmenuId = navItems[0].getAttribute('data-submenu');
+      showSubmenu(firstSubmenuId);
     } else {
       // Remove all active states when closing
       navItems.forEach(item => {
@@ -675,6 +696,8 @@ const themen = [
         const button = item.querySelector('.sticky-nav-link');
         button?.setAttribute('aria-expanded', 'false');
       });
+      // Hide all submenus
+      showSubmenu(null);
     }
   }
 
@@ -688,7 +711,7 @@ const themen = [
   // Submenu hover behavior - show submenu on hover
   navItems.forEach(item => {
     item.addEventListener('mouseenter', () => {
-      // Remove active from all items
+      // Remove active from all nav items
       navItems.forEach(i => {
         i.classList.remove('active');
         const btn = i.querySelector('.sticky-nav-link');
@@ -698,6 +721,9 @@ const themen = [
       item.classList.add('active');
       const button = item.querySelector('.sticky-nav-link');
       button?.setAttribute('aria-expanded', 'true');
+      // Show corresponding submenu
+      const submenuId = item.getAttribute('data-submenu');
+      showSubmenu(submenuId);
     });
   });
 
@@ -714,6 +740,8 @@ const themen = [
         const button = item.querySelector('.sticky-nav-link');
         button?.setAttribute('aria-expanded', 'false');
       });
+      // Hide all submenus
+      showSubmenu(null);
     }
   });
 </script>

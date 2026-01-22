@@ -6,6 +6,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProductConfigurator from '../../components/ProductConfigurator.tsx';
 import ContactFormPopup from '../../components/ContactFormPopup.tsx';
+import CustomerReviews from '../../components/CustomerReviews.astro';
 import '../../styles/steps.css';
 import {
   siteConfig,
@@ -501,15 +502,7 @@ if (product) {
         )}
 
         <!-- Customer Reviews Section - "Was Kunden über uns sagen" -->
-        <section class="reviews-section">
-          <div class="container">
-            <h2 class="reviews-heading">
-              Was Kunden <span class="highlight">über uns sagen</span>
-            </h2>
-            <!-- TrustIndex Widget - Same widget ID as WordPress -->
-            <div class="reviews-widget" id="trustindex-widget-product"></div>
-          </div>
-        </section>
+        <CustomerReviews />
 
         <!-- Lightbox Modal -->
         <div id="lightbox" class="lightbox" aria-hidden="true">
@@ -2034,30 +2027,4 @@ if (product) {
       });
     }
   });
-
-  // Load TrustIndex widget only when visible (reduces forced reflows)
-  const trustIndexContainer = document.getElementById('trustindex-widget-product');
-  if (trustIndexContainer) {
-    const loadTrustWidget = () => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.trustindex.io/loader.js?72406ce58900366af2861a4ccab';
-      script.defer = true;
-      script.async = true;
-      trustIndexContainer.appendChild(script);
-    };
-
-    // Defer until section is visible
-    const reviewsSection = trustIndexContainer.closest('.reviews-section');
-    if (reviewsSection && 'IntersectionObserver' in window) {
-      const observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting) {
-          loadTrustWidget();
-          observer.disconnect();
-        }
-      }, { rootMargin: '200px 0px', threshold: 0 });
-      observer.observe(reviewsSection);
-    } else {
-      loadTrustWidget();
-    }
-  }
 </script>

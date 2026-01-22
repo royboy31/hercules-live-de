@@ -8,38 +8,51 @@
  *
  * Free tier: $200/month credit (~11,700 Place Details requests)
  *
- * Alternative: Set GOOGLE_REVIEWS_RATING and GOOGLE_REVIEWS_COUNT
- * in your .env file to use static values without API calls
+ * Alternative: Reviews will fall back to static data in google-reviews.json
  */
+
+export interface GoogleReview {
+  author: string;
+  authorUrl?: string;
+  profilePhoto?: string;
+  rating: number;
+  text: string;
+  time: string;
+  timestamp?: number;
+}
 
 export interface GooglePlaceData {
   rating: number;
   reviewCount: number;
   name: string;
   url: string;
+  reviews: GoogleReview[];
 }
+
+// Import static reviews as fallback
+import staticReviewsData from '../data/google-reviews.json';
 
 // Default fallback values if API is not configured or fails
 const FALLBACK_DATA: GooglePlaceData = {
   rating: 5.0,
   reviewCount: 56,
-  name: 'Hercules Merchandising France',
-  url: 'https://maps.app.goo.gl/ji5Rv488CH5KZc5p6'
+  name: 'Hercules Merchandise Deutschland',
+  url: 'https://www.google.com/maps/place/Hercules+Merchandise+Deutschland/@50.6145728,6.2359879,6z/data=!4m8!3m7!1s0x8de038b69c3610b5:0xa260992b06e49f6e!8m2!3d50.7269179!4d11.5135722!9m1!1b1!16s%2Fg%2F11mrdf7bjq',
+  reviews: staticReviewsData.reviews as GoogleReview[]
 };
 
-// Place ID for Hercules Merchandising France
+// Place ID for Hercules Merchandise Deutschland
 // To find your Place ID: https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder
-const PLACE_ID = 'ChIJnZs2nhVZFRIRk1iDkX9hJqE';
+const PLACE_ID = 'ChIJtRY2nLY44EcRbp9kBiuZYKI';
 
 // Cache the result during build to avoid multiple API calls
 let cachedData: GooglePlaceData | null = null;
 
 /**
- * Fetch Google Place details including rating and review count
+ * Fetch Google Place details including rating, review count, and actual reviews
  * Supports multiple methods:
- * 1. Environment variables (GOOGLE_REVIEWS_RATING, GOOGLE_REVIEWS_COUNT) - no API needed
- * 2. Google Places API with GOOGLE_PLACES_API_KEY
- * 3. Fallback to default values
+ * 1. Google Places API with GOOGLE_PLACES_API_KEY (fetches real reviews)
+ * 2. Fallback to static reviews from google-reviews.json
  */
 export async function getGooglePlaceData(): Promise<GooglePlaceData> {
   // Return cached data if available
@@ -47,35 +60,19 @@ export async function getGooglePlaceData(): Promise<GooglePlaceData> {
     return cachedData;
   }
 
-  // Method 1: Check for static environment variables (no API needed)
-  const envRating = import.meta.env.GOOGLE_REVIEWS_RATING;
-  const envCount = import.meta.env.GOOGLE_REVIEWS_COUNT;
-
-  if (envRating && envCount) {
-    cachedData = {
-      rating: parseFloat(envRating),
-      reviewCount: parseInt(envCount, 10),
-      name: FALLBACK_DATA.name,
-      url: FALLBACK_DATA.url
-    };
-    console.log(`[GooglePlaces] Using env vars: ${cachedData.rating} stars from ${cachedData.reviewCount} reviews`);
-    return cachedData;
-  }
-
-  // Method 2: Try Google Places API
+  // Try Google Places API
   const apiKey = import.meta.env.GOOGLE_PLACES_API_KEY;
 
   if (!apiKey) {
-    console.warn('[GooglePlaces] No API key configured. Using fallback data.');
-    console.warn('[GooglePlaces] Options to enable dynamic reviews:');
-    console.warn('  1. Set GOOGLE_PLACES_API_KEY for API access');
-    console.warn('  2. Set GOOGLE_REVIEWS_RATING and GOOGLE_REVIEWS_COUNT for static values');
-    return FALLBACK_DATA;
+    console.warn('[GooglePlaces] No API key configured. Using static reviews from google-reviews.json');
+    console.warn('[GooglePlaces] To fetch live reviews, set GOOGLE_PLACES_API_KEY in .env');
+    cachedData = FALLBACK_DATA;
+    return cachedData;
   }
 
   try {
-    // Use legacy Places API - more widely available
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=name,rating,user_ratings_total,url&key=${apiKey}`;
+    // Fetch place details including reviews
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${PLACE_ID}&fields=name,rating,user_ratings_total,url,reviews&reviews_sort=newest&key=${apiKey}`;
 
     const response = await fetch(url);
 
@@ -90,20 +87,34 @@ export async function getGooglePlaceData(): Promise<GooglePlaceData> {
     }
 
     const result = data.result;
+
+    // Transform Google's review format to our format
+    const reviews: GoogleReview[] = (result.reviews || []).map((r: any) => ({
+      author: r.author_name,
+      authorUrl: r.author_url,
+      profilePhoto: r.profile_photo_url,
+      rating: r.rating,
+      text: r.text,
+      time: r.relative_time_description,
+      timestamp: r.time
+    }));
+
     cachedData = {
       rating: result.rating || FALLBACK_DATA.rating,
       reviewCount: result.user_ratings_total || FALLBACK_DATA.reviewCount,
       name: result.name || FALLBACK_DATA.name,
-      url: result.url || FALLBACK_DATA.url
+      url: result.url || FALLBACK_DATA.url,
+      reviews: reviews.length > 0 ? reviews : FALLBACK_DATA.reviews
     };
 
-    console.log(`[GooglePlaces] Fetched: ${cachedData.rating} stars from ${cachedData.reviewCount} reviews`);
+    console.log(`[GooglePlaces] Fetched: ${cachedData.rating} stars from ${cachedData.reviewCount} reviews (${reviews.length} review texts)`);
     return cachedData;
 
   } catch (error) {
     console.error('[GooglePlaces] Failed to fetch place data:', error);
-    console.warn('[GooglePlaces] Using fallback data.');
-    return FALLBACK_DATA;
+    console.warn('[GooglePlaces] Using static reviews from google-reviews.json');
+    cachedData = FALLBACK_DATA;
+    return cachedData;
   }
 }
 

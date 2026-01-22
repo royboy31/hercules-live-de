@@ -1,7 +1,44 @@
 ---
 // Was Kunden über uns sagen - Customer Reviews Section
-// Uses TrustIndex widget for Google Reviews (same widget ID as WordPress)
-// Only Google branding shown (TrustIndex link removed)
+// Displays Google Reviews with Google branding
+// Reviews fetched from Google Places API at build time, or falls back to static data
+import { getGooglePlaceData, formatRating } from '../lib/google-places';
+
+const placeData = await getGooglePlaceData();
+const { rating, reviewCount, reviews, url, name } = placeData;
+
+// Generate star rating HTML
+function getStarRating(rating: number): string {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  let stars = '';
+
+  for (let i = 0; i < fullStars; i++) {
+    stars += '<span class="star full">★</span>';
+  }
+  if (hasHalfStar) {
+    stars += '<span class="star half">★</span>';
+  }
+  for (let i = fullStars + (hasHalfStar ? 1 : 0); i < 5; i++) {
+    stars += '<span class="star empty">☆</span>';
+  }
+  return stars;
+}
+
+// Get initials for avatar fallback
+function getInitials(name: string): string {
+  return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+}
+
+// Generate a consistent color based on name
+function getAvatarColor(name: string): string {
+  const colors = ['#4285F4', '#34A853', '#FBBC05', '#EA4335', '#9C27B0', '#00BCD4'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
 ---
 
 <section class="reviews-section" id="review-section">
@@ -10,21 +47,93 @@
       Was Kunden <span class="highlight">über uns sagen</span>
     </h2>
 
-    <!-- Google Reviews Link Only -->
-    <div class="review-links">
-      <a href="https://www.google.com/maps/place/Hercules+Merchandise+Deutschland/@50.6145728,6.2359879,6z/data=!4m8!3m7!1s0x8de038b69c3610b5:0xa260992b06e49f6e!8m2!3d50.7269179!4d11.5135722!9m1!1b1!16s%2Fg%2F11mrdf7bjq?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" class="review-link google-link" aria-label="Google Bewertungen ansehen">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    <!-- Google Reviews Summary Header -->
+    <div class="google-reviews-header">
+      <a href={url} target="_blank" rel="noopener noreferrer" class="google-header-link">
+        <!-- Google Logo -->
+        <svg class="google-logo" viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#4285F4" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+          <path fill="#EA4335" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+          <path fill="#FBBC05" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+          <path fill="#4285F4" d="M225 3v65h-9.5V3h9.5z"/>
+          <path fill="#34A853" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+          <path fill="#EA4335" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
         </svg>
-        <span>Google</span>
+
+        <div class="rating-summary">
+          <div class="rating-number">{formatRating(rating)}</div>
+          <div class="rating-stars" set:html={getStarRating(rating)}></div>
+          <div class="review-count">{reviewCount} Bewertungen</div>
+        </div>
       </a>
     </div>
 
-    <!-- TrustIndex Widget - Same widget ID as WordPress -->
-    <div class="reviews-widget" id="trustindex-widget"></div>
+    <!-- Reviews Carousel -->
+    <div class="reviews-carousel">
+      <div class="swiper reviews-swiper">
+        <div class="swiper-wrapper">
+          {reviews.map((review) => (
+            <div class="swiper-slide">
+              <div class="review-card">
+                <div class="review-header">
+                  {review.profilePhoto ? (
+                    <img
+                      src={review.profilePhoto}
+                      alt={review.author}
+                      class="reviewer-avatar"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div
+                      class="reviewer-avatar-placeholder"
+                      style={`background-color: ${getAvatarColor(review.author)}`}
+                    >
+                      {getInitials(review.author)}
+                    </div>
+                  )}
+                  <div class="reviewer-info">
+                    <div class="reviewer-name">{review.author}</div>
+                    <div class="review-time">{review.time}</div>
+                  </div>
+                  <!-- Google G icon -->
+                  <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                </div>
+                <div class="review-rating" set:html={getStarRating(review.rating)}></div>
+                <p class="review-text">{review.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div class="swiper-pagination"></div>
+      </div>
+
+      <!-- Navigation arrows -->
+      <button class="swiper-nav swiper-nav-prev" aria-label="Vorherige Bewertung">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+        </svg>
+      </button>
+      <button class="swiper-nav swiper-nav-next" aria-label="Nächste Bewertung">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="currentColor" d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Link to all reviews -->
+    <div class="all-reviews-link">
+      <a href={url} target="_blank" rel="noopener noreferrer">
+        Alle Bewertungen auf Google ansehen
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+        </svg>
+      </a>
+    </div>
   </div>
 </section>
 
@@ -33,7 +142,7 @@
     width: 100%;
     max-width: 1280px;
     margin: 0 auto;
-    padding: 80px 0 50px 0;
+    padding: 80px 20px 50px 20px;
   }
 
   .reviews-container {
@@ -47,51 +156,270 @@
     text-transform: uppercase;
     color: #253461;
     text-align: center;
-    margin: 0 0 55px 0;
+    margin: 0 0 40px 0;
   }
 
   .section-heading .highlight {
     color: #469ADC;
   }
 
-  .review-links {
+  /* Google Reviews Header */
+  .google-reviews-header {
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 30px;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
   }
 
-  .review-link {
-    display: inline-flex;
+  .google-header-link {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: 50px;
+    gap: 15px;
     text-decoration: none;
-    font-family: 'Jost', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    border: 1px solid #ddd;
+    padding: 20px 40px;
     background: #fff;
-    color: #253461;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
   }
 
-  .review-link:hover {
-    background: #f5f5f5;
-    border-color: #ccc;
+  .google-header-link:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  .review-link svg {
+  .google-logo {
+    height: 30px;
+    width: auto;
+  }
+
+  .rating-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .rating-number {
+    font-family: 'Roboto', sans-serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: #202124;
+  }
+
+  .rating-stars {
+    display: flex;
+    gap: 2px;
+  }
+
+  .rating-stars .star {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  .rating-stars .star.full,
+  .rating-stars .star.half {
+    color: #FBBC05;
+  }
+
+  .rating-stars .star.empty {
+    color: #dadce0;
+  }
+
+  .review-count {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #5f6368;
+  }
+
+  /* Reviews Carousel */
+  .reviews-carousel {
+    position: relative;
+    padding: 0 50px;
+  }
+
+  .reviews-swiper {
+    overflow: hidden;
+  }
+
+  .swiper-slide {
+    height: auto;
+  }
+
+  .review-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e8eaed;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .review-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .reviewer-avatar,
+  .reviewer-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     flex-shrink: 0;
   }
 
-  .reviews-widget {
-    width: 100%;
-    min-height: 300px;
+  .reviewer-avatar {
+    object-fit: cover;
+  }
+
+  .reviewer-avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .reviewer-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .reviewer-name {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #202124;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .review-time {
+    font-family: 'Roboto', sans-serif;
+    font-size: 12px;
+    color: #5f6368;
+  }
+
+  .google-icon {
+    flex-shrink: 0;
+  }
+
+  .review-rating {
+    display: flex;
+    gap: 1px;
+    margin-bottom: 12px;
+  }
+
+  .review-rating .star {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .review-rating .star.full,
+  .review-rating .star.half {
+    color: #FBBC05;
+  }
+
+  .review-rating .star.empty {
+    color: #dadce0;
+  }
+
+  .review-text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #3c4043;
+    margin: 0;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Swiper Navigation */
+  .swiper-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #dadce0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5f6368;
+    transition: all 0.2s ease;
+    z-index: 10;
+  }
+
+  .swiper-nav:hover {
+    background: #f1f3f4;
+    color: #202124;
+  }
+
+  .swiper-nav-prev {
+    left: 0;
+  }
+
+  .swiper-nav-next {
+    right: 0;
+  }
+
+  /* Swiper Pagination */
+  .swiper-pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  :global(.reviews-swiper .swiper-pagination-bullet) {
+    width: 8px;
+    height: 8px;
+    background: #dadce0;
+    border-radius: 50%;
+    opacity: 1;
+    transition: all 0.2s ease;
+  }
+
+  :global(.reviews-swiper .swiper-pagination-bullet-active) {
+    background: #4285F4;
+    width: 24px;
+    border-radius: 4px;
+  }
+
+  /* All Reviews Link */
+  .all-reviews-link {
+    text-align: center;
+    margin-top: 30px;
+  }
+
+  .all-reviews-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a73e8;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+  }
+
+  .all-reviews-link a:hover {
+    background: #e8f0fe;
   }
 
   /* Tablet */
@@ -99,50 +427,95 @@
     .section-heading {
       font-size: 30px;
     }
+
+    .reviews-carousel {
+      padding: 0 40px;
+    }
   }
 
   /* Mobile */
   @media (max-width: 767px) {
     .reviews-section {
-      padding: 40px 20px;
+      padding: 40px 15px;
     }
 
     .section-heading {
-      font-size: 28px;
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
+
+    .google-header-link {
+      padding: 15px 25px;
+    }
+
+    .google-logo {
+      height: 24px;
+    }
+
+    .rating-number {
+      font-size: 24px;
+    }
+
+    .rating-stars .star {
+      font-size: 18px;
+    }
+
+    .reviews-carousel {
+      padding: 0;
+    }
+
+    .swiper-nav {
+      display: none;
+    }
+
+    .review-card {
+      padding: 16px;
+    }
+
+    .review-text {
+      font-size: 13px;
+      -webkit-line-clamp: 5;
     }
   }
 </style>
 
-<script is:inline>
-  // Load TrustIndex widget only when section becomes visible (reduces forced reflows)
-  (function() {
-    var loaded = false;
-    function loadWidget() {
-      if (loaded) return;
-      loaded = true;
-      var container = document.getElementById('trustindex-widget');
-      if (container) {
-        var script = document.createElement('script');
-        script.src = 'https://cdn.trustindex.io/loader.js?72406ce58900366af2861a4ccab';
-        script.defer = true;
-        script.async = true;
-        container.appendChild(script);
-      }
-    }
+<script>
+  import Swiper from 'swiper';
+  import { Navigation, Pagination } from 'swiper/modules';
+  import 'swiper/css';
+  import 'swiper/css/pagination';
 
-    // Use IntersectionObserver to defer loading until visible
-    var section = document.querySelector('.reviews-section');
-    if (section && 'IntersectionObserver' in window) {
-      var observer = new IntersectionObserver(function(entries) {
-        if (entries[0].isIntersecting) {
-          loadWidget();
-          observer.disconnect();
-        }
-      }, { rootMargin: '200px 0px', threshold: 0 });
-      observer.observe(section);
-    } else {
-      // Fallback for browsers without IntersectionObserver
-      document.addEventListener('DOMContentLoaded', loadWidget);
-    }
-  })();
+  document.addEventListener('DOMContentLoaded', () => {
+    const swiperEl = document.querySelector('.reviews-swiper');
+    if (!swiperEl) return;
+
+    new Swiper('.reviews-swiper', {
+      modules: [Navigation, Pagination],
+      slidesPerView: 1,
+      spaceBetween: 20,
+      loop: true,
+      autoplay: {
+        delay: 5000,
+        disableOnInteraction: false,
+      },
+      pagination: {
+        el: '.swiper-pagination',
+        clickable: true,
+      },
+      navigation: {
+        prevEl: '.swiper-nav-prev',
+        nextEl: '.swiper-nav-next',
+      },
+      breakpoints: {
+        640: {
+          slidesPerView: 2,
+          spaceBetween: 20,
+        },
+        1024: {
+          slidesPerView: 3,
+          spaceBetween: 24,
+        },
+      },
+    });
+  });
 </script>

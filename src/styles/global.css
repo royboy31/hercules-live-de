@@ -301,5 +301,5 @@ footer {
 img.ti-star.f,
 .ti-widget img.ti-star,
 .ti-review-item .ti-stars img {
-  filter: brightness(0) saturate(100%) invert(78%) sepia(78%) saturate(1128%) hue-rotate(358deg) brightness(102%) contrast(106%) !important;
+  filter: brightness(0) saturate(100%) invert(75%) sepia(98%) saturate(1139%) hue-rotate(357deg) brightness(104%) contrast(103%) !important;
 }

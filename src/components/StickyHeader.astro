@@ -6,11 +6,8 @@ import UserSession from './UserSession.tsx';
 import WishlistCount from './WishlistCount.tsx';
 import ContactFormPopup from './ContactFormPopup.tsx';
 
-// Navigation items for mobile dropdown (order from WordPress - column-first layout)
-// Column 1: Fußball, Rugby, Basketball, Laufen
-// Column 2: Field hockey, Volleyball, Handball, Radfahren
-// Column 3: Fitness, Golf, eSports
-const sportarten = [
+// Fallback menu items (used if API fetch fails or returns empty)
+const fallbackSportarten = [
   { label: 'Fußball', href: '/kollektionen/fussball/', icon: 'Football.svg' },
   { label: 'Rugby', href: '/kollektionen/rugby/', icon: 'Rugby-1.svg' },
   { label: 'Basketball', href: '/kollektionen/basketball/', icon: 'Basketball-1.svg' },
@@ -24,7 +21,7 @@ const sportarten = [
   { label: 'eSports', href: '/kollektionen/esport/', icon: 'esport-1.svg' },
 ];
 
-const produkte = [
+const fallbackProdukte = [
   { label: 'Sportswear', href: '/kollektionen/personalisierte-sportbekleidung/', icon: 'teamwear-1.svg' },
   { label: 'Scarves', href: '/kollektionen/personalisierte-fanschals/', icon: 'scarves-1.svg' },
   { label: 'Beanies', href: '/kollektionen/personalisierte-mutzen/', icon: 'beanies-3.svg' },
@@ -40,7 +37,7 @@ const produkte = [
   { label: 'Zubehör', href: '/kollektionen/zubehor/', icon: 'accessories-1.svg' },
 ];
 
-const themen = [
+const fallbackThemen = [
   { label: 'Sommer', href: '/kollektionen/sommer/', icon: 'summer-1.svg' },
   { label: 'Winter', href: '/kollektionen/winter/', icon: 'winter-1.svg' },
   { label: 'Nachhaltigkeit', href: '/kollektionen/nachhaltigkeit/', icon: 'sustainable-2.svg' },
@@ -54,6 +51,30 @@ const themen = [
   { label: 'Werbegeschenke', href: '/kollektionen/werbegeschenke/', icon: 'giive-aways.svg' },
   { label: 'Kinder', href: '/kollektionen/kinder/', icon: 'kids.svg' },
 ];
+
+// Fetch menu data from WordPress API at build time
+let sportarten = fallbackSportarten;
+let produkte = fallbackProdukte;
+let themen = fallbackThemen;
+
+try {
+  const response = await fetch('https://staging.hercules-merchandise.de/wp-json/hercules/v1/sticky-menu');
+  if (response.ok) {
+    const data = await response.json();
+    // Use API data if menus have items, otherwise use fallback
+    if (data.sportarten && data.sportarten.length > 0) {
+      sportarten = data.sportarten;
+    }
+    if (data.produkte && data.produkte.length > 0) {
+      produkte = data.produkte;
+    }
+    if (data.themen && data.themen.length > 0) {
+      themen = data.themen;
+    }
+  }
+} catch (error) {
+  console.warn('Failed to fetch sticky menu from API, using fallback:', error);
+}
 ---
 
 <header class="sticky-header" id="sticky-header">

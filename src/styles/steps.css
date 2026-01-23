@@ -1094,7 +1094,7 @@ input[type="range"]::-webkit-slider-runnable-track {
     display: flex;
     align-items: center;
     gap: 25px;
-    margin-top: 15px;
+    margin-top: -5px; /* Parent .product-info has 20px flex gap, so -5px gives ~15px total spacing */
 }
 
 .kd-vision-images {

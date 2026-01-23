@@ -1165,7 +1165,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
         <img src="/images/design/design-mockup.webp" alt="Custom merchandise design" width="494" height="637" loading="lazy" />
       </div>
       <div className="kd-vision-content">
-        <h3>VERWIRKLICHEN SIE IHRE VISION ERHALTEN SIE EIN INDIVIDUELLES DESIGN!</h3>
+        <h3>VERWIRKLICHEN SIE IHRE VISION <span style={{ color: '#469ADC' }}>ERHALTEN SIE EIN INDIVIDUELLES DESIGN!</span></h3>
         <a
           href="#design-section"
           className="kd-btn-design"

@@ -573,7 +573,7 @@ input[type="range"]::-ms-thumb {
     font-weight: 400;
     font-size: 16px;
     line-height: 174%;
-    padding: 4px 0 4px 10px;
+    padding: 4px 0;
     text-align: left;
     vertical-align: top;
     color: #253461;

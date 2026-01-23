@@ -1008,7 +1008,7 @@ input[type="range"]::-webkit-slider-runnable-track {
     background-color: white;
     padding: 20px 15px;
     text-align: center;
-    margin-top: 15px;
+    margin-top: 0;
 }
 
 .kd-question-box h3 {

@@ -351,7 +351,7 @@ function getEmailFooter(): string {
         <p>
           <a href="${SITE_URL}" style="color:#253461; text-decoration:none;"><strong>Hercules Merchandise DE</strong></a>
           <strong style="color:#000;"> | </strong>
-          <a href="${SITE_URL}/agb" style="color:#253461; text-decoration:none;"><strong>AGB</strong></a>
+          <a href="${SITE_URL}/nutzungsbedingungen/" style="color:#253461; text-decoration:none;"><strong>AGB</strong></a>
           <strong style="color:#000;"> | </strong>
           <a href="${SITE_URL}/mein-konto/" style="color:#253461; text-decoration:none;"><strong>Ihr Konto</strong></a><br>
           📧 <a href="mailto:info@hercules-merchandise.de" style="color:#253461; text-decoration:none;">info@hercules-merchandise.de</a><br>

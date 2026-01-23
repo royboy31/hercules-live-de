@@ -296,10 +296,13 @@ footer {
 }
 
 /* Change TrustIndex review stars to Google yellow (#fbbc04) */
+.ti-widget .ti-stars img,
+.ti-widget .ti-stars img.ti-star,
+.ti-widget .ti-stars img.ti-star.f,
+.ti-widget .ti-review-item .ti-stars img,
 .ti-stars.star-lg img.ti-star.f,
 .ti-stars img.ti-star,
 img.ti-star.f,
-.ti-widget img.ti-star,
-.ti-review-item .ti-stars img {
-  filter: brightness(0) saturate(100%) invert(75%) sepia(98%) saturate(1139%) hue-rotate(357deg) brightness(104%) contrast(103%) !important;
+img.ti-star {
+  filter: brightness(0) saturate(100%) invert(80%) sepia(54%) saturate(2143%) hue-rotate(357deg) brightness(101%) contrast(103%) !important;
 }

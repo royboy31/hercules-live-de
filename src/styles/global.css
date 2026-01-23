@@ -294,3 +294,11 @@ footer {
   will-change: transform, opacity;
   contain: layout style;
 }
+
+/* Change TrustIndex review stars from green to yellow */
+.ti-stars.star-lg img.ti-star.f,
+.ti-stars img.ti-star,
+img.ti-star.f,
+.ti-widget img.ti-star {
+  filter: sepia(1) saturate(5) hue-rotate(5deg) brightness(1.1) !important;
+}

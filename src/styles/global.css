@@ -295,10 +295,11 @@ footer {
   contain: layout style;
 }
 
-/* Change TrustIndex review stars from green to yellow */
+/* Change TrustIndex review stars to Google yellow (#fbbc04) */
 .ti-stars.star-lg img.ti-star.f,
 .ti-stars img.ti-star,
 img.ti-star.f,
-.ti-widget img.ti-star {
-  filter: sepia(1) saturate(5) hue-rotate(5deg) brightness(1.1) !important;
+.ti-widget img.ti-star,
+.ti-review-item .ti-stars img {
+  filter: brightness(0) saturate(100%) invert(76%) sepia(67%) saturate(497%) hue-rotate(2deg) brightness(105%) contrast(104%) !important;
 }

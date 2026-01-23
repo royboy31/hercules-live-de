@@ -1098,18 +1098,20 @@ input[type="range"]::-webkit-slider-runnable-track {
 }
 
 .kd-vision-images {
-    flex: 0 0 45%;
+    flex: 0 1 auto;
     max-width: 45%;
 }
 
 .kd-vision-images img {
-    width: 100%;
+    width: auto;
+    max-width: 207px;
     height: auto;
+    max-height: 267px;
     object-fit: contain;
 }
 
 .kd-vision-content {
-    flex: 1;
+    flex: 0 1 auto;
     text-align: left;
 }
 

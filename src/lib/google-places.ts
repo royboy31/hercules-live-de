@@ -37,7 +37,7 @@ const FALLBACK_DATA: GooglePlaceData = {
   rating: 5.0,
   reviewCount: 56,
   name: 'Hercules Merchandise Deutschland',
-  url: 'https://www.google.com/maps/place/Hercules+Merchandise+Deutschland/@50.6145728,6.2359879,6z/data=!4m8!3m7!1s0x8de038b69c3610b5:0xa260992b06e49f6e!8m2!3d50.7269179!4d11.5135722!9m1!1b1!16s%2Fg%2F11mrdf7bjq',
+  url: 'https://www.google.com/maps/place//data=!4m7!3m6!1s0x21d159209e369b9d:0xa126617f91835893!8m2!3d30.886403!4d-49.4022062!9m1!1b1',
   reviews: staticReviewsData.reviews as GoogleReview[]
 };
 

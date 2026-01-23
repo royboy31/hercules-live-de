@@ -1093,7 +1093,7 @@ input[type="range"]::-webkit-slider-runnable-track {
     padding: 22px 36px 22px 63px; /* top right bottom left - matching WordPress */
     display: flex;
     align-items: center;
-    gap: 72px; /* Space between image and text */
+    gap: 60px; /* Space between image and text */
     margin-top: -5px; /* Parent .product-info has 20px flex gap, so -5px gives ~15px total spacing */
 }
 

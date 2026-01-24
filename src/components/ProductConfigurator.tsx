@@ -847,7 +847,10 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
 
       {/* Quantity Step - Always show */}
       {(matchedVariation || config.variations?.length > 0) && (
-        <div className={`pearl-step ${maxVisibleStep === quantityStepIndex ? '' : 'collapsed'} ${quantitySelected > 0 && maxVisibleStep !== quantityStepIndex ? 'selected' : ''}`.trim()}>
+        <div
+          className={`pearl-step ${maxVisibleStep === quantityStepIndex ? '' : 'collapsed'} ${quantitySelected > 0 && maxVisibleStep !== quantityStepIndex ? 'selected' : ''}`.trim()}
+          onClick={maxVisibleStep !== quantityStepIndex && quantitySelected > 0 ? () => setMaxVisibleStep(quantityStepIndex) : undefined}
+        >
           <h3>
             {maxVisibleStep !== quantityStepIndex && quantitySelected > 0 ? (
               <>

@@ -405,6 +405,11 @@ input[type="range"]::-ms-thumb {
     align-items: center;
 }
 
+/* Collapsed step: align items to top when title wraps to multiple lines */
+.pearl-step.collapsed h3 {
+    align-items: flex-start;
+}
+
 .pearl-step h3 button:hover {
     width: 20% !important;
 }
@@ -415,6 +420,13 @@ input[type="range"]::-ms-thumb {
     align-items: flex-start;
     justify-content: flex-start;
     width: 50%;
+}
+
+/* Allow long title text to wrap to next line */
+.pearl-step.collapsed .kd-prod-attribute-title-wrapper span {
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.3;
 }
 
 /* Quantity step title - inline layout */
@@ -921,21 +933,18 @@ input[type="range"]::-webkit-slider-runnable-track {
         width: 20% !important;
     }
 
-    /* Collapsed step layout on mobile - adjust column widths */
+    /* Collapsed step layout on mobile - allow text wrapping */
     .pearl-step.collapsed .kd-prod-attribute-title-wrapper {
         width: 45% !important;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
         flex-shrink: 1;
         min-width: 0;
     }
 
     .pearl-step.collapsed .kd-prod-attribute-title-wrapper span {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        white-space: normal;
+        word-wrap: break-word;
         display: block;
+        line-height: 1.3;
     }
 
     .pearl-step.collapsed .kd-selected-val {

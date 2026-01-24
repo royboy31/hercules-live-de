@@ -225,7 +225,6 @@ export default function UserSession({ type }: UserSessionProps) {
       height: '50px',
       objectFit: 'cover',
       borderRadius: '5px',
-      background: '#f5f5f5',
     };
 
     const itemInfoStyle: React.CSSProperties = {

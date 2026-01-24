@@ -3,9 +3,12 @@
  * CategoryProductCard - Product card for category archive pages
  * Matches WordPress WooCommerce styling from staging.hercules-merchandise.de
  *
- * PERFORMANCE: Swiper thumbnails with lazy initialization
- * - Swiper only initializes when card enters viewport (IntersectionObserver)
- * - Uses FreeMode for smooth touch scrolling
+ * THUMBNAILS:
+ * - MOBILE (<768px): Pure CSS flexbox - 4 thumbnails fill full width equally (no Swiper)
+ * - DESKTOP: Swiper with FreeMode for smooth touch scrolling (lazy initialized)
+ *
+ * PERFORMANCE:
+ * - Swiper only initializes on desktop when card enters viewport (IntersectionObserver)
  * - Images remain lazy loaded
  * - Graceful degradation: CSS flexbox works if JS fails
  */
@@ -411,13 +414,21 @@ const cardFeatures = product.card_features || [];
       padding: 8px 12px;
     }
 
-    .kd-thumb-btn {
-      width: 60px;
-      height: 60px;
+    /* Mobile: 4 thumbnails fill full width, no swiper needed */
+    .kd-thumb-swiper .swiper-wrapper {
+      display: flex;
+      gap: 6px;
     }
 
-    .kd-thumb-swiper .swiper-wrapper {
-      gap: 6px;
+    .kd-thumb-swiper .swiper-slide {
+      flex: 1;
+      width: auto !important;
+    }
+
+    .kd-thumb-btn {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1 / 1;
     }
   }
 </style>
@@ -563,8 +574,12 @@ const cardFeatures = product.card_features || [];
   /**
    * Lazy initialization using IntersectionObserver
    * Only initializes Swiper when product card enters viewport
+   * MOBILE: Skip Swiper - uses pure CSS flexbox for 4 equal thumbnails
    */
   function setupLazySwiper() {
+    // Skip Swiper on mobile - CSS flexbox handles the layout
+    if (window.innerWidth <= 767) return;
+
     const swiperElements = document.querySelectorAll('.kd-thumb-swiper');
     if (!swiperElements.length) return;
 

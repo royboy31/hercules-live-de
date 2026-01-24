@@ -1,6 +1,7 @@
 ---
 // Header component matching WordPress Elementor header exactly
 // Container: 1280px, Logo: 70%, Icons: 22px/15px radius, Nav: 16px Jost
+// Menu data fetched from WordPress API at build time
 import MobileMenu from './MobileMenu.astro';
 import ProductSearch from './ProductSearch.tsx';
 import UserSession from './UserSession.tsx';
@@ -8,11 +9,8 @@ import ContactFormPopup from './ContactFormPopup.tsx';
 import WishlistCount from './WishlistCount.tsx';
 import GoogleReviewsBadge from './GoogleReviewsBadge.astro';
 
-// Sportarten menu items with icons (order from WordPress - column-first layout)
-// Column 1: Fußball, Rugby, Basketball, Laufen
-// Column 2: Field hockey, Volleyball, Handball, Radfahren
-// Column 3: Fitness, Golf, eSports
-const sportarten = [
+// Fallback menu items (used if API fetch fails)
+const fallbackSportarten = [
   { label: 'Fußball', href: '/kollektionen/fussball/', icon: 'Football.svg' },
   { label: 'Rugby', href: '/kollektionen/rugby/', icon: 'Rugby-1.svg' },
   { label: 'Basketball', href: '/kollektionen/basketball/', icon: 'Basketball-1.svg' },
@@ -26,8 +24,7 @@ const sportarten = [
   { label: 'eSports', href: '/kollektionen/esport/', icon: 'esport-1.svg' },
 ];
 
-// Produkte menu items with icons (labels from WordPress)
-const produkte = [
+const fallbackProdukte = [
   { label: 'Sportbekleidung', href: '/kollektionen/personalisierte-sportbekleidung/', icon: 'teamwear-1.svg' },
   { label: 'Schals', href: '/kollektionen/personalisierte-fanschals/', icon: 'scarves-1.svg' },
   { label: 'Mützen', href: '/kollektionen/personalisierte-mutzen/', icon: 'beanies-3.svg' },
@@ -43,8 +40,7 @@ const produkte = [
   { label: 'Zubehör', href: '/kollektionen/zubehor/', icon: 'accessories-1.svg' },
 ];
 
-// Themen menu items with icons (order from WordPress)
-const themen = [
+const fallbackThemen = [
   { label: 'Sommer', href: '/kollektionen/sommer/', icon: 'summer-1.svg' },
   { label: 'Winter', href: '/kollektionen/winter/', icon: 'winter-1.svg' },
   { label: 'Nachhaltigkeit', href: '/kollektionen/nachhaltigkeit/', icon: 'sustainable-2.svg' },
@@ -59,13 +55,40 @@ const themen = [
   { label: 'Kinder', href: '/kollektionen/kinder/', icon: 'kids.svg' },
 ];
 
-// Direct navigation links
-const directLinks = [
+const fallbackDirectLinks = [
   { label: 'SPORTBEKLEIDUNG', href: '/kollektionen/personalisierte-sportbekleidung/' },
   { label: 'SCHALS', href: '/kollektionen/personalisierte-fanschals/' },
   { label: 'KOPFBEDECKUNG', href: '/kollektionen/kopfbedeckung/' },
   { label: 'MÜTZEN', href: '/kollektionen/personalisierte-mutzen/' },
 ];
+
+// Fetch menu data from WordPress API at build time
+let sportarten = fallbackSportarten;
+let produkte = fallbackProdukte;
+let themen = fallbackThemen;
+let directLinks = fallbackDirectLinks;
+
+try {
+  const response = await fetch('https://staging.hercules-merchandise.de/wp-json/hercules/v1/main-header-menu');
+  if (response.ok) {
+    const data = await response.json();
+    // Use API data if available, otherwise use fallback
+    if (data.dropdowns?.sportarten?.length > 0) {
+      sportarten = data.dropdowns.sportarten;
+    }
+    if (data.dropdowns?.produkte?.length > 0) {
+      produkte = data.dropdowns.produkte;
+    }
+    if (data.dropdowns?.themen?.length > 0) {
+      themen = data.dropdowns.themen;
+    }
+    if (data.directLinks?.length > 0) {
+      directLinks = data.directLinks;
+    }
+  }
+} catch (error) {
+  console.warn('Failed to fetch main header menu from API, using fallback:', error);
+}
 ---
 
 <!-- Desktop Header -->

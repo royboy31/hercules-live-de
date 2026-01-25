@@ -988,9 +988,9 @@ input[type="range"]::-webkit-slider-runnable-track {
         vertical-align: top;
     }
 
-    /* Variation summary section padding */
+    /* Variation summary section padding - match step horizontal padding (21px) */
     .variation-summary {
-        padding: 12px 15px;
+        padding: 12px 21px;
     }
 
     .box-selector-item {
@@ -1001,9 +1001,11 @@ input[type="range"]::-webkit-slider-runnable-track {
         width: 45% !important;
     }
 
+    /* Action buttons wrapper - match step horizontal padding (21px) */
     .kd-action-btns-wrapper {
         flex-direction: column;
         gap: 10px;
+        padding: 20px 21px 26px 21px;
     }
 
     .kd-action-btns-wrapper .kd-single-action-btn {

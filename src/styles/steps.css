@@ -346,9 +346,8 @@ input[type="range"]::-ms-thumb {
 
 /* Step indicator/header */
 .pearl-step-indicator {
-    padding: 20px;
+    padding: 15px 21px;  /* Match step horizontal padding */
     margin: 0;
-    padding-bottom: 15px;
     font-family: Jost;
     font-weight: 500;
     font-size: 15px;
@@ -356,8 +355,12 @@ input[type="range"]::-ms-thumb {
     letter-spacing: 0%;
     text-transform: uppercase;
     color: #253461;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 85% 15%;  /* Align "AB X STÜCKE" with ÄNDERN buttons (15% width) */
+}
+
+.pearl-step-indicator span {
+    text-align: right;
 }
 
 .pearl-step-indicator h2 {
@@ -551,7 +554,7 @@ input[type="range"]::-ms-thumb {
 
 /* Variation summary section */
 .variation-summary {
-    padding: 13px 20px 15px 20px;
+    padding: 13px 21px 15px 21px;  /* Match step horizontal padding (21px) */
     font-family: 'Jost';
     font-size: 16px;
     border-bottom: 1px solid #DFDFDF;
@@ -573,11 +576,11 @@ input[type="range"]::-ms-thumb {
     font-size: 16px;
     line-height: 174%;
     letter-spacing: 0%;
-    padding: 4px 10px 4px 0;
+    padding: 4px 0;
     text-align: left;
     vertical-align: top;
     color: #253461;
-    width: 50%;
+    width: 50%;  /* Match collapsed step title width */
 }
 
 .offer-table tr td:last-child {
@@ -585,11 +588,11 @@ input[type="range"]::-ms-thumb {
     font-weight: 500;
     font-size: 14px;
     line-height: 174%;
-    padding: 0;
+    padding: 4px 0;
     text-align: left;
     vertical-align: top;
     color: #253461;
-    width: 50%;
+    width: 50%;  /* Spans value area (35%) + button area (15%) */
 }
 
 /* Free value styling (Kostenlos) - green text */
@@ -599,7 +602,7 @@ input[type="range"]::-ms-thumb {
 
 /* Action buttons wrapper */
 .kd-action-btns-wrapper {
-    padding: 20px 20px 26px 20px;
+    padding: 20px 21px 26px 21px;  /* Match step horizontal padding (21px) */
     display: flex;
     column-gap: 12px;
     justify-content: center;

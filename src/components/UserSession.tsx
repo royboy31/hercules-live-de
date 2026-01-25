@@ -217,7 +217,6 @@ export default function UserSession({ type }: UserSessionProps) {
       alignItems: 'center',
       gap: '10px',
       padding: '8px 0',
-      borderBottom: '1px solid #f0f0f0',
     };
 
     const itemImageStyle: React.CSSProperties = {
@@ -357,42 +356,21 @@ export default function UserSession({ type }: UserSessionProps) {
                 <ul style={itemListStyle}>
                   {items.map((item) => (
                     <li key={item.key} style={itemStyle}>
-                      {item.thumbnail && (
-                        <img
-                          src={item.thumbnail}
-                          alt={item.name}
-                          style={itemImageStyle}
-                        />
-                      )}
-                      <div style={itemInfoStyle}>
-                        <p style={itemNameStyle}>{item.name.split(' - ')[0]}</p>
-                        <p style={itemPriceStyle}>
-                          {item.quantity} x {item.price}
-                        </p>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          removeFromCart(item.key);
-                        }}
-                        style={removeButtonStyle}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.color = '#e74c3c';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.color = '#999';
-                        }}
-                        disabled={removingItem === item.key}
-                        aria-label="Artikel entfernen"
-                        title="Entfernen"
-                      >
-                        {removingItem === item.key ? (
-                          <span style={{ fontSize: '12px' }}>...</span>
-                        ) : (
-                          '×'
+                      <a href={item.permalink || `/produkte/`} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flex: 1, minWidth: 0 }}>
+                        {item.thumbnail && (
+                          <img
+                            src={item.thumbnail}
+                            alt={item.name}
+                            style={itemImageStyle}
+                          />
                         )}
-                      </button>
+                        <div style={itemInfoStyle}>
+                          <p style={itemNameStyle}>{item.name.split(' - ')[0]}</p>
+                          <p style={itemPriceStyle}>
+                            {item.quantity} x {item.price}
+                          </p>
+                        </div>
+                      </a>
                     </li>
                   ))}
                 </ul>

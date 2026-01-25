@@ -9,6 +9,7 @@ interface CartItem {
   price: string;
   line_total: string;
   thumbnail: string | null;
+  permalink?: string;
 }
 
 interface SessionData {

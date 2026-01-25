@@ -356,7 +356,7 @@ export default function UserSession({ type }: UserSessionProps) {
                 <ul style={itemListStyle}>
                   {items.map((item) => (
                     <li key={item.key} style={itemStyle}>
-                      <a href={item.permalink || `/produkte/`} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flex: 1, minWidth: 0 }}>
+                      <a href={item.permalink || `/produkte/`} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit', flex: 1, minWidth: 0 }}>
                         {item.thumbnail && (
                           <img
                             src={item.thumbnail}

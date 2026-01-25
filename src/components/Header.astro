@@ -73,17 +73,34 @@ try {
   if (response.ok) {
     const data = await response.json();
     // Use API data if available, otherwise use fallback
-    if (data.dropdowns?.sportarten?.length > 0) {
-      sportarten = data.dropdowns.sportarten;
+    // API returns: { dropdowns: { sportarten: { items: [...] } } }
+    // Map title/url to label/href for consistency with fallback structure
+    if (data.dropdowns?.sportarten?.items?.length > 0) {
+      sportarten = data.dropdowns.sportarten.items.map((item: any) => ({
+        label: item.title,
+        href: item.url,
+        icon: item.icon?.split('/').pop() || ''
+      }));
     }
-    if (data.dropdowns?.produkte?.length > 0) {
-      produkte = data.dropdowns.produkte;
+    if (data.dropdowns?.produkte?.items?.length > 0) {
+      produkte = data.dropdowns.produkte.items.map((item: any) => ({
+        label: item.title,
+        href: item.url,
+        icon: item.icon?.split('/').pop() || ''
+      }));
     }
-    if (data.dropdowns?.themen?.length > 0) {
-      themen = data.dropdowns.themen;
+    if (data.dropdowns?.themen?.items?.length > 0) {
+      themen = data.dropdowns.themen.items.map((item: any) => ({
+        label: item.title,
+        href: item.url,
+        icon: item.icon?.split('/').pop() || ''
+      }));
     }
     if (data.directLinks?.length > 0) {
-      directLinks = data.directLinks;
+      directLinks = data.directLinks.map((item: any) => ({
+        label: item.label,
+        href: item.href
+      }));
     }
   }
 } catch (error) {

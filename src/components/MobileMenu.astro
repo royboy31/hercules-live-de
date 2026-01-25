@@ -1,11 +1,9 @@
 ---
 // Mobile slide-out menu with sliding submenus
+// Fetches menu data from WordPress API at build time
 
-// Menu items (order from WordPress - column-first layout for desktop, list for mobile)
-// Column 1: Fußball, Rugby, Basketball, Laufen
-// Column 2: Field hockey, Volleyball, Handball, Radfahren
-// Column 3: Fitness, Golf, eSports
-const mobileMenuItems = {
+// Fallback menu items (used if API fetch fails)
+const fallbackMenuItems = {
   sportarten: {
     title: 'Sportarten',
     items: [
@@ -58,6 +56,55 @@ const mobileMenuItems = {
     ]
   },
 };
+
+const fallbackDirectLinks = [
+  { label: 'Sportbekleidung', href: '/kollektionen/personalisierte-sportbekleidung/' },
+  { label: 'Schals', href: '/kollektionen/personalisierte-fanschals/' },
+  { label: 'Kopfbedeckung', href: '/kollektionen/kopfbedeckung/' },
+  { label: 'Mützen', href: '/kollektionen/personalisierte-mutzen/' },
+];
+
+// Fetch menu data from WordPress API at build time
+let mobileMenuItems = fallbackMenuItems;
+let directLinks = fallbackDirectLinks;
+
+try {
+  const response = await fetch('https://staging.hercules-merchandise.de/wp-json/hercules/v1/main-header-menu');
+  if (response.ok) {
+    const data = await response.json();
+    // API returns: { dropdowns: { sportarten: { items: [...] } }, directLinks: [...] }
+    // Map title/url to label/href for consistency
+    if (data.dropdowns?.sportarten?.items?.length > 0) {
+      mobileMenuItems.sportarten.items = data.dropdowns.sportarten.items.map((item: any) => ({
+        label: item.title,
+        href: item.url,
+        icon: item.icon?.split('/').pop() || ''
+      }));
+    }
+    if (data.dropdowns?.produkte?.items?.length > 0) {
+      mobileMenuItems.produkte.items = data.dropdowns.produkte.items.map((item: any) => ({
+        label: item.title,
+        href: item.url,
+        icon: item.icon?.split('/').pop() || ''
+      }));
+    }
+    if (data.dropdowns?.themen?.items?.length > 0) {
+      mobileMenuItems.themen.items = data.dropdowns.themen.items.map((item: any) => ({
+        label: item.title,
+        href: item.url,
+        icon: item.icon?.split('/').pop() || ''
+      }));
+    }
+    if (data.directLinks?.length > 0) {
+      directLinks = data.directLinks.map((item: any) => ({
+        label: item.label,
+        href: item.href
+      }));
+    }
+  }
+} catch (error) {
+  console.warn('Failed to fetch mobile menu from API, using fallback:', error);
+}
 ---
 
 <!-- Mobile Menu Overlay -->
@@ -94,19 +141,12 @@ const mobileMenuItems = {
           </button>
         ))}
 
-        <!-- Direct Links -->
-        <a href="/kollektionen/personalisierte-sportbekleidung/" class="menu-item">
-          <span class="menu-item-label">Sportbekleidung</span>
-        </a>
-        <a href="/kollektionen/personalisierte-fanschals/" class="menu-item">
-          <span class="menu-item-label">Schals</span>
-        </a>
-        <a href="/kollektionen/kopfbedeckung/" class="menu-item">
-          <span class="menu-item-label">Kopfbedeckung</span>
-        </a>
-        <a href="/kollektionen/personalisierte-mutzen/" class="menu-item">
-          <span class="menu-item-label">Mützen</span>
-        </a>
+        <!-- Direct Links (dynamic from API) -->
+        {directLinks.map((link) => (
+          <a href={link.href} class="menu-item">
+            <span class="menu-item-label">{link.label}</span>
+          </a>
+        ))}
 
         <!-- Wishlist Link -->
         <a href="/wishlist/" class="menu-item wishlist-link">

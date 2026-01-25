@@ -986,6 +986,7 @@ input[type="range"]::-webkit-slider-runnable-track {
         font-size: 13px;
         text-align: left;
         vertical-align: top;
+        padding-left: 5px;  /* Align with collapsed step values which have padding: 0 5px */
     }
 
     /* Variation summary section padding - match step horizontal padding (21px) */

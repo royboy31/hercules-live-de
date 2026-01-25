@@ -947,7 +947,7 @@ input[type="range"]::-webkit-slider-runnable-track {
 
     .pearl-step.collapsed .kd-selected-val {
         width: 100% !important;
-        text-align: center;
+        text-align: left;  /* Left-aligned to match screenshot */
         font-size: 12px;
         padding: 0 5px;
     }
@@ -975,14 +975,14 @@ input[type="range"]::-webkit-slider-runnable-track {
     }
 
     .offer-table tr td:first-child {
-        width: 55% !important;
+        width: 40% !important;  /* Matches collapsed step title column */
         font-size: 14px;
         padding-right: 8px;
         vertical-align: top;
     }
 
     .offer-table tr td:last-child {
-        width: 45% !important;
+        width: 60% !important;  /* Spans value + action columns of steps */
         font-size: 13px;
         text-align: left;
         vertical-align: top;

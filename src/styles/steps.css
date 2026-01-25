@@ -920,23 +920,20 @@ input[type="range"]::-webkit-slider-runnable-track {
         overflow-x: hidden;
     }
 
-    .pearl-step h3 {
-        flex-wrap: nowrap;
-        max-width: 100%;
+    /* ==========================================
+       COLLAPSED STEPS - 3 Column Grid Layout
+       Fixes alignment issues on mobile
+       ========================================== */
+    .pearl-step.collapsed h3 {
+        display: grid !important;
+        grid-template-columns: 40% 35% 25%;
+        gap: 0;
+        align-items: center;
+        width: 100%;
     }
 
-    .pearl-step.collapsed.selected .kd-selected-step-info {
-        width: 80% !important;
-    }
-
-    .pearl-step.collapsed.selected .kd-selected-chng-btn {
-        width: 20% !important;
-    }
-
-    /* Collapsed step layout on mobile - allow text wrapping */
     .pearl-step.collapsed .kd-prod-attribute-title-wrapper {
-        width: 45% !important;
-        flex-shrink: 1;
+        width: 100% !important;
         min-width: 0;
     }
 
@@ -945,18 +942,55 @@ input[type="range"]::-webkit-slider-runnable-track {
         word-wrap: break-word;
         display: block;
         line-height: 1.3;
+        font-size: 14px;
     }
 
     .pearl-step.collapsed .kd-selected-val {
-        width: 30% !important;
-        flex-shrink: 0;
+        width: 100% !important;
         text-align: center;
+        font-size: 12px;
+        padding: 0 5px;
     }
 
     .pearl-step.collapsed .kd-selected-chng-btn {
-        width: 25% !important;
+        width: 100% !important;
         min-width: unset !important;
-        flex-shrink: 0;
+        text-align: right;
+        font-size: 12px;
+    }
+
+    /* Non-collapsed step header */
+    .pearl-step:not(.collapsed) h3 {
+        flex-wrap: nowrap;
+        max-width: 100%;
+    }
+
+    /* ==========================================
+       OFFER TABLE - Fixed Column Alignment
+       Section 4: Ihr Angebot pricing summary
+       ========================================== */
+    .offer-table {
+        table-layout: fixed !important;
+        width: 100% !important;
+    }
+
+    .offer-table tr td:first-child {
+        width: 55% !important;
+        font-size: 14px;
+        padding-right: 8px;
+        vertical-align: top;
+    }
+
+    .offer-table tr td:last-child {
+        width: 45% !important;
+        font-size: 13px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    /* Variation summary section padding */
+    .variation-summary {
+        padding: 12px 15px;
     }
 
     .box-selector-item {

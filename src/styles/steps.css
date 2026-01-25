@@ -926,7 +926,7 @@ input[type="range"]::-webkit-slider-runnable-track {
        ========================================== */
     .pearl-step.collapsed h3 {
         display: grid !important;
-        grid-template-columns: 40% 35% 25%;
+        grid-template-columns: 45% 30% 25%;
         gap: 0;
         align-items: center;
         width: 100%;
@@ -975,14 +975,14 @@ input[type="range"]::-webkit-slider-runnable-track {
     }
 
     .offer-table tr td:first-child {
-        width: 40% !important;  /* Matches collapsed step title column */
+        width: 45% !important;  /* Matches collapsed step title column */
         font-size: 14px;
         padding-right: 8px;
         vertical-align: top;
     }
 
     .offer-table tr td:last-child {
-        width: 60% !important;  /* Spans value + action columns of steps */
+        width: 55% !important;  /* Spans value + action columns of steps */
         font-size: 13px;
         text-align: left;
         vertical-align: top;

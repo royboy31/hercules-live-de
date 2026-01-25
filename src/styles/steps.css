@@ -920,6 +920,22 @@ input[type="range"]::-webkit-slider-runnable-track {
         overflow-x: hidden;
     }
 
+    /* Step indicator - align "AB X STÜCKE" with ÄNDERN buttons */
+    .pearl-step-indicator {
+        display: grid !important;
+        grid-template-columns: 75% 25%;
+        padding: 15px 21px;
+    }
+
+    .pearl-step-indicator h2 {
+        font-size: 13px;
+    }
+
+    .pearl-step-indicator span {
+        text-align: right;
+        font-size: 13px;
+    }
+
     /* ==========================================
        COLLAPSED STEPS - 3 Column Grid Layout
        Fixes alignment issues on mobile

@@ -440,42 +440,36 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
       );
       const addonPricePerPiece = getAddonPricePerPiece(quantitySelected);
 
-      // Prepare form data for WordPress AJAX
-      const params = new URLSearchParams();
-      params.append('action', 'pearl_wc_add_to_cart_custom');
-      params.append('product_id', String(config.product_id));
-      params.append('variation_id', String(matchedVariation.variation_id));
-      params.append('quantity', String(quantitySelected));
-      params.append('price_num', String(finalPricePerPiece));
-      params.append('addons', JSON.stringify(selectedAddons));
-      params.append('addonsPricePerpiece', String(addonPricePerPiece));
-      params.append('minQty', String(quantityRange.min));
+      // Prepare data for Hercules Cart API (REST endpoint, no nonce required)
+      const cartData = {
+        product_id: config.product_id,
+        variation_id: matchedVariation.variation_id,
+        quantity: quantitySelected,
+        price_num: finalPricePerPiece,
+        addons: selectedAddons,
+        addonsPricePerpiece: addonPricePerPiece,
+        minQty: quantityRange.min,
+      };
 
-      // Call WordPress AJAX endpoint
-      const response = await fetch('/wp-admin/admin-ajax.php', {
+      // Call Hercules Cart REST API endpoint
+      const response = await fetch('/wp-json/hercules/v1/cart/add', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: params.toString(),
+        body: JSON.stringify(cartData),
         credentials: 'include', // Important for session cookies
       });
 
       const result = await response.json();
 
       if (result.success) {
-        // Fetch updated session to get new cart data
-        try {
-          const sessionRes = await fetch('/wp-json/hercules/v1/session', {
-            credentials: 'include',
-          });
-          const sessionData = await sessionRes.json();
-
-          // Dispatch event with new cart data for immediate UI update
+        // Use cart data directly from response (Hercules Cart API returns it)
+        if (result.cart) {
           window.dispatchEvent(new CustomEvent('hercules:cart-updated', {
-            detail: { cart: sessionData.cart }
+            detail: { cart: result.cart }
           }));
-        } catch (e) {
+        } else {
           // Fallback: dispatch event without data, UserSession will refetch
           window.dispatchEvent(new CustomEvent('hercules:cart-updated'));
         }
@@ -489,7 +483,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
           }
         }, 500);
       } else {
-        const errorMsg = result.data || 'Ein Fehler ist aufgetreten';
+        const errorMsg = result.message || 'Ein Fehler ist aufgetreten';
         setAddToCartError(typeof errorMsg === 'string' ? errorMsg : 'Ein Fehler ist aufgetreten');
         setAddToCartLoading(false);
         setLoadingAction(null);

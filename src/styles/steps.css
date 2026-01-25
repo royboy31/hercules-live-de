@@ -408,9 +408,9 @@ input[type="range"]::-ms-thumb {
     align-items: center;
 }
 
-/* Collapsed step: align items to top when title wraps to multiple lines */
+/* Collapsed step: align items to bottom for consistent row alignment */
 .pearl-step.collapsed h3 {
-    align-items: flex-start;
+    align-items: flex-end;
 }
 
 .pearl-step h3 button:hover {
@@ -947,7 +947,7 @@ input[type="range"]::-webkit-slider-runnable-track {
         display: grid !important;
         grid-template-columns: 45% 30% 25%;
         gap: 0;
-        align-items: center;
+        align-items: end;  /* Bottom-align all columns */
         width: 100%;
     }
 

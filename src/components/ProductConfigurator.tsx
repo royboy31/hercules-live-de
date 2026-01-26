@@ -119,8 +119,8 @@ function getAddonPriceAtTierQty(addon: AddonData, selectedValue: string | string
   let total = 0;
 
   for (const name of selectedNames) {
-    // Skip "none" selection - it has no price
-    if (name === 'none') continue;
+    // Skip "Keine" selection - it has no price
+    if (name === 'Keine') continue;
 
     const option = addon.options.find(o => o.name === name);
     if (!option || !option.price_table || option.price_table.length === 0) continue;
@@ -753,16 +753,16 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                 {/* Multiple Choice (checkboxes) for addons like Zubehör - auto-advances on selection */}
                 {addon.display_type === 'multiple_choise' && (() => {
                   const currentSelected = Array.isArray(selectedValue) ? selectedValue : (selectedValue ? [selectedValue] : []);
-                  const isNoneChecked = currentSelected.includes('none');
+                  const isNoneChecked = currentSelected.includes('Keine');
 
                   const handleCheckboxChange = (value: string, checked: boolean) => {
                     let newSelected: string[];
-                    if (value === 'none') {
+                    if (value === 'Keine') {
                       // "Keine" clears all other selections and advances immediately
-                      newSelected = checked ? ['none'] : [];
+                      newSelected = checked ? ['Keine'] : [];
                     } else {
-                      // Remove 'none' if selecting an actual option
-                      const withoutNone = currentSelected.filter(v => v !== 'none');
+                      // Remove 'Keine' if selecting an actual option
+                      const withoutNone = currentSelected.filter(v => v !== 'Keine');
                       if (checked) {
                         newSelected = [...withoutNone, value];
                       } else {
@@ -783,9 +783,9 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                         <input
                           type="checkbox"
                           name={String(addon.id)}
-                          value="none"
+                          value="Keine"
                           checked={isNoneChecked}
-                          onChange={(e) => handleCheckboxChange('none', e.target.checked)}
+                          onChange={(e) => handleCheckboxChange('Keine', e.target.checked)}
                           style={{ marginRight: '8px' }}
                         />
                         Keine

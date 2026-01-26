@@ -355,12 +355,15 @@ input[type="range"]::-ms-thumb {
     letter-spacing: 0%;
     text-transform: uppercase;
     color: #253461;
-    display: grid;
-    grid-template-columns: 85% 15%;  /* Align "AB X STÜCKE" with ÄNDERN buttons (15% width) */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .pearl-step-indicator span {
     text-align: right;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .pearl-step-indicator h2 {
@@ -846,7 +849,8 @@ input[type="range"]::-webkit-slider-runnable-track {
 
 /* kd-delivery-content: inline display for proper text flow */
 .offer-table .kd-delivery-content {
-    display: inline;
+    display: inline-block;
+    padding-top: 3px;
 }
 
 /* Express link wrapper: block display below delivery content with spacing */

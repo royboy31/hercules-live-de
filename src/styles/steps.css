@@ -835,18 +835,31 @@ input[type="range"]::-webkit-slider-runnable-track {
     position: relative;
 }
 
-/* Lieferzeit row - align cells to top of content, express link separate */
-.offer-table tr:has(.kd-lieferzeit-cell) td {
-    vertical-align: top;
+/* Lieferzeit row - first cell bottom-aligns to kd-delivery-content, not express-link-wrapper */
+.offer-table tr:has(.kd-lieferzeit-cell) td:first-child {
+    vertical-align: bottom !important;
 }
 
+.offer-table tr:has(.kd-lieferzeit-cell) td:last-child {
+    vertical-align: bottom !important;
+}
+
+/* kd-delivery-content: inline-block to create alignment reference for first cell */
 .offer-table .kd-delivery-content {
-    display: inline;
+    display: inline-block;
+    vertical-align: bottom;
+}
+
+/* Express link wrapper: absolutely positioned so it doesn't affect cell height/alignment */
+.offer-table tr:has(.kd-lieferzeit-cell) td:last-child {
+    position: relative;
+    padding-bottom: 30px !important; /* Space for the express link */
 }
 
 .offer-table .kd-express-link-wrapper {
-    display: block;
-    margin-top: 8px;
+    position: absolute;
+    bottom: 4px;
+    left: 0;
 }
 
 .offer-table .kd-tooltip-trigger {

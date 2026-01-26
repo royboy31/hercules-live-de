@@ -2123,10 +2123,62 @@ export default {
       });
     }
 
-    // Get all products (index)
+    // Get all products (index only - lightweight)
     if (url.pathname === '/products') {
       const index = await env.PRODUCTS_KV.get('product:index');
       return new Response(index || '[]', {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get all products with full data (for build optimization)
+    if (url.pathname === '/products-full') {
+      const indexStr = await env.PRODUCTS_KV.get('product:index');
+      if (!indexStr) {
+        return new Response('[]', {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const index = JSON.parse(indexStr);
+      const products = await Promise.all(
+        index.map(async (p: any) => {
+          const productStr = await env.PRODUCTS_KV.get(`product:${p.id}`);
+          return productStr ? JSON.parse(productStr) : null;
+        })
+      );
+
+      return new Response(JSON.stringify(products.filter(Boolean)), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get products by category with full data (optimized for collection pages)
+    if (url.pathname.startsWith('/products-by-category/')) {
+      const categorySlug = url.pathname.replace('/products-by-category/', '');
+
+      const indexStr = await env.PRODUCTS_KV.get('product:index');
+      if (!indexStr) {
+        return new Response('[]', {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const index = JSON.parse(indexStr);
+      // Filter products by category from index
+      const categoryProducts = index.filter((p: any) =>
+        p.categories?.includes(categorySlug)
+      );
+
+      // Fetch full product data for matching products
+      const products = await Promise.all(
+        categoryProducts.map(async (p: any) => {
+          const productStr = await env.PRODUCTS_KV.get(`product:${p.id}`);
+          return productStr ? JSON.parse(productStr) : null;
+        })
+      );
+
+      return new Response(JSON.stringify(products.filter(Boolean)), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

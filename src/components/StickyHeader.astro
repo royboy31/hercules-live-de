@@ -1,97 +1,16 @@
 ---
 // Sticky Header - Shows on scroll (replaces main header when scrolled)
 // Exact match to WordPress Elementor CSS from post-196.css
+// Menu data fetched from shared cache (single API call for all components)
 import ProductSearch from './ProductSearch.tsx';
 import UserSession from './UserSession.tsx';
 import WishlistCount from './WishlistCount.tsx';
 import ContactFormPopup from './ContactFormPopup.tsx';
+import { getMenuData } from '../data/menu-data';
 
-// Menu items fetched from WordPress API at build time
-// Icons come from custom field in WordPress Menu admin
-const iconBaseUrl = 'https://staging.hercules-merchandise.de/wp-content/uploads/hercules-menu-icons/';
-
-// Fallback menu items (used only if API fetch fails)
-const fallbackSportarten = [
-  { label: 'Fußball', href: '/kollektionen/fussball/', icon_url: iconBaseUrl + 'Football.svg' },
-  { label: 'Rugby', href: '/kollektionen/rugby/', icon_url: iconBaseUrl + 'Rugby-1.svg' },
-  { label: 'Basketball', href: '/kollektionen/basketball/', icon_url: iconBaseUrl + 'Basketball-1.svg' },
-  { label: 'Laufen', href: '/kollektionen/laufen/', icon_url: iconBaseUrl + 'running-1.svg' },
-  { label: 'Feldhockey', href: '/kollektionen/feldhockey/', icon_url: iconBaseUrl + 'field-hockey-1.svg' },
-  { label: 'Volleyball', href: '/kollektionen/volleyball/', icon_url: iconBaseUrl + 'volleyball-1.svg' },
-  { label: 'Handball', href: '/kollektionen/handball/', icon_url: iconBaseUrl + 'handball-1.svg' },
-  { label: 'Radfahren', href: '/kollektionen/radfahren/', icon_url: iconBaseUrl + 'cycling-1.svg' },
-  { label: 'Fitness', href: '/kollektionen/fitness/', icon_url: iconBaseUrl + 'fitness-1.svg' },
-  { label: 'Golf', href: '/kollektionen/golf/', icon_url: iconBaseUrl + 'golf-1.svg' },
-  { label: 'eSports', href: '/kollektionen/esport/', icon_url: iconBaseUrl + 'esport-1.svg' },
-];
-
-const fallbackProdukte = [
-  { label: 'Sportbekleidung', href: '/kollektionen/personalisierte-sportbekleidung/', icon_url: iconBaseUrl + 'teamwear-1.svg' },
-  { label: 'Schals', href: '/kollektionen/personalisierte-fanschals/', icon_url: iconBaseUrl + 'scarves-1.svg' },
-  { label: 'Mützen', href: '/kollektionen/personalisierte-mutzen/', icon_url: iconBaseUrl + 'beanies-3.svg' },
-  { label: 'Kopfbedeckung', href: '/kollektionen/kopfbedeckung/', icon_url: iconBaseUrl + 'cap-1.svg' },
-  { label: 'Wimpel', href: '/kollektionen/personalisierte-wimpel/', icon_url: iconBaseUrl + 'pennants-3.svg' },
-  { label: 'Handtücher', href: '/kollektionen/handtucher/', icon_url: iconBaseUrl + 'towelst-1.svg' },
-  { label: 'Flaggen', href: '/kollektionen/flaggen/', icon_url: iconBaseUrl + 'flags-1.svg' },
-  { label: 'Schuhwerk', href: '/kollektionen/schuhwerk/', icon_url: iconBaseUrl + 'footwear-1.svg' },
-  { label: 'Taschen', href: '/kollektionen/taschen/', icon_url: iconBaseUrl + 'sportsbag-1.svg' },
-  { label: 'Textilien', href: '/kollektionen/personalisierte-textilien/', icon_url: iconBaseUrl + 'textile-1.svg' },
-  { label: 'Trinkflaschen', href: '/kollektionen/trinkflaschen/', icon_url: iconBaseUrl + 'drinkware-1.svg' },
-  { label: 'Bälle', href: '/kollektionen/balle/', icon_url: iconBaseUrl + 'balls-1.svg' },
-  { label: 'Zubehör', href: '/kollektionen/zubehor/', icon_url: iconBaseUrl + 'accessories-1.svg' },
-];
-
-const fallbackThemen = [
-  { label: 'Sommer', href: '/kollektionen/sommer/', icon_url: iconBaseUrl + 'summer-1.svg' },
-  { label: 'Winter', href: '/kollektionen/winter/', icon_url: iconBaseUrl + 'winter-1.svg' },
-  { label: 'Nachhaltigkeit', href: '/kollektionen/nachhaltigkeit/', icon_url: iconBaseUrl + 'sustainable-2.svg' },
-  { label: 'Hergestellt in Europa', href: '/kollektionen/hergestellt-in-europa/', icon_url: iconBaseUrl + 'made-in-europe-1.svg' },
-  { label: 'Mode', href: '/kollektionen/mode/', icon_url: iconBaseUrl + 'fashion-1.svg' },
-  { label: 'Schulanfang', href: '/kollektionen/schulanfang/', icon_url: iconBaseUrl + 'back-to-school-1.svg' },
-  { label: 'Tifo', href: '/kollektionen/tifo/', icon_url: iconBaseUrl + 'tifo-1.svg' },
-  { label: 'Weihnachten', href: '/kollektionen/weihnachten/', icon_url: iconBaseUrl + 'christmas-1.svg' },
-  { label: 'Kleine Preise', href: '/kollektionen/kleine-preise/', icon_url: iconBaseUrl + 'smallprices.svg' },
-  { label: 'Business', href: '/kollektionen/business/', icon_url: iconBaseUrl + 'business.svg' },
-  { label: 'Werbegeschenke', href: '/kollektionen/werbegeschenke/', icon_url: iconBaseUrl + 'giive-aways.svg' },
-  { label: 'Kinder', href: '/kollektionen/kinder/', icon_url: iconBaseUrl + 'kids.svg' },
-];
-
-// Fetch menu data from WordPress API at build time
-let sportarten = fallbackSportarten;
-let produkte = fallbackProdukte;
-let themen = fallbackThemen;
-
-try {
-  const response = await fetch('https://staging.hercules-merchandise.de/wp-json/hercules/v1/main-header-menu');
-  if (response.ok) {
-    const data = await response.json();
-    // API returns: { dropdowns: { sportarten: [...], produkte: [...], themen: [...] }, directLinks: [...] }
-    // Each item has: { id, title, url, slug, icon_url }
-    if (data.dropdowns?.sportarten?.length > 0) {
-      sportarten = data.dropdowns.sportarten.map((item: any) => ({
-        label: item.title,
-        href: item.url,
-        icon_url: item.icon_url || ''
-      }));
-    }
-    if (data.dropdowns?.produkte?.length > 0) {
-      produkte = data.dropdowns.produkte.map((item: any) => ({
-        label: item.title,
-        href: item.url,
-        icon_url: item.icon_url || ''
-      }));
-    }
-    if (data.dropdowns?.themen?.length > 0) {
-      themen = data.dropdowns.themen.map((item: any) => ({
-        label: item.title,
-        href: item.url,
-        icon_url: item.icon_url || ''
-      }));
-    }
-  }
-} catch (error) {
-  console.warn('Failed to fetch sticky menu from API, using fallback:', error);
-}
+// Get menu data from shared cache (fetched once per build)
+const menuData = await getMenuData();
+const { sportarten, produkte, themen } = menuData;
 ---
 
 <header class="sticky-header" id="sticky-header">

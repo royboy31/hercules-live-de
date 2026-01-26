@@ -1037,15 +1037,19 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                   </span>
                 </td>
                 <td>
-                  {config.estimated_delivery_date && <div>{config.estimated_delivery_date}</div>}
-                  <div>{priceInfo.leadTime}</div>
-                  <button
-                    type="button"
-                    onClick={() => setShowExpressPopup(true)}
-                    className="kd-express-link"
-                  >
-                    Ich benötige eine Expresslieferung
-                  </button>
+                  <span className="kd-delivery-content">
+                    {config.estimated_delivery_date && <span>{config.estimated_delivery_date}<br/></span>}
+                    <span>{priceInfo.leadTime}</span>
+                  </span>
+                  <span className="kd-express-link-wrapper">
+                    <button
+                      type="button"
+                      onClick={() => setShowExpressPopup(true)}
+                      className="kd-express-link"
+                    >
+                      Ich benötige eine Expresslieferung
+                    </button>
+                  </span>
                 </td>
               </tr>
             </tbody>

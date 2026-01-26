@@ -833,7 +833,20 @@ input[type="range"]::-webkit-slider-runnable-track {
 /* Lieferzeit tooltip */
 .kd-lieferzeit-cell {
     position: relative;
+}
+
+/* Lieferzeit row - align cells to top of content, express link separate */
+.offer-table tr:has(.kd-lieferzeit-cell) td {
     vertical-align: top;
+}
+
+.offer-table .kd-delivery-content {
+    display: inline;
+}
+
+.offer-table .kd-express-link-wrapper {
+    display: block;
+    margin-top: 8px;
 }
 
 .offer-table .kd-tooltip-trigger {

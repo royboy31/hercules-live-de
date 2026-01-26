@@ -1088,6 +1088,23 @@ input[type="range"]::-webkit-slider-runnable-track {
         min-width: 50px;
         text-align: right;
     }
+
+    /* Mobile: Lieferzeit row - align first cell to kd-delivery-content, not express-link */
+    .offer-table tr:has(.kd-lieferzeit-cell) td:first-child {
+        vertical-align: bottom !important;
+    }
+
+    .offer-table tr:has(.kd-lieferzeit-cell) td:last-child {
+        vertical-align: bottom !important;
+        position: relative;
+        padding-bottom: 30px !important;
+    }
+
+    .offer-table .kd-express-link-wrapper {
+        position: absolute;
+        bottom: 4px;
+        left: 5px;
+    }
 }
 
 /* ==========================================

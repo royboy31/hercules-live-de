@@ -61,28 +61,27 @@ try {
   const response = await fetch('https://staging.hercules-merchandise.de/wp-json/hercules/v1/main-header-menu');
   if (response.ok) {
     const data = await response.json();
-    // Use API data if available, otherwise use fallback
-    // API returns: { dropdowns: { sportarten: { items: [...] } } }
-    // Map title/url to label/href for consistency with fallback structure
-    if (data.dropdowns?.sportarten?.items?.length > 0) {
-      sportarten = data.dropdowns.sportarten.items.map((item: any) => ({
+    // API returns: { dropdowns: { sportarten: [...], produkte: [...], themen: [...] }, directLinks: [...] }
+    // Each item has: { id, title, url, slug, icon_url }
+    if (data.dropdowns?.sportarten?.length > 0) {
+      sportarten = data.dropdowns.sportarten.map((item: any) => ({
         label: item.title,
         href: item.url,
-        icon: item.icon?.split('/').pop() || ''
+        icon: item.icon_url ? item.icon_url.split('/').pop() : ''
       }));
     }
-    if (data.dropdowns?.produkte?.items?.length > 0) {
-      produkte = data.dropdowns.produkte.items.map((item: any) => ({
+    if (data.dropdowns?.produkte?.length > 0) {
+      produkte = data.dropdowns.produkte.map((item: any) => ({
         label: item.title,
         href: item.url,
-        icon: item.icon?.split('/').pop() || ''
+        icon: item.icon_url ? item.icon_url.split('/').pop() : ''
       }));
     }
-    if (data.dropdowns?.themen?.items?.length > 0) {
-      themen = data.dropdowns.themen.items.map((item: any) => ({
+    if (data.dropdowns?.themen?.length > 0) {
+      themen = data.dropdowns.themen.map((item: any) => ({
         label: item.title,
         href: item.url,
-        icon: item.icon?.split('/').pop() || ''
+        icon: item.icon_url ? item.icon_url.split('/').pop() : ''
       }));
     }
   }

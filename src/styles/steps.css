@@ -346,7 +346,7 @@ input[type="range"]::-ms-thumb {
 
 /* Step indicator/header */
 .pearl-step-indicator {
-    padding: 15px 21px;  /* Match step horizontal padding */
+    padding: 20px 21px 15px 21px;  /* Match product-title-wrapper height (20px top, 15px bottom) */
     margin: 0;
     font-family: Jost;
     font-weight: 500;

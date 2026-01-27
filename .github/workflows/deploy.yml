@@ -42,7 +42,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist/ --project-name=hercules-astro
+          command: pages deploy dist/ --project-name=hercules-de-live
 
       - name: Output deployment URL
-        run: echo "Deployed to https://hercules-astro.pages.dev"
+        run: echo "Deployed to https://hercules-de-live.pages.dev"

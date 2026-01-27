@@ -207,7 +207,7 @@ export default {
       const fetchOptions: RequestInit = isWordPress ? {
         cf: {
           // Resolve directly to origin server IP to bypass Cloudflare's APO cookie stripping
-          resolveOverride: 'origin-staging.hercules-merchandise.de',
+          resolveOverride: 'origin.hercules-merchandise.de',
           cacheTtl: 0,
           cacheEverything: false,
         } as any,

@@ -3,9 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
 [vars]
-ASTRO_ORIGIN = "https://hercules-astro.pages.dev"
-WORDPRESS_ORIGIN = "https://staging.hercules-merchandise.de"
+ASTRO_ORIGIN = "https://hercules-de-live.pages.dev"
+WORDPRESS_ORIGIN = "https://hercules-merchandise.de"
 
 routes = [
-  { pattern = "staging.hercules-merchandise.de/*", zone_name = "hercules-merchandise.de" }
+  { pattern = "hercules-merchandise.de/*", zone_name = "hercules-merchandise.de" }
 ]

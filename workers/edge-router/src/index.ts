@@ -54,7 +54,7 @@ const WORDPRESS_PATHS = [
 
   // Product customization/purchase (WordPress for add-to-cart functionality)
   '/kaufen',     // Astro links here for actual purchase - routes to WordPress /produkte/
-  '/shop',
+  // Note: /shop is now redirected to /kollektionen/ via 301
 
   // Contact & Quote pages
   '/kontakt',
@@ -140,10 +140,76 @@ export default {
       });
     }
 
-    // Handle /blog -> /blogs redirect (keep on same domain)
+    // ============================================
+    // 301 REDIRECTS - Old URLs to new URL structure
+    // ============================================
+
+    // /blog -> /blogs
     if (pathname === '/blog' || pathname === '/blog/') {
       const redirectUrl = new URL('/blogs/', url.origin);
       return Response.redirect(redirectUrl.toString(), 301);
+    }
+
+    // /collections/* -> /kollektionen/* (English to German)
+    if (pathname === '/collections' || pathname === '/collections/') {
+      return Response.redirect(new URL('/kollektionen/', url.origin).toString(), 301);
+    }
+    if (pathname.startsWith('/collections/')) {
+      const slug = pathname.replace('/collections/', '');
+      return Response.redirect(new URL(`/kollektionen/${slug}`, url.origin).toString(), 301);
+    }
+
+    // /product-category/* -> /kollektionen/* (WooCommerce default category URL)
+    if (pathname === '/product-category' || pathname === '/product-category/') {
+      return Response.redirect(new URL('/kollektionen/', url.origin).toString(), 301);
+    }
+    if (pathname.startsWith('/product-category/')) {
+      const slug = pathname.replace('/product-category/', '');
+      return Response.redirect(new URL(`/kollektionen/${slug}`, url.origin).toString(), 301);
+    }
+
+    // /product/* -> /produkte/* (WooCommerce default product URL - singular)
+    if (pathname.startsWith('/product/') && !pathname.startsWith('/product-category/')) {
+      const slug = pathname.replace('/product/', '');
+      return Response.redirect(new URL(`/produkte/${slug}`, url.origin).toString(), 301);
+    }
+
+    // /products/* -> /produkte/* (English plural)
+    if (pathname === '/products' || pathname === '/products/') {
+      return Response.redirect(new URL('/produkte/', url.origin).toString(), 301);
+    }
+    if (pathname.startsWith('/products/')) {
+      const slug = pathname.replace('/products/', '');
+      return Response.redirect(new URL(`/produkte/${slug}`, url.origin).toString(), 301);
+    }
+
+    // /shop -> /kollektionen (shop page redirect)
+    if (pathname === '/shop' || pathname === '/shop/') {
+      return Response.redirect(new URL('/kollektionen/', url.origin).toString(), 301);
+    }
+
+    // /kategorie/* -> /kollektionen/* (German WooCommerce category)
+    if (pathname === '/kategorie' || pathname === '/kategorie/') {
+      return Response.redirect(new URL('/kollektionen/', url.origin).toString(), 301);
+    }
+    if (pathname.startsWith('/kategorie/')) {
+      const slug = pathname.replace('/kategorie/', '');
+      return Response.redirect(new URL(`/kollektionen/${slug}`, url.origin).toString(), 301);
+    }
+
+    // /category/* -> /kollektionen/* (English category)
+    if (pathname === '/category' || pathname === '/category/') {
+      return Response.redirect(new URL('/kollektionen/', url.origin).toString(), 301);
+    }
+    if (pathname.startsWith('/category/')) {
+      const slug = pathname.replace('/category/', '');
+      return Response.redirect(new URL(`/kollektionen/${slug}`, url.origin).toString(), 301);
+    }
+
+    // /artikel/* -> /produkte/* (German article/product)
+    if (pathname.startsWith('/artikel/')) {
+      const slug = pathname.replace('/artikel/', '');
+      return Response.redirect(new URL(`/produkte/${slug}`, url.origin).toString(), 301);
     }
 
     // Handle CORS preflight for API requests

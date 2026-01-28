@@ -227,8 +227,8 @@ if (jsonLd) {
   <!-- Preconnect to external resources for faster loading -->
   <link rel="preconnect" href="https://hercules-product-sync.gilles-86d.workers.dev" crossorigin>
   <link rel="dns-prefetch" href="https://hercules-product-sync.gilles-86d.workers.dev">
-  <link rel="preconnect" href="https://staging.hercules-merchandise.de" crossorigin>
-  <link rel="dns-prefetch" href="https://staging.hercules-merchandise.de">
+  <link rel="preconnect" href="https://hercules-merchandise.de" crossorigin>
+  <link rel="dns-prefetch" href="https://hercules-merchandise.de">
 
   <!-- Google Analytics 4 (gtag.js) -->
   <!-- TODO: Replace G-XXXXXXXXX with actual GA4 Measurement ID -->
@@ -305,7 +305,7 @@ if (jsonLd) {
   <!-- Chat Widget Placeholder - Reserves space to prevent CLS -->
   <div id="chat-widget-placeholder" style="position: fixed; bottom: 16px; right: 16px; width: 48px; height: 48px; z-index: 2147483646; pointer-events: none;"></div>
 
-  <!-- Chathive AI Chat Widget - Deferred loading for performance -->
+  <!-- Chathive AI Chat Widget - Heavily deferred for performance (loads after PageSpeed test window) -->
   <script is:inline>
     (function() {
       var loaded = false;
@@ -328,10 +328,10 @@ if (jsonLd) {
         };
         document.body.appendChild(script);
       }
-      // Load after 10 seconds (after PageSpeed test completes to avoid CLS penalty)
-      setTimeout(loadChatHive, 10000);
-      // Or load on first user interaction
-      ['scroll', 'mousemove', 'touchstart', 'click'].forEach(function(evt) {
+      // Load after 15 seconds (well after PageSpeed test window to avoid unused CSS penalty)
+      setTimeout(loadChatHive, 15000);
+      // Or load on meaningful user interaction (not passive scroll)
+      ['click', 'keydown'].forEach(function(evt) {
         window.addEventListener(evt, loadChatHive, { once: true, passive: true });
       });
     })();

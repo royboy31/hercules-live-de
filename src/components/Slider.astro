@@ -53,6 +53,7 @@ const slides = [
               height="550"
               fetchpriority={slide.id === 1 ? "high" : "low"}
               loading={slide.id === 1 ? "eager" : "lazy"}
+              decoding={slide.id === 1 ? "sync" : "async"}
             />
             <div class="slide-bg" aria-hidden="true"></div>
             <a href={slide.buttonLink} class="slide-inner">

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import QuantityRequestPopup from './QuantityRequestPopup';
 import ExpressDeliveryPopup from './ExpressDeliveryPopup';
 import ContactFormPopup from './ContactFormPopup';
+import { cartStore } from '../lib/cartStore';
 
 // Types matching the API response
 interface TermInfo {
@@ -464,14 +465,13 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
       const result = await response.json();
 
       if (result.success) {
-        // Use cart data directly from response (Hercules Cart API returns it)
+        // Update cart in localStorage
         if (result.cart) {
-          window.dispatchEvent(new CustomEvent('hercules:cart-updated', {
-            detail: { cart: result.cart }
-          }));
+          // Full cart data from API - save to localStorage
+          cartStore.set(result.cart);
         } else {
-          // Fallback: dispatch event without data, UserSession will refetch
-          window.dispatchEvent(new CustomEvent('hercules:cart-updated'));
+          // Fallback: increment cart count locally
+          cartStore.incrementCount(1);
         }
 
         // Small delay to let user see the cart update, then redirect

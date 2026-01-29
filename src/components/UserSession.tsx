@@ -1,8 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { sessionManager, type SessionData, type CartItem } from '../lib/sessionManager';
+import { cartStore, type CartData } from '../lib/cartStore';
 
 interface UserSessionProps {
   type: 'cart' | 'account' | 'cart-count';
+}
+
+interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  first_name: string;
+  avatar: string;
 }
 
 // Use the same domain when accessed through Edge Router, otherwise use staging
@@ -23,12 +31,78 @@ const getBaseUrl = () => {
 };
 
 export default function UserSession({ type }: UserSessionProps) {
-  const [session, setSession] = useState<SessionData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Cart state from localStorage
+  const [cart, setCart] = useState<CartData>(cartStore.get());
+  const [cartLoading, setCartLoading] = useState(false);
+
+  // User session state (only fetched for account type)
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<UserData | null>(null);
+  const [userLoading, setUserLoading] = useState(type === 'account');
+
+  // UI state
   const [showCartDropdown, setShowCartDropdown] = useState(false);
   const [removingItem, setRemovingItem] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch initial cart data if needed (first visit only)
+  const fetchInitialCart = async () => {
+    if (!cartStore.needsInitialSync()) return;
+
+    setCartLoading(true);
+    try {
+      const baseUrl = getBaseUrl();
+      const response = await fetch(`${baseUrl}/wp-json/hercules/v1/session`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Accept': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.cart) {
+          cartStore.set(data.cart);
+        }
+        // Also update user state if available
+        if (data.logged_in !== undefined) {
+          setIsLoggedIn(data.logged_in);
+          setUser(data.user);
+        }
+      }
+    } catch (err) {
+      console.error('[UserSession] Failed to fetch initial cart:', err);
+    } finally {
+      setCartLoading(false);
+      setUserLoading(false);
+    }
+  };
+
+  // Fetch user session (for account icon only)
+  const fetchUserSession = async () => {
+    try {
+      const baseUrl = getBaseUrl();
+      const response = await fetch(`${baseUrl}/wp-json/hercules/v1/session`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Accept': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsLoggedIn(data.logged_in || false);
+        setUser(data.user || null);
+
+        // Also sync cart data while we're at it
+        if (data.cart) {
+          cartStore.set(data.cart);
+        }
+      }
+    } catch (err) {
+      console.error('[UserSession] Failed to fetch user session:', err);
+    } finally {
+      setUserLoading(false);
+    }
+  };
 
   // Remove item from cart
   const removeFromCart = async (cartItemKey: string) => {
@@ -36,7 +110,6 @@ export default function UserSession({ type }: UserSessionProps) {
     try {
       const baseUrl = getBaseUrl();
 
-      // Use custom Hercules API to remove item
       const response = await fetch(`${baseUrl}/wp-json/hercules/v1/cart/remove`, {
         method: 'POST',
         credentials: 'include',
@@ -49,14 +122,8 @@ export default function UserSession({ type }: UserSessionProps) {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.cart) {
-          // Update session manager with new cart data
-          sessionManager.updateCart(data.cart);
-          // Dispatch event so other components know cart was updated
-          window.dispatchEvent(new CustomEvent('hercules:cart-updated', { detail: { cart: data.cart } }));
-        } else {
-          // Fallback: refresh session
-          await sessionManager.fetchSession(true);
-          window.dispatchEvent(new CustomEvent('hercules:cart-updated'));
+          // Update localStorage with new cart data from server
+          cartStore.set(data.cart);
         }
       } else {
         console.error('Failed to remove item from cart');
@@ -69,27 +136,26 @@ export default function UserSession({ type }: UserSessionProps) {
   };
 
   useEffect(() => {
-    // Subscribe to session manager - only ONE API call is made across all components
-    const unsubscribe = sessionManager.subscribe((newSession, isLoading, sessionError) => {
-      setSession(newSession);
-      setLoading(isLoading);
-      setError(sessionError);
+    // Subscribe to cart changes from localStorage
+    const unsubscribe = cartStore.subscribe((newCart) => {
+      setCart(newCart);
     });
 
-    // Refresh on tab visibility change
+    // Fetch initial cart if needed (first visit)
+    if (cartStore.needsInitialSync()) {
+      fetchInitialCart();
+    }
+
+    // For account type, always fetch user session
+    if (type === 'account') {
+      fetchUserSession();
+    }
+
+    // Refresh cart on tab visibility change
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        sessionManager.fetchSession(true);
-      }
-    };
-
-    // Listen for custom cart update events
-    const handleCartUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail?.cart) {
-        sessionManager.updateCart(customEvent.detail.cart);
-      } else {
-        sessionManager.fetchSession(true);
+        // Re-read from localStorage (might have changed in another tab)
+        setCart(cartStore.get());
       }
     };
 
@@ -101,22 +167,20 @@ export default function UserSession({ type }: UserSessionProps) {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('hercules:cart-updated', handleCartUpdate);
     document.addEventListener('mousedown', handleClickOutside);
 
     return () => {
       unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('hercules:cart-updated', handleCartUpdate);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [type]);
 
   // Cart count badge only
   if (type === 'cart-count') {
-    const count = session?.cart?.count || 0;
+    const count = cart.count || 0;
 
-    if (loading) {
+    if (cartLoading) {
       return null; // Don't show anything while loading
     }
 
@@ -133,9 +197,9 @@ export default function UserSession({ type }: UserSessionProps) {
 
   // Full cart icon with badge and dropdown
   if (type === 'cart') {
-    const count = session?.cart?.count || 0;
-    const items = session?.cart?.items || [];
-    const subtotal = session?.cart?.subtotal || '€0,00';
+    const count = cart.count || 0;
+    const items = cart.items || [];
+    const subtotal = cart.subtotal || '€0,00';
 
     // Container styles
     const containerStyle: React.CSSProperties = {
@@ -247,22 +311,6 @@ export default function UserSession({ type }: UserSessionProps) {
       margin: 0,
     };
 
-    const removeButtonStyle: React.CSSProperties = {
-      background: 'none',
-      border: 'none',
-      padding: '4px',
-      cursor: 'pointer',
-      color: '#999',
-      fontSize: '18px',
-      lineHeight: 1,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      transition: 'color 0.2s',
-      marginLeft: '8px',
-      flexShrink: 0,
-    };
-
     const subtotalRowStyle: React.CSSProperties = {
       display: 'flex',
       justifyContent: 'space-between',
@@ -336,7 +384,7 @@ export default function UserSession({ type }: UserSessionProps) {
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 31 31" fill="none">
             <path d="M12.5938 26.1562C12.5938 26.5395 12.4801 26.914 12.2672 27.2327C12.0543 27.5513 11.7517 27.7996 11.3977 27.9463C11.0437 28.0929 10.6541 28.1313 10.2783 28.0565C9.90242 27.9818 9.5572 27.7972 9.28623 27.5263C9.01527 27.2553 8.83074 26.9101 8.75598 26.5342C8.68122 26.1584 8.71959 25.7688 8.86623 25.4148C9.01288 25.0608 9.26121 24.7582 9.57983 24.5453C9.89845 24.3324 10.273 24.2188 10.6562 24.2188C11.1701 24.2188 11.6629 24.4229 12.0263 24.7862C12.3896 25.1496 12.5938 25.6424 12.5938 26.1562ZM23.25 24.2188C22.8668 24.2188 22.4922 24.3324 22.1736 24.5453C21.855 24.7582 21.6066 25.0608 21.46 25.4148C21.3133 25.7688 21.275 26.1584 21.3497 26.5342C21.4245 26.9101 21.609 27.2553 21.88 27.5263C22.1509 27.7972 22.4962 27.9818 22.872 28.0565C23.2479 28.1313 23.6374 28.0929 23.9914 27.9463C24.3455 27.7996 24.6481 27.5513 24.861 27.2327C25.0739 26.914 25.1875 26.5395 25.1875 26.1562C25.1875 25.6424 24.9834 25.1496 24.62 24.7862C24.2567 24.4229 23.7639 24.2188 23.25 24.2188ZM29.0274 8.97789L25.9225 20.1524C25.7518 20.7628 25.3867 21.3009 24.8826 21.6851C24.3784 22.0693 23.7627 22.2786 23.1289 22.2812H11.16C10.5243 22.281 9.90613 22.0728 9.39978 21.6884C8.89343 21.3041 8.52668 20.7646 8.35547 20.1524L4.1075 4.84375H1.9375C1.68057 4.84375 1.43417 4.74169 1.25249 4.56001C1.07081 4.37833 0.96875 4.13193 0.96875 3.875C0.96875 3.61807 1.07081 3.37167 1.25249 3.18999C1.43417 3.00831 1.68057 2.90625 1.9375 2.90625H4.84375C5.05554 2.90621 5.26152 2.97558 5.43014 3.10374C5.59875 3.2319 5.72073 3.41178 5.77738 3.61586L6.92535 7.75H28.0938C28.2431 7.74997 28.3904 7.78447 28.5242 7.85081C28.658 7.91714 28.7747 8.01352 28.8651 8.1324C28.9555 8.25129 29.0172 8.38946 29.0453 8.53613C29.0735 8.6828 29.0673 8.83399 29.0274 8.97789ZM26.8186 9.6875H7.46422L10.2264 19.6341C10.283 19.8382 10.405 20.0181 10.5736 20.1463C10.7422 20.2744 10.9482 20.3438 11.16 20.3438H23.1289C23.3407 20.3438 23.5467 20.2744 23.7153 20.1463C23.8839 20.0181 24.0059 19.8382 24.0625 19.6341L26.8186 9.6875Z" fill="#253461"></path>
           </svg>
-          {!loading && count > 0 && (
+          {!cartLoading && count > 0 && (
             <span style={badgeStyle}>
               {count > 99 ? '99+' : count}
             </span>
@@ -422,8 +470,6 @@ export default function UserSession({ type }: UserSessionProps) {
 
   // Account link with user state
   if (type === 'account') {
-    const isLoggedIn = session?.logged_in || false;
-    const user = session?.user;
     const accountUrl = '/mein-konto/';
 
     // Full icon styles to match WordPress exactly

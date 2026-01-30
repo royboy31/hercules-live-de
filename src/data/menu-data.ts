@@ -3,8 +3,8 @@
  * This prevents Header, MobileMenu, and StickyHeader from each making separate API calls
  */
 
-const MENU_API_URL = 'https://staging.hercules-merchandise.de/wp-json/hercules/v1/main-header-menu';
-const iconBaseUrl = 'https://staging.hercules-merchandise.de/wp-content/uploads/hercules-menu-icons/';
+const MENU_API_URL = 'https://hercules-merchandise.de/wp-json/hercules/v1/main-header-menu';
+const iconBaseUrl = 'https://hercules-merchandise.de/wp-content/uploads/hercules-menu-icons/';
 
 export interface MenuItem {
   label: string;
@@ -59,7 +59,7 @@ const fallbackData: MenuData = {
     { label: 'Tifo', href: '/kollektionen/tifo/', icon_url: iconBaseUrl + 'tifo-1.svg' },
     { label: 'Weihnachten', href: '/kollektionen/weihnachten/', icon_url: iconBaseUrl + 'christmas-1.svg' },
     { label: 'Kleine Preise', href: '/kollektionen/kleine-preise/', icon_url: iconBaseUrl + 'smallprices.svg' },
-    { label: 'Business', href: '/kollektionen/business/', icon_url: iconBaseUrl + 'business.svg' },
+    { label: 'Geschäft', href: '/kollektionen/business/', icon_url: iconBaseUrl + 'business.svg' },
     { label: 'Werbegeschenke', href: '/kollektionen/werbegeschenke/', icon_url: iconBaseUrl + 'giive-aways.svg' },
     { label: 'Kinder', href: '/kollektionen/kinder/', icon_url: iconBaseUrl + 'kids.svg' },
   ],

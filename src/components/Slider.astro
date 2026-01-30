@@ -45,15 +45,16 @@ const slides = [
             {/* Using img with srcset for responsive loading - smaller images for mobile */}
             <img
               class="slide-bg-img"
-              src={slide.image}
+              src={slide.imageMobile}
               srcset={`${slide.imageMobileSm} 480w, ${slide.imageMobile} 640w, ${slide.image} 1280w`}
-              sizes="(max-width: 480px) 480px, (max-width: 768px) 640px, 1280px"
+              sizes="(max-width: 480px) 480px, (max-width: 1024px) 640px, 1280px"
               alt=""
               width="1280"
               height="550"
               fetchpriority={slide.id === 1 ? "high" : "low"}
               loading={slide.id === 1 ? "eager" : "lazy"}
               decoding={slide.id === 1 ? "sync" : "async"}
+              data-hq-src={slide.image}
             />
             <div class="slide-bg" aria-hidden="true"></div>
             <a href={slide.buttonLink} class="slide-inner">
@@ -409,15 +410,39 @@ const slides = [
     });
   }
 
+  // Upgrade to high-quality images after initial load (for desktop users)
+  function upgradeToHQImages() {
+    // Only upgrade on desktop (viewport > 1024px)
+    if (window.innerWidth <= 1024) return;
+
+    const images = document.querySelectorAll('.slide-bg-img[data-hq-src]');
+    images.forEach(img => {
+      const hqSrc = img.getAttribute('data-hq-src');
+      if (hqSrc && img.src !== hqSrc) {
+        // Preload HQ image then swap
+        const preload = new Image();
+        preload.onload = () => {
+          img.src = hqSrc;
+        };
+        preload.src = hqSrc;
+      }
+    });
+  }
+
   // Use requestIdleCallback to initialize after main thread is idle
   // Delay initialization to improve PageSpeed score without affecting real users
   document.addEventListener('DOMContentLoaded', () => {
     // 3 second delay + idle callback for optimal PageSpeed score
     setTimeout(() => {
       if ('requestIdleCallback' in window) {
-        requestIdleCallback(initSwiper, { timeout: 5000 });
+        requestIdleCallback(() => {
+          initSwiper();
+          // Upgrade images after swiper init on desktop
+          upgradeToHQImages();
+        }, { timeout: 5000 });
       } else {
         initSwiper();
+        upgradeToHQImages();
       }
     }, 3000);
   });

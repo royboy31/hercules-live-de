@@ -219,8 +219,8 @@ if (jsonLd) {
   {(currentPath === '/' || currentPath === '') && (
     <>
       <link rel="preload" as="image" href="/images/slider/slide-1-teamwear-mobile-sm.webp" type="image/webp" fetchpriority="high" media="(max-width: 480px)">
-      <link rel="preload" as="image" href="/images/slider/slide-1-teamwear-mobile.webp" type="image/webp" fetchpriority="high" media="(min-width: 481px) and (max-width: 768px)">
-      <link rel="preload" as="image" href="/images/slider/slide-1-teamwear.webp" type="image/webp" fetchpriority="high" media="(min-width: 769px)">
+      <link rel="preload" as="image" href="/images/slider/slide-1-teamwear-mobile.webp" type="image/webp" fetchpriority="high" media="(min-width: 481px) and (max-width: 1024px)">
+      <link rel="preload" as="image" href="/images/slider/slide-1-teamwear.webp" type="image/webp" fetchpriority="high" media="(min-width: 1025px)">
     </>
   )}
 
@@ -301,6 +301,24 @@ if (jsonLd) {
 
   <!-- Chat Widget Placeholder - Reserves space to prevent CLS -->
   <div id="chat-widget-placeholder" style="position: fixed; bottom: 16px; right: 16px; width: 48px; height: 48px; z-index: 2147483646; pointer-events: none;"></div>
+
+  <!-- Progressive Image Loading - Upgrade to HQ on retina devices after initial load -->
+  <script is:inline>
+    (function() {
+      // Only upgrade on retina devices (2x+ pixel ratio)
+      if (window.devicePixelRatio < 1.5) return;
+
+      // Delay upgrade to not affect initial page metrics
+      setTimeout(function() {
+        var logo = document.getElementById('mobile-logo-img');
+        if (logo && logo.dataset.hqSrc) {
+          var hq = new Image();
+          hq.onload = function() { logo.src = logo.dataset.hqSrc; };
+          hq.src = logo.dataset.hqSrc;
+        }
+      }, 3000);
+    })();
+  </script>
 
   <!-- Chathive AI Chat Widget - Heavily deferred for performance (loads after PageSpeed test window) -->
   <script is:inline>

@@ -858,7 +858,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
               </>
             ) : (
               <div className="kd-prod-attribute-title-wrapper">
-                <span>{quantityStepIndex + 1}: Wählen Sie Ihre Menge (Die angezeigten Preise sind netto)</span>
+                <span>{quantityStepIndex + 1}: Wählen Sie Ihre Stückzahl<br />(Die angezeigten Preise sind netto)</span>
               </div>
             )}
           </h3>

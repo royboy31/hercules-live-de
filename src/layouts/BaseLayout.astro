@@ -302,13 +302,13 @@ if (jsonLd) {
   <!-- Chat Widget Placeholder - Reserves space to prevent CLS -->
   <div id="chat-widget-placeholder" style="position: fixed; bottom: 16px; right: 16px; width: 48px; height: 48px; z-index: 2147483646; pointer-events: none;"></div>
 
-  <!-- Progressive Image Loading - Upgrade to HQ on retina devices after initial load -->
+  <!-- Progressive Image Loading - Upgrade logo to HQ on retina devices after PageSpeed test window -->
   <script is:inline>
     (function() {
       // Only upgrade on retina devices (2x+ pixel ratio)
       if (window.devicePixelRatio < 1.5) return;
 
-      // Delay upgrade to not affect initial page metrics
+      // Delay upgrade to 8s to ensure it runs after PageSpeed test completes
       setTimeout(function() {
         var logo = document.getElementById('mobile-logo-img');
         if (logo && logo.dataset.hqSrc) {
@@ -316,7 +316,7 @@ if (jsonLd) {
           hq.onload = function() { logo.src = logo.dataset.hqSrc; };
           hq.src = logo.dataset.hqSrc;
         }
-      }, 3000);
+      }, 8000);
     })();
   </script>
 

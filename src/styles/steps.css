@@ -52,7 +52,7 @@
     line-height: 100%;
     letter-spacing: 0%;
     text-transform: uppercase;
-    overflow: hidden;
+    word-break: break-word;
 }
 
 .pearl-step.default-select {

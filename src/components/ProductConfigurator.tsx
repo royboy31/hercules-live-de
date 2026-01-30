@@ -120,8 +120,8 @@ function getAddonPriceAtTierQty(addon: AddonData, selectedValue: string | string
   let total = 0;
 
   for (const name of selectedNames) {
-    // Skip "Keine" selection - it has no price
-    if (name === 'Keine') continue;
+    // Skip "Keins" selection - it has no price
+    if (name === 'Keins') continue;
 
     const option = addon.options.find(o => o.name === name);
     if (!option || !option.price_table || option.price_table.length === 0) continue;
@@ -753,16 +753,16 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                 {/* Multiple Choice (checkboxes) for addons like Zubehör - auto-advances on selection */}
                 {addon.display_type === 'multiple_choise' && (() => {
                   const currentSelected = Array.isArray(selectedValue) ? selectedValue : (selectedValue ? [selectedValue] : []);
-                  const isNoneChecked = currentSelected.includes('Keine');
+                  const isNoneChecked = currentSelected.includes('Keins');
 
                   const handleCheckboxChange = (value: string, checked: boolean) => {
                     let newSelected: string[];
-                    if (value === 'Keine') {
-                      // "Keine" clears all other selections and advances immediately
-                      newSelected = checked ? ['Keine'] : [];
+                    if (value === 'Keins') {
+                      // "Keins" clears all other selections and advances immediately
+                      newSelected = checked ? ['Keins'] : [];
                     } else {
-                      // Remove 'Keine' if selecting an actual option
-                      const withoutNone = currentSelected.filter(v => v !== 'Keine');
+                      // Remove 'Keins' if selecting an actual option
+                      const withoutNone = currentSelected.filter(v => v !== 'Keins');
                       if (checked) {
                         newSelected = [...withoutNone, value];
                       } else {
@@ -778,17 +778,17 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
 
                   return (
                     <div className="kd-step-choises">
-                      {/* "Keine" (None) checkbox - always first */}
+                      {/* "Keins" (None) checkbox - always first */}
                       <label style={{ display: 'block', marginBottom: '8px' }}>
                         <input
                           type="checkbox"
                           name={String(addon.id)}
-                          value="Keine"
+                          value="Keins"
                           checked={isNoneChecked}
-                          onChange={(e) => handleCheckboxChange('Keine', e.target.checked)}
+                          onChange={(e) => handleCheckboxChange('Keins', e.target.checked)}
                           style={{ marginRight: '8px' }}
                         />
-                        Keine
+                        Keins
                       </label>
                       {/* Dynamic options from database */}
                       {addon.options.map((option, index) => {

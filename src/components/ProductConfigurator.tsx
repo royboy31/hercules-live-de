@@ -554,7 +554,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
       {/* Step indicator - matches WordPress exactly */}
       <div className="pearl-step-indicator">
         <h2>ERSTELLEN SIE IHR PRODUKT — SCHRITT {currentStepNum} VON {totalSteps}</h2>
-        <span>AB {minQuantity} STÜCKE</span>
+        <span>Ab {minQuantity} Stück</span>
       </div>
 
       {/* Attribute Steps - Only render visible attributes (excludes single default options) */}

@@ -931,7 +931,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
 
               {/* Custom quantity slider */}
               <div className="range-wrapper">
-                <h4 className="specific-qty-title">Oder wählen Sie eine bestimmte Menge</h4>
+                <h4 className="specific-qty-title">Oder geben Sie Ihre genaue Stückzahl an</h4>
 
                 <div className="kd-range-slider-container">
                   <div

@@ -19,8 +19,8 @@ crons = ["0 3 * * *"]  # Run daily at 3 AM UTC
 
 # Environment variables (set via wrangler secret)
 [vars]
-WC_STORE_URL = "https://staging.hercules-merchandise.de"
-ASTRO_SITE_URL = "https://hercules-astro.pages.dev"
+WC_STORE_URL = "https://hercules-merchandise.de"
+ASTRO_SITE_URL = "https://hercules-de-live.pages.dev"
 
 # Development environment
 [env.dev]

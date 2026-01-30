@@ -903,7 +903,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                     </div>
                     <div className="kd-radio-meta">
                       {savings > 0 && (
-                        <span className="save">SPEICHERN {savings}%</span>
+                        <span className="save">Sparen Sie {savings}%</span>
                       )}
                       <span>{currencySymbol}{totalPrice.toFixed(2).replace('.', ',')}</span>
                     </div>

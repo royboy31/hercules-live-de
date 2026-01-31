@@ -1163,7 +1163,10 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     {/* Vision Section - Verwirklichen Sie Ihre Vision */}
     <div className="kd-vision-section">
       <div className="kd-vision-images">
-        <img src="/images/design/design-mockup.webp" alt="Custom merchandise design" width="494" height="637" loading="lazy" />
+        <picture>
+          <source media="(max-width: 768px)" srcSet="/images/design/design-mockup-mobile.webp" width="220" height="284" />
+          <img src="/images/design/design-mockup.webp" alt="Custom merchandise design" width="494" height="637" loading="lazy" decoding="async" />
+        </picture>
       </div>
       <div className="kd-vision-content">
         <h3>VERWIRKLICHEN SIE IHRE VISION <span style={{ color: '#469ADC' }}>ERHALTEN SIE EIN INDIVIDUELLES DESIGN!</span></h3>

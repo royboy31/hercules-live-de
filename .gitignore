@@ -25,3 +25,11 @@ npm-debug.log*
 # Temporary
 tmp/
 *.tmp
+
+# Project docs with credentials (keep local only)
+CLAUDE.md
+SESSION-*.md
+SESSION-STATUS.md
+PROGRESS-*.md
+GO-LIVE-PROGRESS.md
+live-plan.md

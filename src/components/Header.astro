@@ -239,11 +239,13 @@ const { sportarten, produkte, themen, directLinks } = menuData;
     display: block;
   }
 
-  /* Search - 708px width, 144px gap from logo */
+  /* Search - 708px width, 144px gap from logo, bottom-aligned to match WordPress Elementor */
   .header-search {
     width: 708px;
     flex-shrink: 0;
     margin-left: 144px;
+    align-self: flex-end;
+    padding-bottom: 10px;
   }
 
   /* Override ProductSearch component styles to match header */
@@ -260,13 +262,15 @@ const { sportarten, produkte, themen, directLinks } = menuData;
     color: #253461;
   }
 
-  /* Header Icons - right aligned, center vertically */
+  /* Header Icons - right aligned, bottom-aligned to match WordPress Elementor */
   .header-icons {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
+    align-self: flex-end;
     gap: 10px;
     flex-shrink: 0;
     margin-left: auto;
+    padding-bottom: 10px;
   }
 
   /* Icon buttons - elementor-element-5bdc66d, dd73c14, d8c5621 */

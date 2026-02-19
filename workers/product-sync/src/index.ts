@@ -20,11 +20,11 @@ export interface Env {
 }
 
 // GitHub repo for triggering auto-rebuild
-const GITHUB_REPO = 'kamindu01/hercules-astro';
+const GITHUB_REPO = 'royboy31/hercules-live-de';
 const GITHUB_WORKFLOW = 'deploy.yml';
 
 // Worker base URL for image serving
-const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
+const WORKER_URL = 'https://hercules-product-sync-live.gilles-86d.workers.dev';
 
 interface WCProduct {
   id: number;
@@ -735,7 +735,7 @@ const MAX_GALLERY_IMAGES = 5;
 
 // Main sync function with batching support
 // forceImageRefresh: if true, re-download all images even if already cached (for upgrading image sizes)
-async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: boolean = false): Promise<{ synced: number; errors: string[]; hasMore: boolean; nextOffset: number }> {
+async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: boolean = false, forceIndex: boolean = false): Promise<{ synced: number; errors: string[]; hasMore: boolean; nextOffset: number }> {
   const client = new WooCommerceClient(
     env.WC_STORE_URL,
     env.WC_CONSUMER_KEY,
@@ -843,15 +843,25 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
 
     // Update product index with full list on first batch
     if (offset === 0) {
-      const productIndex = allProducts.map(p => ({
-        id: p.id,
-        name: p.name,
-        slug: p.slug,
-        featured: p.featured,
-        categories: p.categories.map(c => c.slug),
-        menu_order: p.menu_order || 0,
-      }));
-      await env.PRODUCTS_KV.put('product:index', JSON.stringify(productIndex));
+      const existingIndexStr = await env.PRODUCTS_KV.get('product:index');
+      const existingCount = existingIndexStr ? JSON.parse(existingIndexStr).length : 0;
+      const threshold = Math.floor(existingCount * 0.8);
+
+      if (allProducts.length === 0) {
+        console.error(`syncAllProducts: WooCommerce returned 0 products — skipping product:index write (existing: ${existingCount})`);
+      } else if (existingCount > 0 && allProducts.length < threshold && !forceIndex) {
+        console.error(`syncAllProducts: WooCommerce returned ${allProducts.length} products but existing index has ${existingCount} (threshold: ${threshold}) — skipping product:index write. Add ?force_index=true to /sync to override.`);
+      } else {
+        const productIndex = allProducts.map(p => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          featured: p.featured,
+          categories: p.categories.map(c => c.slug),
+          menu_order: p.menu_order || 0,
+        }));
+        await env.PRODUCTS_KV.put('product:index', JSON.stringify(productIndex));
+      }
     }
 
     // Store sync timestamp only when complete
@@ -879,6 +889,9 @@ async function deleteProduct(env: Env, productId: number): Promise<void> {
     await env.PRODUCTS_KV.delete(`product:slug:${product.slug}`);
     // Delete cached image
     await env.PRODUCTS_KV.delete(`image:${product.slug}`);
+    // Invalidate product-config cache
+    await env.PRODUCTS_KV.delete(`product-config:${product.id}`);
+    await env.PRODUCTS_KV.delete(`product-config:${product.slug}`);
   }
 
   // Delete by ID
@@ -924,35 +937,35 @@ async function syncSingleProduct(env: Env, productId: number): Promise<SyncedPro
     false // Don't sync images - no R2 bucket
   );
 
-  // Cache ALL gallery images in KV (same logic as batch sync)
-  // Force refresh on webhook updates to ensure image changes are captured
-  // Cache both main (361x361) and thumb (100x100) versions
+  // Cache gallery images in KV — skip if already cached (saves KV writes on title/price/text edits).
+  // Images only need re-caching when the WordPress filename changes (which happens when a new
+  // image is uploaded), so forceRefresh: false is correct here. The batch sync uses forceRefresh: true.
   let cachedImageCount = 0;
   if (product.slug && product.images?.length > 0) {
     const imagesToCache = Math.min(product.images.length, MAX_GALLERY_IMAGES);
     for (let i = 0; i < imagesToCache; i++) {
       const img = product.images[i];
       if (img?.src) {
-        // Cache main size (361x361) for category cards
+        // Cache main size (361x361) for category cards — skip if already in KV
         const mainUrl = img.src.replace(/(\.[^.]+)$/, '-361x361$1');
-        let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, true, 'full');
+        let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, false, 'full');
         if (!mainSuccess && img.src !== mainUrl) {
           // Fallback to 300x300, then 600x600, then original
           const fallback300 = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
-          mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback300, product.slug, i, true, 'full');
+          mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback300, product.slug, i, false, 'full');
           if (!mainSuccess) {
             const fallback600 = img.src.replace(/(\.[^.]+)$/, '-600x600$1');
-            mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback600, product.slug, i, true, 'full');
+            mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback600, product.slug, i, false, 'full');
           }
         }
 
-        // Cache thumbnail (100x100) for thumbnail carousels
+        // Cache thumbnail (100x100) — skip if already in KV
         const thumbUrl = img.src.replace(/(\.[^.]+)$/, '-100x100$1');
-        let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, true, 'thumb');
+        let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, false, 'thumb');
         if (!thumbSuccess && img.src !== thumbUrl) {
           // Fallback to 83x83 if 100x100 doesn't exist
           const fallback83 = img.src.replace(/(\.[^.]+)$/, '-83x83$1');
-          thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback83, product.slug, i, true, 'thumb');
+          thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback83, product.slug, i, false, 'thumb');
         }
 
         if (mainSuccess || thumbSuccess) {
@@ -974,6 +987,12 @@ async function syncSingleProduct(env: Env, productId: number): Promise<SyncedPro
     `product:slug:${product.slug}`,
     JSON.stringify(syncedProduct)
   );
+
+  // Invalidate product-config cache so next configurator load re-fetches from WordPress
+  await Promise.all([
+    env.PRODUCTS_KV.delete(`product-config:${product.id}`),
+    env.PRODUCTS_KV.delete(`product-config:${product.slug}`),
+  ]);
 
   console.log(`Synced product ${productId} with ${cachedImageCount} cached images`);
 
@@ -1392,8 +1411,8 @@ async function deletePost(env: Env, postId: number): Promise<void> {
   console.log(`Deleted post ${postId} from KV`);
 }
 
-// Debounce interval for site rebuilds (5 minutes)
-const REBUILD_DEBOUNCE_MS = 5 * 60 * 1000;
+// Debounce interval for site rebuilds (60 seconds)
+const REBUILD_DEBOUNCE_MS = 60 * 1000;
 
 // Trigger GitHub Actions workflow to rebuild and deploy the site
 // Uses workflow_dispatch API to trigger the deploy.yml workflow
@@ -1670,6 +1689,37 @@ export default {
       }
     }
 
+    // Webhook endpoint for attribute term changes (flush all product-config cache)
+    if (url.pathname === '/webhook/attribute-term-update' && request.method === 'POST') {
+      try {
+        const signature = request.headers.get('X-WC-Webhook-Signature') || '';
+        const payload = await request.text();
+
+        // Verify HMAC-SHA256 signature
+        const isValid = await verifyWebhookSignature(payload, signature, env.WEBHOOK_SECRET);
+        if (!isValid) {
+          console.log('Invalid webhook signature received');
+          return new Response('Invalid signature', { status: 401 });
+        }
+
+        // Flush all product-config:* keys so the next configurator load re-fetches fresh data
+        const listed = await env.PRODUCTS_KV.list({ prefix: 'product-config:' });
+        await Promise.all(listed.keys.map(k => env.PRODUCTS_KV.delete(k.name)));
+
+        console.log(`Attribute term change: flushed ${listed.keys.length} product-config cache keys`);
+
+        return new Response(JSON.stringify({ success: true, flushed: listed.keys.length }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('Attribute term update webhook error:', error);
+        return new Response(JSON.stringify({ error: String(error) }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // ============================================
     // BLOG POST WEBHOOK ENDPOINTS
     // ============================================
@@ -1765,7 +1815,8 @@ export default {
       // Get offset from query string for batch syncing
       const offset = parseInt(url.searchParams.get('offset') || '0', 10);
       const forceImages = url.searchParams.get('force_images') === 'true';
-      const result = await syncAllProducts(env, offset, forceImages);
+      const forceIndex = url.searchParams.get('force_index') === 'true';
+      const result = await syncAllProducts(env, offset, forceImages, forceIndex);
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -2358,7 +2409,7 @@ export default {
       return new Response(bytes, {
         headers: {
           'Content-Type': metadata?.contentType || 'image/jpeg',
-          'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
+          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours (images can change on product update)
           'Access-Control-Allow-Origin': '*',
         },
       });
@@ -2470,7 +2521,7 @@ export default {
                 const resizedResponse = await fetch(cdnCgiUrl);
                 if (resizedResponse.ok) {
                   const headers = new Headers(resizedResponse.headers);
-                  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+                  headers.set('Cache-Control', 'public, max-age=86400');
                   headers.set('Access-Control-Allow-Origin', '*');
                   return new Response(resizedResponse.body, {
                     status: 200,
@@ -2519,7 +2570,7 @@ export default {
             const resizedResponse = await fetch(cdnCgiUrl);
             if (resizedResponse.ok) {
               const headers = new Headers(resizedResponse.headers);
-              headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+              headers.set('Cache-Control', 'public, max-age=86400');
               headers.set('Access-Control-Allow-Origin', '*');
               return new Response(resizedResponse.body, {
                 status: 200,
@@ -2544,7 +2595,7 @@ export default {
       return new Response(bytes, {
         headers: {
           'Content-Type': metadata?.contentType || 'image/png',
-          'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
+          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours (images can change on product update)
           'Access-Control-Allow-Origin': '*',
         },
       });
@@ -2581,7 +2632,7 @@ export default {
       return new Response(bytes, {
         headers: {
           'Content-Type': metadata?.contentType || 'image/png',
-          'Cache-Control': 'public, max-age=31536000, immutable', // Cache for 1 year
+          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours (images can change on product update)
           'Access-Control-Allow-Origin': '*',
         },
       });

@@ -17,7 +17,7 @@ const OUTPUT_FILE = resolve(__dirname, '../src/data/google-place-data.json');
 
 // Hercules Merchandising France — Google Maps feature ID
 const FTID = '0x21d159209e369b9d:0xa126617f91835893';
-const MAPS_SHORT_URL = 'https://maps.app.goo.gl/Wgu46EzxorSEJTb7A';
+const MAPS_SHORT_URL = 'https://www.google.com/maps/place/Hercules+Merchandising+France/@30.886403,-49.4022061,3z/data=!3m1!4b1!4m8!3m7!1s0x21d159209e369b9d:0xa126617f91835893!8m2!3d30.886403!4d-49.4022062!9m1!1b1!16s%2Fg%2F11vkhhwqmm?entry=ttu&g_ep=EgoyMDI2MDIxOC4wIKXMDSoASAFQAw%3D%3D';
 
 // Fallback values if scraping fails
 const FALLBACK = {
@@ -68,7 +68,7 @@ async function fetchGoogleReviews() {
   const rating = placeData?.[4]?.[7];
   const reviewCount = placeData?.[37]?.[1];
   const name = placeData?.[11];
-  const mapsUrl = placeData?.[42] || MAPS_SHORT_URL;
+  const mapsUrl = MAPS_SHORT_URL;
 
   if (typeof rating !== 'number' || rating < 1 || rating > 5) {
     throw new Error(`Invalid rating extracted: ${rating}`);

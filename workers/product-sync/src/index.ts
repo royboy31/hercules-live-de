@@ -553,6 +553,32 @@ async function syncImageToKV(
   }
 }
 
+// Helper: encode ArrayBuffer as base64 and store in KV with metadata
+async function cacheImageInKV(
+  kv: KVNamespace,
+  imageBuffer: ArrayBuffer,
+  contentType: string,
+  originalUrl: string,
+  kvKey: string,
+  imageIndex: number,
+  size: string
+): Promise<void> {
+  try {
+    const bytes = new Uint8Array(imageBuffer);
+    const chunkSize = 0x8000;
+    let binaryString = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    await kv.put(kvKey, btoa(binaryString), {
+      metadata: { contentType, originalUrl, syncedAt: new Date().toISOString(), imageIndex, size },
+    });
+  } catch (e) {
+    console.error('Failed to async cache image in KV:', e);
+  }
+}
+
 // Image sync helper (optional - only used if R2 bucket is available)
 async function syncImageToR2(
   bucket: R2Bucket | undefined,
@@ -2500,10 +2526,9 @@ export default {
       }
 
       if (!base64Image) {
-        // Image not cached - try to get original URL from product data and redirect
+        // Image not cached - fetch from WordPress and proxy directly (no redirect)
         const product = await env.PRODUCTS_KV.get<SyncedProduct>(`product:slug:${slug}`, 'json');
         if (product && product.images && product.images[imageIndex]) {
-          // Redirect to WordPress image URL (with optional resizing via cdn-cgi)
           const originalUrl = product.images[imageIndex].src;
           if (originalUrl) {
             // If resizing requested, use Cloudflare cdn-cgi Image Resizing
@@ -2529,10 +2554,55 @@ export default {
                   });
                 }
               } catch (e) {
-                // Fall through to redirect if resizing fails
+                // Fall through to direct proxy below
               }
             }
-            return Response.redirect(originalUrl, 302);
+
+            // Proxy image directly: try WebP of sized variants first, then original
+            // This avoids a 302 redirect to a raw WordPress PNG and serves WebP where possible
+            // For thumbnail requests, try smaller WordPress crops first
+            const sizeVariants = requestedSize === 'thumb'
+              ? ['-100x100', '-150x150', '-83x83', '-300x300', '']
+              : ['-361x361', '-300x300', ''];
+            for (const size of sizeVariants) {
+              const sizedUrl = size
+                ? originalUrl.replace(/(\.[^.]+)$/, `${size}$1`)
+                : originalUrl;
+              const webpUrl = /\.(png|jpe?g)$/i.test(sizedUrl) ? sizedUrl + '.webp' : sizedUrl;
+
+              // Try WebP first
+              try {
+                const res = await fetch(webpUrl, { headers: { 'User-Agent': 'Hercules-Product-Sync/1.0' } });
+                if (res.ok) {
+                  const imageBuffer = await res.arrayBuffer();
+                  ctx.waitUntil(cacheImageInKV(env.PRODUCTS_KV, imageBuffer, 'image/webp', originalUrl, kvKey, imageIndex, requestedSize || 'full'));
+                  return new Response(imageBuffer, {
+                    headers: {
+                      'Content-Type': 'image/webp',
+                      'Cache-Control': 'public, max-age=86400',
+                      'Access-Control-Allow-Origin': '*',
+                    },
+                  });
+                }
+              } catch {}
+
+              // Fall back to original format for this size variant
+              try {
+                const res = await fetch(sizedUrl, { headers: { 'User-Agent': 'Hercules-Product-Sync/1.0' } });
+                if (res.ok) {
+                  const imageBuffer = await res.arrayBuffer();
+                  const contentType = res.headers.get('content-type') || 'image/png';
+                  ctx.waitUntil(cacheImageInKV(env.PRODUCTS_KV, imageBuffer, contentType, originalUrl, kvKey, imageIndex, requestedSize || 'full'));
+                  return new Response(imageBuffer, {
+                    headers: {
+                      'Content-Type': contentType,
+                      'Cache-Control': 'public, max-age=86400',
+                      'Access-Control-Allow-Origin': '*',
+                    },
+                  });
+                }
+              } catch {}
+            }
           }
         }
         return new Response('Image not found', { status: 404 });

@@ -1737,12 +1737,10 @@ if (product) {
     highQualityImg.src = fullSrc;
   }
 
-  // Upgrade after page is fully loaded (after LCP is measured)
-  if (document.readyState === 'complete') {
-    setTimeout(upgradeMainImage, 100);
-  } else {
-    window.addEventListener('load', () => setTimeout(upgradeMainImage, 100));
-  }
+  // Auto-upgrade removed: upgrading to WordPress URL after load causes LCP regression
+  // (Lighthouse re-measures LCP when src swaps to the larger WordPress image)
+  // Quality is sufficient at 361x361 WebP for the 340px display slot.
+  // Upgrade still happens on thumbnail click via the gallery interaction handler below.
 
   // Thumbnail Gallery Pagination (WordPress style)
   const PAGE_SIZE = 20;

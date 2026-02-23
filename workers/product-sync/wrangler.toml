@@ -1,4 +1,4 @@
-name = "hercules-product-sync"
+name = "hercules-product-sync-live"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
@@ -13,14 +13,24 @@ preview_id = "d063f9226fb448efb168b81562eb45dd"
 # binding = "PRODUCTS_BUCKET"
 # bucket_name = "hercules-products"
 
-# Scheduled triggers (cron jobs)
-[triggers]
-crons = ["0 3 * * *"]  # Run daily at 3 AM UTC
+# Scheduled triggers disabled - sync happens via webhooks on product/category/post update
+# [triggers]
+# crons = ["0 3 * * *"]  # Run daily at 3 AM UTC (disabled)
 
 # Environment variables (set via wrangler secret)
 [vars]
 WC_STORE_URL = "https://hercules-merchandise.de"
 ASTRO_SITE_URL = "https://hercules-de-live.pages.dev"
+
+# Staging environment — deploys to hercules-product-sync.gilles-86d.workers.dev
+# Used by staging.hercules-merchandise.de (Astro build hardcodes this URL)
+[env.staging]
+name = "hercules-product-sync"
+vars = { WC_STORE_URL = "https://staging.hercules-merchandise.de", ASTRO_SITE_URL = "https://hercules-de-live.pages.dev" }
+
+[[env.staging.kv_namespaces]]
+binding = "PRODUCTS_KV"
+id = "9eb4cfdf0e0d4636ad728eeb0ee30557"
 
 # Development environment
 [env.dev]

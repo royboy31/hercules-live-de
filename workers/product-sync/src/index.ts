@@ -655,7 +655,7 @@ async function transformProduct(
     // Parse conditional prices - convert string prices to numbers
     const conditionalPrices = v.conditional_prices?.map(cp => ({
       qty: Number(cp.qty),
-      price: typeof cp.price === 'string' ? parseFloat(cp.price) : cp.price,
+      price: typeof cp.price === 'string' ? parseFloat(cp.price.replace(',', '.')) : cp.price,
     }));
 
     return {
@@ -2480,6 +2480,14 @@ export default {
     // Supports: /image/{slug} (main image) or /image/{slug}/{index} (gallery image)
     // Optional query params: ?size=thumb (300x300), ?w=300 (width), ?format=webp (output format)
     if (url.pathname.startsWith('/image/')) {
+      // Check Cloudflare edge cache first — serves without invoking Worker at all on cache hit
+      const edgeCache = caches.default;
+      const cacheKey = new Request(request.url, { method: 'GET' });
+      const edgeCached = await edgeCache.match(cacheKey);
+      if (edgeCached) {
+        return edgeCached;
+      }
+
       const pathParts = url.pathname.replace('/image/', '').split('/');
       const slug = pathParts[0];
       const imageIndex = pathParts[1] ? parseInt(pathParts[1], 10) : 0;
@@ -2576,13 +2584,15 @@ export default {
                 if (res.ok) {
                   const imageBuffer = await res.arrayBuffer();
                   ctx.waitUntil(cacheImageInKV(env.PRODUCTS_KV, imageBuffer, 'image/webp', originalUrl, kvKey, imageIndex, requestedSize || 'full'));
-                  return new Response(imageBuffer, {
+                  const proxyWebpResponse = new Response(imageBuffer, {
                     headers: {
                       'Content-Type': 'image/webp',
                       'Cache-Control': 'public, max-age=86400',
                       'Access-Control-Allow-Origin': '*',
                     },
                   });
+                  ctx.waitUntil(edgeCache.put(cacheKey, proxyWebpResponse.clone()));
+                  return proxyWebpResponse;
                 }
               } catch {}
 
@@ -2593,13 +2603,15 @@ export default {
                   const imageBuffer = await res.arrayBuffer();
                   const contentType = res.headers.get('content-type') || 'image/png';
                   ctx.waitUntil(cacheImageInKV(env.PRODUCTS_KV, imageBuffer, contentType, originalUrl, kvKey, imageIndex, requestedSize || 'full'));
-                  return new Response(imageBuffer, {
+                  const proxyFallbackResponse = new Response(imageBuffer, {
                     headers: {
                       'Content-Type': contentType,
                       'Cache-Control': 'public, max-age=86400',
                       'Access-Control-Allow-Origin': '*',
                     },
                   });
+                  ctx.waitUntil(edgeCache.put(cacheKey, proxyFallbackResponse.clone()));
+                  return proxyFallbackResponse;
                 }
               } catch {}
             }
@@ -2661,14 +2673,16 @@ export default {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      // Return image with caching headers
-      return new Response(bytes, {
+      // Return image with caching headers; also populate Cloudflare edge cache
+      const kvResponse = new Response(bytes, {
         headers: {
           'Content-Type': metadata?.contentType || 'image/png',
-          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours (images can change on product update)
+          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
           'Access-Control-Allow-Origin': '*',
         },
       });
+      ctx.waitUntil(edgeCache.put(cacheKey, kvResponse.clone()));
+      return kvResponse;
     }
 
     // Serve cached category images

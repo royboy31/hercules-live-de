@@ -118,19 +118,7 @@
       }
     }
 
-    // Use IntersectionObserver to defer loading until visible
-    var section = document.querySelector('.reviews-section');
-    if (section && 'IntersectionObserver' in window) {
-      var observer = new IntersectionObserver(function(entries) {
-        if (entries[0].isIntersecting) {
-          loadWidget();
-          observer.disconnect();
-        }
-      }, { rootMargin: '200px 0px', threshold: 0 });
-      observer.observe(section);
-    } else {
-      // Fallback for browsers without IntersectionObserver
-      document.addEventListener('DOMContentLoaded', loadWidget);
-    }
+    // Load immediately so Google can see TrustIndex review schema
+    loadWidget();
   })();
 </script>

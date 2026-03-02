@@ -854,17 +854,19 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
         let emailParams: SendEmailParams;
 
         if (formType === 'expressdelivery' || formType === 'express_delivery') {
-          // Express delivery: TO admin only, Reply-To customer (no CC)
+          // Express delivery: TO admin, CC info, Reply-To customer
           emailParams = {
             to: [{ email: env.COMPANY_EMAIL, name: 'Hercules Merchandise' }],
+            cc: [{ email: 'info@hercules-merchandise.com', name: 'Hercules Merchandise' }],
             replyTo: { email: contactData.email, name: contactData.name },
             subject: `Dringende Angebotsanfrage - ${contactData.productName || 'Express'}`,
             htmlContent,
           };
         } else if (formType === 'quantity' || formType === 'quantity_request' || contactData.productName) {
-          // Quantity request: TO admin, Reply-To customer (no CC)
+          // Quantity request: TO admin, CC info, Reply-To customer
           emailParams = {
             to: [{ email: env.COMPANY_EMAIL, name: 'Hercules Merchandise' }],
+            cc: [{ email: 'info@hercules-merchandise.com', name: 'Hercules Merchandise' }],
             replyTo: { email: contactData.email, name: contactData.name },
             subject,
             htmlContent,

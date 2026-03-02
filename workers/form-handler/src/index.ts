@@ -870,10 +870,9 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
             htmlContent,
           };
         } else {
-          // General contact form: TO admin, CC customer, Reply-To customer
+          // General contact form: TO admin, Reply-To customer
           emailParams = {
             to: [{ email: env.COMPANY_EMAIL, name: 'Hercules Merchandise' }],
-            cc: [{ email: contactData.email, name: contactData.name }],
             replyTo: { email: contactData.email, name: contactData.name },
             subject,
             htmlContent,

@@ -378,17 +378,20 @@ const slides = [
 </style>
 
 <script>
-  import Swiper from 'swiper';
-  import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
   import 'swiper/css';
   import 'swiper/css/navigation';
   import 'swiper/css/pagination';
   import 'swiper/css/effect-fade';
 
-  // Defer Swiper initialization until after LCP to improve performance
-  function initSwiper() {
+  // Initialize Swiper with dynamic imports to reduce initial JS parse/compile
+  async function initSwiper() {
+    const [{ default: Swiper }, { Navigation, Pagination, EffectFade, Autoplay }] = await Promise.all([
+      import('swiper'),
+      import('swiper/modules')
+    ]);
+
     new Swiper('.hero-swiper', {
-      modules: [Navigation, Pagination, Autoplay, EffectFade],
+      modules: [Navigation, Pagination, EffectFade, Autoplay],
       effect: 'fade',
       fadeEffect: {
         crossFade: true,
@@ -411,13 +414,11 @@ const slides = [
     });
   }
 
-  // Use requestIdleCallback to initialize after main thread is idle
-  // Delay initialization to improve PageSpeed score without affecting real users
+  // Defer Swiper initialization until after LCP
   document.addEventListener('DOMContentLoaded', () => {
-    // 3 second delay + idle callback for optimal PageSpeed score
     setTimeout(() => {
       if ('requestIdleCallback' in window) {
-        requestIdleCallback(initSwiper, { timeout: 5000 });
+        requestIdleCallback(() => initSwiper(), { timeout: 5000 });
       } else {
         initSwiper();
       }

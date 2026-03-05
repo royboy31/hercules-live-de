@@ -135,14 +135,6 @@ if (jsonLd) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Google Tag Manager -->
-  <script is:inline>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','dataLayer','GTM-MJKQ32P5');</script>
-  <!-- End Google Tag Manager -->
-
   <!-- Preload LCP images FIRST for fastest rendering (highest priority) -->
   {preloadImages.map((src) => (
     <link rel="preload" as="image" href={src} fetchpriority="high" />
@@ -236,58 +228,6 @@ if (jsonLd) {
   <link rel="preconnect" href="https://hercules-product-sync.gilles-86d.workers.dev" crossorigin>
   <link rel="dns-prefetch" href="https://hercules-product-sync.gilles-86d.workers.dev">
 
-  <!-- Google Analytics 4 (gtag.js) -->
-  <!-- TODO: Replace G-XXXXXXXXX with actual GA4 Measurement ID -->
-  <script is:inline>
-    // Initialize dataLayer and gtag function
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-
-    // GA4 Measurement ID - Replace with actual ID
-    window.GA4_MEASUREMENT_ID = 'G-XXXXXXXXX';
-
-    // Check if statistics consent is given
-    function hasStatisticsConsent() {
-      try {
-        const prefs = JSON.parse(localStorage.getItem('cmplz_preferences') || '{}');
-        return prefs.statistics === true;
-      } catch (e) {
-        return false;
-      }
-    }
-
-    // Initialize GA4 with consent mode
-    function initGA4() {
-      if (window.ga4Initialized) return;
-
-      // Load gtag.js script
-      var script = document.createElement('script');
-      script.async = true;
-      script.src = 'https://www.googletagmanager.com/gtag/js?id=' + window.GA4_MEASUREMENT_ID;
-      document.head.appendChild(script);
-
-      gtag('js', new Date());
-      gtag('config', window.GA4_MEASUREMENT_ID, {
-        send_page_view: true,
-        cookie_flags: 'SameSite=None;Secure'
-      });
-
-      window.ga4Initialized = true;
-    }
-
-    // Initialize if consent already given
-    if (hasStatisticsConsent()) {
-      initGA4();
-    }
-
-    // Listen for consent updates
-    window.addEventListener('cmplz_consent_updated', function(e) {
-      if (e.detail && e.detail.statistics) {
-        initGA4();
-      }
-    });
-  </script>
-
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">
@@ -329,6 +269,30 @@ if (jsonLd) {
           hq.src = logo.dataset.hqSrc;
         }
       }, 8000);
+    })();
+  </script>
+
+  <!-- Google Tag Manager - Deferred to after page load for better LCP -->
+  <script is:inline>
+    (function() {
+      var gtmLoaded = false;
+      function loadGTM() {
+        if (gtmLoaded) return;
+        gtmLoaded = true;
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+        var j = document.createElement('script');
+        j.async = true;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-MJKQ32P5';
+        document.head.appendChild(j);
+      }
+      // Load GTM after page load + 2s delay, or on first user interaction
+      window.addEventListener('load', function() {
+        setTimeout(loadGTM, 2000);
+      });
+      ['click', 'scroll', 'keydown', 'touchstart'].forEach(function(evt) {
+        window.addEventListener(evt, loadGTM, { once: true, passive: true });
+      });
     })();
   </script>
 

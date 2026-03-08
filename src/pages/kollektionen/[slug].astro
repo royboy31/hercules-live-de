@@ -124,9 +124,9 @@ if (faqSchema) {
   jsonLdSchemas.push(faqSchema);
 }
 
-// Preload LCP image via same-origin proxy (eliminates cross-origin DNS+TLS overhead)
+// Preload LCP image from Worker (cross-origin, but preconnect mitigates overhead)
 const lcpImageUrl = validProducts.length > 0
-  ? `/api/image/${validProducts[0].slug}`
+  ? `${WORKER_URL}/image/${validProducts[0].slug}`
   : null;
 const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
 ---
@@ -240,9 +240,9 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
               <li class="related-product-item">
                 <a href={`/produkte/${product.slug}`} class="related-product-link">
                   <img
-                    data-src={`https://hercules-product-sync.gilles-86d.workers.dev/image/${product.slug}/0`}
+                    src={`https://hercules-product-sync.gilles-86d.workers.dev/image/${product.slug}/0`}
                     alt={product.name}
-                    class="kd-deferred-img"
+                    loading="lazy"
                     width="1000"
                     height="1000"
                   />
@@ -831,26 +831,6 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
 </style>
 
 <script>
-  // Lazy load deferred images (related products section)
-  (function() {
-    const imgs = document.querySelectorAll('.kd-deferred-img[data-src]');
-    if (!imgs.length) return;
-    if ('IntersectionObserver' in window) {
-      const obs = new IntersectionObserver(function(entries) {
-        entries.forEach(function(e) {
-          if (e.isIntersecting) {
-            var img = e.target as HTMLImageElement;
-            if (img.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; }
-            obs.unobserve(e.target);
-          }
-        });
-      }, { rootMargin: '300px' });
-      imgs.forEach(function(img) { obs.observe(img); });
-    } else {
-      imgs.forEach(function(img) { (img as HTMLImageElement).src = (img as HTMLImageElement).dataset.src || ''; });
-    }
-  })();
-
   // FAQ Accordion toggle
   const faqItems = document.querySelectorAll('.faq-item');
   faqItems.forEach(item => {

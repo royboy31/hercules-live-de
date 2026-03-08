@@ -72,10 +72,7 @@ const galleryImages = (product.images || []).slice(0, imageCount).map((img, inde
 });
 
 // Worker main image URL - 361x361 cached image (fast initial load)
-// LCP candidate uses same-origin proxy to avoid cross-origin overhead
-const workerImageUrl = isLCPCandidate
-  ? `/api/image/${product.slug}`
-  : `${WORKER_URL}/image/${product.slug}`;
+const workerImageUrl = `${WORKER_URL}/image/${product.slug}`;
 // Original WordPress URL - full resolution for high-quality upgrade
 const originalImageUrl = product.images?.[0]?.src || workerImageUrl;
 
@@ -134,32 +131,18 @@ const cardFeatures = product.card_features || [];
     <!-- Product Gallery -->
     <div class="kd-product-gallery" data-product-slug={product.slug}>
       <!-- Main Image - Progressive Loading: Worker cached (361x361) first, then original WordPress (1000x1000) -->
-      <!-- Above fold (index < 2): use src for immediate loading -->
-      <!-- Below fold: use data-src to prevent preload scanner from competing with LCP -->
       <div class="kd-main-image">
-        {isAboveFold ? (
-          <img
-            src={workerImageUrl}
-            data-full-src={originalImageUrl}
-            data-upgraded="false"
-            alt={product.name}
-            loading={isLCPCandidate ? "eager" : "lazy"}
-            fetchpriority={isLCPCandidate ? "high" : "auto"}
-            class="kd-main-img kd-progressive-img"
-            width="361"
-            height="361"
-          />
-        ) : (
-          <img
-            data-src={workerImageUrl}
-            data-full-src={originalImageUrl}
-            data-upgraded="false"
-            alt={product.name}
-            class="kd-main-img kd-progressive-img kd-deferred-img"
-            width="361"
-            height="361"
-          />
-        )}
+        <img
+          src={workerImageUrl}
+          data-full-src={originalImageUrl}
+          data-upgraded="false"
+          alt={product.name}
+          loading={isAboveFold ? "eager" : "lazy"}
+          fetchpriority={isLCPCandidate ? "high" : "auto"}
+          class="kd-main-img kd-progressive-img"
+          width="361"
+          height="361"
+        />
       </div>
 
       <!-- Thumbnail Swiper Carousel - Lazy Initialized -->
@@ -483,29 +466,24 @@ const cardFeatures = product.card_features || [];
   }
 
   /**
-   * Lazy load deferred images — main images and thumbnails use data-src
-   * to prevent preload scanner from competing with LCP image for bandwidth
+   * Lazy load thumbnail images — use data-src to avoid preload scanner
    */
-  function setupDeferredImages() {
-    const deferredImgs = document.querySelectorAll('img[data-src]');
-    if (!deferredImgs.length) return;
+  function setupLazyThumbnails() {
+    const thumbs = document.querySelectorAll('.kd-thumb[data-src]');
+    if (!thumbs.length) return;
     if ('IntersectionObserver' in window) {
       const obs = new IntersectionObserver((entries) => {
         entries.forEach((e) => {
           if (e.isIntersecting) {
             const img = e.target as HTMLImageElement;
-            const src = img.dataset.src;
-            if (src) { img.src = src; delete img.dataset.src; }
+            if (img.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; }
             obs.unobserve(e.target);
           }
         });
       }, { rootMargin: '200px', threshold: 0 });
-      deferredImgs.forEach((img) => obs.observe(img));
+      thumbs.forEach((img) => obs.observe(img));
     } else {
-      deferredImgs.forEach((img) => {
-        const src = (img as HTMLImageElement).dataset.src;
-        if (src) { (img as HTMLImageElement).src = src; }
-      });
+      thumbs.forEach((img) => { if ((img as HTMLImageElement).dataset.src) (img as HTMLImageElement).src = (img as HTMLImageElement).dataset.src!; });
     }
   }
 
@@ -583,7 +561,7 @@ const cardFeatures = product.card_features || [];
   function init() {
     setupThumbnailClickHandlers();
     setupProgressiveImageLoading();
-    setupDeferredImages();
+    setupLazyThumbnails();
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => setupLazySwiper(), { timeout: 2000 });
     } else {

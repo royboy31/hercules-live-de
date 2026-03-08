@@ -124,9 +124,9 @@ if (faqSchema) {
   jsonLdSchemas.push(faqSchema);
 }
 
-// Preload LCP image (first product's main image from Worker)
+// Preload LCP image via same-origin proxy (eliminates cross-origin DNS+TLS overhead)
 const lcpImageUrl = validProducts.length > 0
-  ? `${WORKER_URL}/image/${validProducts[0].slug}`
+  ? `/api/image/${validProducts[0].slug}`
   : null;
 const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
 ---

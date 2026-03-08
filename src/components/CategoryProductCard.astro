@@ -131,18 +131,32 @@ const cardFeatures = product.card_features || [];
     <!-- Product Gallery -->
     <div class="kd-product-gallery" data-product-slug={product.slug}>
       <!-- Main Image - Progressive Loading: Worker cached (361x361) first, then original WordPress (1000x1000) -->
+      <!-- Above fold (index < 2): use src for immediate loading -->
+      <!-- Below fold: use data-src to prevent preload scanner from competing with LCP -->
       <div class="kd-main-image">
-        <img
-          src={workerImageUrl}
-          data-full-src={originalImageUrl}
-          data-upgraded="false"
-          alt={product.name}
-          loading={isAboveFold ? "eager" : "lazy"}
-          fetchpriority={isLCPCandidate ? "high" : "auto"}
-          class="kd-main-img kd-progressive-img"
-          width="361"
-          height="361"
-        />
+        {isAboveFold ? (
+          <img
+            src={workerImageUrl}
+            data-full-src={originalImageUrl}
+            data-upgraded="false"
+            alt={product.name}
+            loading={isLCPCandidate ? "eager" : "lazy"}
+            fetchpriority={isLCPCandidate ? "high" : "auto"}
+            class="kd-main-img kd-progressive-img"
+            width="361"
+            height="361"
+          />
+        ) : (
+          <img
+            data-src={workerImageUrl}
+            data-full-src={originalImageUrl}
+            data-upgraded="false"
+            alt={product.name}
+            class="kd-main-img kd-progressive-img kd-deferred-img"
+            width="361"
+            height="361"
+          />
+        )}
       </div>
 
       <!-- Thumbnail Swiper Carousel - Lazy Initialized -->
@@ -466,28 +480,26 @@ const cardFeatures = product.card_features || [];
   }
 
   /**
-   * Lazy load thumbnail images — only when card enters viewport
-   * Thumbnails use data-src instead of src to avoid initial network requests
+   * Lazy load deferred images — main images and thumbnails use data-src
+   * to prevent preload scanner from competing with LCP image for bandwidth
    */
-  function setupLazyThumbnails() {
-    const cards = document.querySelectorAll('.kd-product-gallery');
-    if (!cards.length) return;
+  function setupDeferredImages() {
+    const deferredImgs = document.querySelectorAll('img[data-src]');
+    if (!deferredImgs.length) return;
     if ('IntersectionObserver' in window) {
       const obs = new IntersectionObserver((entries) => {
         entries.forEach((e) => {
           if (e.isIntersecting) {
-            const thumbs = e.target.querySelectorAll('.kd-thumb[data-src]');
-            thumbs.forEach((img) => {
-              const src = (img as HTMLImageElement).dataset.src;
-              if (src) { (img as HTMLImageElement).src = src; delete (img as HTMLImageElement).dataset.src; }
-            });
+            const img = e.target as HTMLImageElement;
+            const src = img.dataset.src;
+            if (src) { img.src = src; delete img.dataset.src; }
             obs.unobserve(e.target);
           }
         });
       }, { rootMargin: '200px', threshold: 0 });
-      cards.forEach((card) => obs.observe(card));
+      deferredImgs.forEach((img) => obs.observe(img));
     } else {
-      document.querySelectorAll('.kd-thumb[data-src]').forEach((img) => {
+      deferredImgs.forEach((img) => {
         const src = (img as HTMLImageElement).dataset.src;
         if (src) { (img as HTMLImageElement).src = src; }
       });
@@ -568,7 +580,7 @@ const cardFeatures = product.card_features || [];
   function init() {
     setupThumbnailClickHandlers();
     setupProgressiveImageLoading();
-    setupLazyThumbnails();
+    setupDeferredImages();
     if ('requestIdleCallback' in window) {
       requestIdleCallback(() => setupLazySwiper(), { timeout: 2000 });
     } else {

@@ -240,9 +240,9 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
               <li class="related-product-item">
                 <a href={`/produkte/${product.slug}`} class="related-product-link">
                   <img
-                    src={`https://hercules-product-sync.gilles-86d.workers.dev/image/${product.slug}/0`}
+                    data-src={`https://hercules-product-sync.gilles-86d.workers.dev/image/${product.slug}/0`}
                     alt={product.name}
-                    loading="lazy"
+                    class="kd-deferred-img"
                     width="1000"
                     height="1000"
                   />
@@ -831,6 +831,26 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
 </style>
 
 <script>
+  // Lazy load deferred images (related products section)
+  (function() {
+    const imgs = document.querySelectorAll('.kd-deferred-img[data-src]');
+    if (!imgs.length) return;
+    if ('IntersectionObserver' in window) {
+      const obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+          if (e.isIntersecting) {
+            var img = e.target as HTMLImageElement;
+            if (img.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; }
+            obs.unobserve(e.target);
+          }
+        });
+      }, { rootMargin: '300px' });
+      imgs.forEach(function(img) { obs.observe(img); });
+    } else {
+      imgs.forEach(function(img) { (img as HTMLImageElement).src = (img as HTMLImageElement).dataset.src || ''; });
+    }
+  })();
+
   // FAQ Accordion toggle
   const faqItems = document.querySelectorAll('.faq-item');
   faqItems.forEach(item => {

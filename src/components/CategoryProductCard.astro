@@ -37,11 +37,9 @@ interface Props {
   };
   /** Product index in grid - used for fetchpriority (first 6 get high priority) */
   index?: number;
-  /** Base64 data URI for LCP image (embedded at build time for instant paint) */
-  lcpDataUri?: string | null;
 }
 
-const { product, index = 0, lcpDataUri = null } = Astro.props;
+const { product, index = 0 } = Astro.props;
 
 // First 2 products are above the fold on mobile (2 col) and tablet (2 col)
 // These get eager loading to improve LCP
@@ -132,10 +130,10 @@ const cardFeatures = product.card_features || [];
 
     <!-- Product Gallery -->
     <div class="kd-product-gallery" data-product-slug={product.slug}>
-      <!-- Main Image - Progressive Loading: data URI (instant) or Worker cached (361x361) first, then original WordPress (1000x1000) -->
+      <!-- Main Image - Progressive Loading: Worker cached (361x361) first, then original WordPress (1000x1000) -->
       <div class="kd-main-image">
         <img
-          src={lcpDataUri || workerImageUrl}
+          src={workerImageUrl}
           data-full-src={originalImageUrl}
           data-upgraded="false"
           alt={product.name}
@@ -151,7 +149,7 @@ const cardFeatures = product.card_features || [];
       <!-- Show thumbnails even with 1 image so users see the gallery section -->
       {galleryImages.length >= 1 && (
         <div class="kd-thumbnails-wrapper">
-          <div class="swiper kd-thumb-swiper" data-gallery={JSON.stringify(galleryImages)}>
+          <div class="swiper kd-thumb-swiper">
             <div class="swiper-wrapper">
               {galleryImages.slice(0, 4).map((img, idx) => (
                 <div class="swiper-slide">

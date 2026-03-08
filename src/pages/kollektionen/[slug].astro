@@ -124,27 +124,11 @@ if (faqSchema) {
   jsonLdSchemas.push(faqSchema);
 }
 
-// Fetch LCP image at build time and embed as base64 data URI
-// This eliminates the cross-origin network request for the first product image,
-// dramatically improving LCP on slow connections (saves ~300-500ms)
-let lcpImageDataUri: string | null = null;
-if (validProducts.length > 0) {
-  try {
-    const imgRes = await fetch(`${WORKER_URL}/image/${validProducts[0].slug}`);
-    if (imgRes.ok) {
-      const buffer = await imgRes.arrayBuffer();
-      const base64 = Buffer.from(buffer).toString('base64');
-      const contentType = imgRes.headers.get('content-type') || 'image/webp';
-      lcpImageDataUri = `data:${contentType};base64,${base64}`;
-    }
-  } catch (e) {
-    // Fall back to regular URL if fetch fails
-  }
-}
-// Only preload from Worker if we couldn't embed at build time
-const preloadImages = (!lcpImageDataUri && validProducts.length > 0)
-  ? [`${WORKER_URL}/image/${validProducts[0].slug}`]
-  : [];
+// Preload LCP image (first product's main image from Worker)
+const lcpImageUrl = validProducts.length > 0
+  ? `${WORKER_URL}/image/${validProducts[0].slug}`
+  : null;
+const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
 ---
 
 <BaseLayout
@@ -189,7 +173,7 @@ const preloadImages = (!lcpImageDataUri && validProducts.length > 0)
       {validProducts.length > 0 ? (
         <ul class="products">
           {validProducts.map((product: any, index: number) => (
-            <CategoryProductCard product={product} index={index} lcpDataUri={index === 0 ? lcpImageDataUri : null} />
+            <CategoryProductCard product={product} index={index} />
           ))}
         </ul>
       ) : (

@@ -151,7 +151,7 @@ jsonLdSchemas.push(getBreadcrumbSchema([
           <!-- Featured Image -->
           {(post.localFeaturedImage || post.featuredImage) && (
             <div class="featured-image">
-              <img src={post.localFeaturedImage || post.featuredImage} alt={post.title} />
+              <img src={post.localFeaturedImage || post.featuredImage} alt={post.title} width="800" height="450" />
             </div>
           )}
 
@@ -338,6 +338,8 @@ jsonLdSchemas.push(getBreadcrumbSchema([
     height: auto;
     display: block;
     border-radius: 0;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
   }
 
   /* Post Info (Date) */
@@ -395,6 +397,12 @@ jsonLdSchemas.push(getBreadcrumbSchema([
     max-width: 100%;
     height: auto;
     margin: 20px 0;
+    display: block;
+  }
+
+  /* Prevent CLS from WordPress content images that have width/height attributes */
+  .post-body :global(img[width][height]) {
+    aspect-ratio: attr(width) / attr(height);
   }
 
   .post-body :global(ul) {

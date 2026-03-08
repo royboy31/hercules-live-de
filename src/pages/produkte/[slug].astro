@@ -2072,7 +2072,20 @@ if (product) {
       });
     }
 
-    // Load immediately so Google can see TrustIndex review schema
-    loadTrustWidget();
+    // Load when reviews section enters viewport (reduces TBT on initial load)
+    if ('IntersectionObserver' in window) {
+      var reviewsSection = trustIndexContainer.closest('.reviews-section') || trustIndexContainer;
+      var trustObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            loadTrustWidget();
+            trustObserver.disconnect();
+          }
+        });
+      }, { rootMargin: '200px' });
+      trustObserver.observe(reviewsSection);
+    } else {
+      loadTrustWidget();
+    }
   }
 </script>

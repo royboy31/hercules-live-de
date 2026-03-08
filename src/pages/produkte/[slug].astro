@@ -7,6 +7,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProductConfigurator from '../../components/ProductConfigurator.tsx';
 import ContactFormPopup from '../../components/ContactFormPopup.tsx';
 import '../../styles/steps.css';
+import placeData from '../../data/google-place-data.json';
 import {
   siteConfig,
   getProductSchema,
@@ -508,8 +509,55 @@ if (product) {
             <h2 class="reviews-heading">
               Was Kunden <span class="highlight">über uns sagen</span>
             </h2>
-            <!-- TrustIndex Widget - Same widget ID as WordPress, logo replaced with Google -->
-            <div class="reviews-widget" id="trustindex-widget-product"></div>
+            <!-- Static reviews rendered at build time (visible immediately) -->
+            <div class="static-reviews-product" id="static-reviews-product">
+              <div class="sr-header">
+                <a href={placeData.url || '#'} target="_blank" rel="noopener noreferrer" class="sr-google-link">
+                  <svg class="sr-google-logo" viewBox="0 0 272 92" width="80" height="28">
+                    <path fill="#EA4335" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+                    <path fill="#FBBC05" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+                    <path fill="#4285F4" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+                    <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+                    <path fill="#EA4335" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+                    <path fill="#4285F4" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>
+                  </svg>
+                  <div class="sr-rating-info">
+                    <div class="sr-stars">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <svg class="sr-star" viewBox="0 0 24 24" width="20" height="20">
+                          <path fill={i < (placeData.rating || 5) ? '#fbbc04' : '#dadce0'} d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                      ))}
+                    </div>
+                    <span class="sr-rating-text">{(placeData.rating || 5).toFixed(1)} / 5 ({placeData.reviewCount || 28} Bewertungen)</span>
+                  </div>
+                </a>
+              </div>
+              <div class="sr-cards">
+                {(placeData.reviews || []).map((review: any) => (
+                  <div class="sr-card">
+                    <div class="sr-card-header">
+                      <div class="sr-avatar">{review.author.charAt(0)}</div>
+                      <div class="sr-author-info">
+                        <span class="sr-author">{review.author}</span>
+                        <span class="sr-time">{review.time}</span>
+                      </div>
+                    </div>
+                    <div class="sr-card-stars">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <svg class="sr-star" viewBox="0 0 24 24" width="16" height="16">
+                          <path fill={i < review.rating ? '#fbbc04' : '#dadce0'} d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                      ))}
+                    </div>
+                    <p class="sr-text">{review.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <!-- TrustIndex Widget - hydrates over static content when loaded -->
+            <div class="reviews-widget" id="trustindex-widget-product" style="display:none;"></div>
           </div>
         </section>
 
@@ -1700,9 +1748,117 @@ if (product) {
     min-height: 300px;
   }
 
+  /* ── Static Reviews (build-time rendered) ── */
+  .static-reviews-product {
+    width: 100%;
+    padding: 0 20px;
+  }
+
+  .sr-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .sr-google-link {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .sr-rating-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sr-stars {
+    display: flex;
+    gap: 2px;
+  }
+
+  .sr-rating-text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #5f5f5f;
+  }
+
+  .sr-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .sr-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .sr-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .sr-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #253461;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Jost', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .sr-author-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sr-author {
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #253461;
+  }
+
+  .sr-time {
+    font-family: 'Roboto', sans-serif;
+    font-size: 12px;
+    color: #999;
+  }
+
+  .sr-card-stars {
+    display: flex;
+    gap: 1px;
+    margin-bottom: 8px;
+  }
+
+  .sr-text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #4a4a4a;
+    margin: 0;
+  }
+
   @media (max-width: 1024px) {
     .reviews-heading {
       font-size: 30px;
+    }
+
+    .sr-cards {
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
@@ -1713,6 +1869,15 @@ if (product) {
 
     .reviews-heading {
       font-size: 28px;
+    }
+
+    .static-reviews-product {
+      padding: 0;
+    }
+
+    .sr-cards {
+      grid-template-columns: 1fr;
+      gap: 15px;
     }
   }
 </style>
@@ -2035,57 +2200,67 @@ if (product) {
     }
   });
 
-  // Load TrustIndex widget only when visible (with Google logo replacement)
-  const trustIndexContainer = document.getElementById('trustindex-widget-product');
-  if (trustIndexContainer) {
-    const loadTrustWidget = () => {
-      const script = document.createElement('script');
+  // Load TrustIndex widget when visible — replaces static reviews with live widget
+  (function() {
+    var loaded = false;
+    var container = document.getElementById('trustindex-widget-product');
+    var staticReviews = document.getElementById('static-reviews-product');
+    if (!container) return;
+
+    function loadWidget() {
+      if (loaded) return;
+      loaded = true;
+
+      var script = document.createElement('script');
       script.src = 'https://cdn.trustindex.io/loader.js?72406ce58900366af2861a4ccab';
       script.defer = true;
       script.async = true;
-      trustIndexContainer.appendChild(script);
+      container.appendChild(script);
 
-      // Replace TrustIndex logo with Google logo after widget loads
-      script.onload = function() {
-        setTimeout(replaceTrustIndexLogo, 1000);
-        setTimeout(replaceTrustIndexLogo, 2000);
-        setTimeout(replaceTrustIndexLogo, 3000);
-      };
-    };
+      var googleSvg = '<path fill="#EA4335" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="#FBBC05" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="#4285F4" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/><path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/><path fill="#EA4335" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/><path fill="#4285F4" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>';
+      var CORRECT_MAPS_URL = 'https://www.google.com/maps/place/Hercules+Merchandising+France/@30.886403,-49.4022061,3z/data=!3m1!4b1!4m8!3m7!1s0x21d159209e369b9d:0xa126617f91835893!8m2!3d30.886403!4d-49.4022062!9m1!1b1!16s%2Fg%2F11vkhhwqmm?entry=ttu&g_ep=EgoyMDI2MDIxOC4wIKXMDSoASAFQAw%3D%3D';
 
-    function replaceTrustIndexLogo() {
-      // Only target the TrustIndex logo image (not other elements)
-      var logoImages = document.querySelectorAll('.ti-widget img');
-      logoImages.forEach(function(img) {
-        // Only replace if it's the TrustIndex logo (check src contains trustindex)
-        if (img.src && img.src.includes('trustindex') && img.src.includes('logo')) {
-          var googleLogo = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-          googleLogo.setAttribute('viewBox', '0 0 272 92');
-          googleLogo.setAttribute('width', img.width || '80');
-          googleLogo.setAttribute('height', img.height || '28');
-          googleLogo.style.cssText = img.style.cssText;
-          googleLogo.style.display = 'inline-block';
-          googleLogo.style.verticalAlign = 'middle';
-          googleLogo.innerHTML = '<path fill="#EA4335" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="#FBBC05" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/><path fill="#4285F4" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/><path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/><path fill="#EA4335" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/><path fill="#4285F4" d="M35.29 41.41V32H67c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.02 9.66C16.32 69.35.36 53.89.36 34.91.36 15.93 16.32.47 35.3.47c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.49.01z"/>';
-          img.parentNode.replaceChild(googleLogo, img);
+      var obs = new MutationObserver(function() {
+        var tiWidget = container.querySelector('.ti-widget');
+        if (tiWidget) {
+          container.style.display = '';
+          if (staticReviews) staticReviews.style.display = 'none';
         }
+        // Replace TrustIndex logo with Google logo
+        var logos = container.querySelectorAll('.ti-header-logo-img, .ti-large-logo img, .ti-small-logo img');
+        logos.forEach(function(img) {
+          if (img.dataset.replaced) return;
+          img.dataset.replaced = '1';
+          var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('viewBox', '0 0 272 92');
+          svg.setAttribute('width', img.width || img.offsetWidth || 80);
+          svg.setAttribute('height', img.height || img.offsetHeight || 28);
+          svg.style.display = 'inline-block';
+          svg.style.verticalAlign = 'middle';
+          svg.innerHTML = googleSvg;
+          img.parentNode.replaceChild(svg, img);
+        });
+        // Rewrite Google Maps links
+        var links = container.querySelectorAll('a[href*="google.com/maps"], a[href*="maps.google"], a[href*="maps.app.goo.gl"]');
+        links.forEach(function(a) { a.href = CORRECT_MAPS_URL; });
       });
+      obs.observe(container, { childList: true, subtree: true });
     }
 
-    // Load when reviews section enters viewport (reduces TBT on initial load)
+    // Load when reviews section enters viewport
     if ('IntersectionObserver' in window) {
-      var reviewsSection = trustIndexContainer.closest('.reviews-section') || trustIndexContainer;
+      var reviewsSection = container.closest('.reviews-section') || container;
       var trustObserver = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
           if (entry.isIntersecting) {
-            loadTrustWidget();
+            loadWidget();
             trustObserver.disconnect();
           }
         });
-      }, { rootMargin: '200px' });
+      }, { rootMargin: '300px' });
       trustObserver.observe(reviewsSection);
     } else {
-      loadTrustWidget();
+      loadWidget();
     }
-  }
+  })();
 </script>

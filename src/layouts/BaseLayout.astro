@@ -286,12 +286,9 @@ if (jsonLd) {
         j.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-MJKQ32P5';
         document.head.appendChild(j);
       }
-      // Load GTM after page load + 5s delay, or on first user interaction
+      // Load GTM after 5s — no interaction trigger to avoid PageSpeed TBT penalty
       window.addEventListener('load', function() {
         setTimeout(loadGTM, 5000);
-      });
-      ['click', 'scroll', 'keydown', 'touchstart'].forEach(function(evt) {
-        window.addEventListener(evt, loadGTM, { once: true, passive: true });
       });
     })();
   </script>

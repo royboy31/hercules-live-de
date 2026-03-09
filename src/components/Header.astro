@@ -65,7 +65,7 @@ const { sportarten, produkte, themen, directLinks } = menuData;
                 {sportarten.map((item) => (
                   <li>
                     <a href={item.href}>
-                      {item.icon_url && <img src={item.icon_url} alt={`${item.label} Kategorie Icon`} width="24" height="24" />}
+                      {item.icon_url && <img src={item.icon_url} alt={`${item.label} Kategorie Icon`} width="24" height="24" loading="lazy" />}
                       <span>{item.label}</span>
                     </a>
                   </li>
@@ -86,7 +86,7 @@ const { sportarten, produkte, themen, directLinks } = menuData;
                 {produkte.map((item) => (
                   <li>
                     <a href={item.href}>
-                      {item.icon_url && <img src={item.icon_url} alt={`${item.label} Kategorie Icon`} width="24" height="24" />}
+                      {item.icon_url && <img src={item.icon_url} alt={`${item.label} Kategorie Icon`} width="24" height="24" loading="lazy" />}
                       <span>{item.label}</span>
                     </a>
                   </li>
@@ -107,7 +107,7 @@ const { sportarten, produkte, themen, directLinks } = menuData;
                 {themen.map((item) => (
                   <li>
                     <a href={item.href}>
-                      {item.icon_url && <img src={item.icon_url} alt={`${item.label} Kollektion Icon`} width="24" height="24" />}
+                      {item.icon_url && <img src={item.icon_url} alt={`${item.label} Kollektion Icon`} width="24" height="24" loading="lazy" />}
                       <span>{item.label}</span>
                     </a>
                   </li>

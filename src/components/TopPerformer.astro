@@ -274,11 +274,14 @@ const { products } = Astro.props;
 </style>
 
 <script>
-  import Swiper from 'swiper';
-  import { Navigation, Autoplay } from 'swiper/modules';
   import 'swiper/css';
 
-  function initSwiper() {
+  async function initSwiper() {
+    const [{ default: Swiper }, { Navigation, Autoplay }] = await Promise.all([
+      import('swiper'),
+      import('swiper/modules')
+    ]);
+
     new Swiper('.top-performer-swiper', {
       modules: [Navigation, Autoplay],
       slidesPerView: 1,
@@ -308,8 +311,10 @@ const { products } = Astro.props;
     });
   }
 
-  // Initialize Swiper when DOM is ready
-  document.addEventListener('DOMContentLoaded', () => {
-    initSwiper();
-  });
+  // Defer initialization - below fold, no need to load immediately
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => initSwiper(), { timeout: 4000 });
+  } else {
+    setTimeout(initSwiper, 2000);
+  }
 </script>

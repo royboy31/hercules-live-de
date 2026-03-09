@@ -1,7 +1,7 @@
 ---
 // Sie vertrauen uns - Trust Logos Section
-// Pure CSS animation - no JavaScript required for continuous scroll
-// This eliminates the critical request chain from Swiper.js
+// Reduced logos in HTML — JS clones them for seamless marquee loop
+// This cuts ~270 DOM elements and ~30KB HTML vs duplicating in markup
 
 const logosRow1 = [
   { src: '/images/logos/Glasgow-Saints.webp', alt: 'Glasgow Saints' },
@@ -66,19 +66,10 @@ const logosRow2 = [
     <!-- Row 1: Left to Right (CSS animation) -->
     <div class="marquee-container">
       <div class="marquee-track marquee-ltr">
-        {/* First set of logos */}
         {logosRow1.map((logo) => (
           <div class="logo-item">
             <figure class="logo-figure">
               <img src={logo.src} alt={logo.alt} loading="lazy" width="218" height="100" />
-            </figure>
-          </div>
-        ))}
-        {/* Duplicate for seamless loop */}
-        {logosRow1.map((logo) => (
-          <div class="logo-item" aria-hidden="true">
-            <figure class="logo-figure">
-              <img src={logo.src} alt="" loading="lazy" width="218" height="100" />
             </figure>
           </div>
         ))}
@@ -88,19 +79,10 @@ const logosRow2 = [
     <!-- Row 2: Right to Left (CSS animation) -->
     <div class="marquee-container">
       <div class="marquee-track marquee-rtl">
-        {/* First set of logos */}
         {logosRow2.map((logo) => (
           <div class="logo-item">
             <figure class="logo-figure">
               <img src={logo.src} alt={logo.alt} loading="lazy" width="218" height="100" />
-            </figure>
-          </div>
-        ))}
-        {/* Duplicate for seamless loop */}
-        {logosRow2.map((logo) => (
-          <div class="logo-item" aria-hidden="true">
-            <figure class="logo-figure">
-              <img src={logo.src} alt="" loading="lazy" width="218" height="100" />
             </figure>
           </div>
         ))}
@@ -116,6 +98,8 @@ const logosRow2 = [
     margin-top: 50px;
     overflow: hidden;
     width: 100%;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 350px;
   }
 
   .trust-container {
@@ -239,3 +223,17 @@ const logosRow2 = [
     }
   }
 </style>
+
+<script is:inline>
+  // Clone logo items for seamless marquee loop (avoids duplicating in HTML)
+  document.querySelectorAll('.marquee-track').forEach(function(track) {
+    var items = track.querySelectorAll('.logo-item');
+    items.forEach(function(item) {
+      var clone = item.cloneNode(true);
+      clone.setAttribute('aria-hidden', 'true');
+      var img = clone.querySelector('img');
+      if (img) img.alt = '';
+      track.appendChild(clone);
+    });
+  });
+</script>

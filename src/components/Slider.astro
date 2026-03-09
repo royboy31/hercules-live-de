@@ -127,6 +127,22 @@ const slides = [
     display: none;
   }
 
+  /* Pre-Swiper: show first slide immediately for LCP, hide others */
+  .swiper-wrapper {
+    display: flex;
+  }
+  .swiper-slide {
+    flex-shrink: 0;
+    width: 100%;
+  }
+  .swiper-slide:not(:first-child) {
+    display: none;
+  }
+  /* Once Swiper initializes, it adds .swiper-initialized */
+  :global(.swiper-initialized) .swiper-slide:not(:first-child) {
+    display: block;
+  }
+
   .slide-inner {
     position: relative;
     display: flex;
@@ -414,14 +430,10 @@ const slides = [
     });
   }
 
-  // Defer Swiper initialization until after LCP
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(() => initSwiper(), { timeout: 5000 });
-      } else {
-        initSwiper();
-      }
-    }, 3000);
-  });
+  // Defer Swiper initialization - short delay to let LCP paint first
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => initSwiper(), { timeout: 3000 });
+  } else {
+    setTimeout(initSwiper, 1000);
+  }
 </script>

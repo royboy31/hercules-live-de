@@ -1,4 +1,4 @@
-name = "hercules-edge-router"
+name = "hercules-edge-router-live"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
 

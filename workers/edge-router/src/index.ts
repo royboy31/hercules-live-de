@@ -11,12 +11,11 @@ interface Env {
 }
 
 // Paths that should NEVER be cached (dynamic/personalized)
+// Note: English equivalents are 301-redirected to German versions before reaching here.
 const NO_CACHE_PATHS = [
-  '/cart',
   '/warenkorb',
-  '/checkout',
   '/kasse',
-  '/my-account',
+  '/danke',
   '/mein-konto',
   '/quote-generator',  // Quote generator uses WC session - must not be cached
   '/angebotsgenerator', // German quote generator page
@@ -27,16 +26,15 @@ const NO_CACHE_PATHS = [
 ];
 
 // Paths that should go to WordPress
+// Note: English equivalents (/cart, /checkout, /my-account, etc.) are 301-redirected
+// to their German versions in the redirect section above, so they never reach here.
 const WORDPRESS_PATHS = [
-  // Cart & Checkout
-  '/cart',
+  // Cart & Checkout (German)
   '/warenkorb',
-  '/checkout',
   '/kasse',
-  '/thank-you',
+  '/danke',
 
-  // Account
-  '/my-account',
+  // Account (German)
   '/mein-konto',
 
   // WordPress Core
@@ -212,6 +210,41 @@ export default {
       return Response.redirect(new URL(`/produkte/${slug}`, url.origin).toString(), 301);
     }
 
+    // English -> German page redirects
+    if (pathname === '/cart' || pathname === '/cart/') {
+      return Response.redirect(new URL('/warenkorb/', url.origin).toString(), 301);
+    }
+    if (pathname === '/checkout' || pathname === '/checkout/') {
+      return Response.redirect(new URL('/kasse/', url.origin).toString(), 301);
+    }
+    if (pathname === '/my-account' || pathname === '/my-account/') {
+      return Response.redirect(new URL('/mein-konto/', url.origin).toString(), 301);
+    }
+    if (pathname === '/contact' || pathname === '/contact/') {
+      return Response.redirect(new URL('/kontakt/', url.origin).toString(), 301);
+    }
+    if (pathname === '/about-us' || pathname === '/about-us/') {
+      return Response.redirect(new URL('/uber-uns/', url.origin).toString(), 301);
+    }
+    if (pathname === '/terms-and-conditions' || pathname === '/terms-and-conditions/') {
+      return Response.redirect(new URL('/agb/', url.origin).toString(), 301);
+    }
+    if (pathname === '/privacy-policy' || pathname === '/privacy-policy/') {
+      return Response.redirect(new URL('/datenschutzerklarung/', url.origin).toString(), 301);
+    }
+    if (pathname === '/imprint' || pathname === '/imprint/') {
+      return Response.redirect(new URL('/impressum/', url.origin).toString(), 301);
+    }
+    if (pathname === '/thank-you' || pathname === '/thank-you/') {
+      return Response.redirect(new URL('/danke/', url.origin).toString(), 301);
+    }
+    if (pathname === '/deliveries-and-returns' || pathname === '/deliveries-and-returns/') {
+      return Response.redirect(new URL('/lieferungen-und-rucksendungen/', url.origin).toString(), 301);
+    }
+    if (pathname === '/payment-methods' || pathname === '/payment-methods/') {
+      return Response.redirect(new URL('/zahlungsmethoden/', url.origin).toString(), 301);
+    }
+
     // Handle CORS preflight for API requests
     if (request.method === 'OPTIONS' && pathname.startsWith('/wp-json/')) {
       return new Response(null, {
@@ -257,10 +290,14 @@ export default {
     }
 
     // Create the proxied request
+    // Note: GET/HEAD requests cannot have a body in the Workers runtime.
+    // Some clients (e.g. Exact Online) send GET with Content-Length: 0, which
+    // causes a TypeError if we pass request.body through.
+    const hasBody = request.method !== 'GET' && request.method !== 'HEAD';
     const proxyRequest = new Request(targetUrl.toString(), {
       method: request.method,
       headers,
-      body: request.body,
+      body: hasBody ? request.body : undefined,
       redirect: 'manual', // Handle redirects ourselves
     });
 

@@ -215,6 +215,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
   const [addToCartLoading, setAddToCartLoading] = useState(false);
   const [addToCartError, setAddToCartError] = useState<string | null>(null);
   const [loadingAction, setLoadingAction] = useState<'quote' | 'cart' | null>(null);
+  const [productInCart, setProductInCart] = useState(false);
 
   // Fetch product config on mount
   useEffect(() => {
@@ -274,6 +275,16 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     }
     fetchConfig();
   }, [productSlug, workerUrl]);
+
+  // Check if any product is already in cart
+  useEffect(() => {
+    const checkCart = () => {
+      const cart = cartStore.get();
+      setProductInCart(cart.count > 0);
+    };
+    checkCart();
+    return cartStore.subscribe(checkCart);
+  }, []);
 
   // Get attribute keys (filtered for visibility)
   const attributeKeys = useMemo(() => {
@@ -1128,7 +1139,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
             onClick={() => handleAddToCart('quote')}
           >
             {addToCartLoading && <span className="kd-btn-spinner"></span>}
-            {addToCartLoading ? 'Wird verarbeitet...' : 'Erstellen Sie Ihr Angebot'}
+            {addToCartLoading ? 'Wird verarbeitet...' : productInCart ? 'Zum Angebot hinzufügen' : 'Erstellen Sie Ihr Angebot'}
           </button>
           <small>Wir senden Ihnen ein PDF zu</small>
         </div>

@@ -71,6 +71,8 @@ interface WCProduct {
   pdf_2_url?: string | null;
   // FAQ fields (exposed by our REST API filter)
   faq?: Array<{ question: string; answer: string }>;
+  // Missive-only flag (exposed by hercules-missive-only plugin)
+  missive_only?: boolean;
 }
 
 interface WCVariation {
@@ -744,6 +746,8 @@ async function transformProduct(
     pdf_2_url: product.pdf_2_url || null,
     // FAQ items from ACF fields
     faq: product.faq || [],
+    // Missive-only flag (hidden from website, visible in Missive CRM)
+    missive_only: product.missive_only || getMeta('_missive_only') === 'yes',
     // Will be updated after image caching
     cached_image_count: 0,
     synced_at: new Date().toISOString(),
@@ -885,6 +889,7 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
           featured: p.featured,
           categories: p.categories.map(c => c.slug),
           menu_order: p.menu_order || 0,
+          missive_only: p.missive_only || p.meta_data?.find((m: any) => m.key === '_missive_only')?.value === 'yes',
         }));
         await env.PRODUCTS_KV.put('product:index', JSON.stringify(productIndex));
       }
@@ -2202,8 +2207,11 @@ export default {
 
     // Get all products (index only - lightweight)
     if (url.pathname === '/products') {
-      const index = await env.PRODUCTS_KV.get('product:index');
-      return new Response(index || '[]', {
+      const indexStr = await env.PRODUCTS_KV.get('product:index');
+      const index = indexStr ? JSON.parse(indexStr) : [];
+      // Exclude missive-only products from website listings
+      const filtered = index.filter((p: any) => !p.missive_only);
+      return new Response(JSON.stringify(filtered), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -2218,8 +2226,10 @@ export default {
       }
 
       const index = JSON.parse(indexStr);
+      // Exclude missive-only products from website builds
+      const filtered = index.filter((p: any) => !p.missive_only);
       const products = await Promise.all(
-        index.map(async (p: any) => {
+        filtered.map(async (p: any) => {
           const productStr = await env.PRODUCTS_KV.get(`product:${p.id}`);
           return productStr ? JSON.parse(productStr) : null;
         })
@@ -2244,7 +2254,7 @@ export default {
       const index = JSON.parse(indexStr);
       // Filter products by category from index
       const categoryProducts = index.filter((p: any) =>
-        p.categories?.includes(categorySlug)
+        p.categories?.includes(categorySlug) && !p.missive_only
       );
 
       // Fetch full product data for matching products

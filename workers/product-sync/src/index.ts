@@ -2198,7 +2198,7 @@ export default {
       const product = JSON.parse(productStr);
 
       // Block missive-only products unless explicitly requested
-      const includeMissive = url.searchParams.get('include_missive') === 'true';
+      const excludeMissive = url.searchParams.get('exclude_missive') === 'true';
       if (product.missive_only && !includeMissive) {
         return new Response('Product not found', { status: 404 });
       }
@@ -2758,9 +2758,9 @@ export default {
 
       const index = JSON.parse(indexStr);
 
-      // include_missive=true shows all products (for Missive CRM)
-      // Default: exclude missive-only products (for website search)
-      const includeMissive = url.searchParams.get('include_missive') === 'true';
+      // exclude_missive=true hides missive-only products (for Astro website search)
+      // Default: include all products (for Missive CRM)
+      const excludeMissive = url.searchParams.get('exclude_missive') === 'true';
 
       // Score-based search: prioritize name matches over category matches
       // Also filter out test products and products without slugs
@@ -2769,8 +2769,8 @@ export default {
           // Filter out test products and products without slugs
           if (!p.slug || p.slug === '') return false;
           if (p.name.toLowerCase().includes('(copy)') || p.name.toLowerCase() === 'test') return false;
-          // Exclude missive-only unless explicitly requested
-          if (!includeMissive && p.missive_only) return false;
+          // Exclude missive-only when requested by Astro
+          if (excludeMissive && p.missive_only) return false;
           return true;
         })
         .map((p: any) => {

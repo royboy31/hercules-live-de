@@ -228,6 +228,57 @@ if (jsonLd) {
     </>
   )}
 
+  <!-- Google Consent Mode V2 - Must load BEFORE GTM and GA4 -->
+  <script is:inline>
+    // Default consent for EU regions (GDPR compliant - deny all until user consents)
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'analytics_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'wait_for_update': 500
+    });
+
+    // Complianz → Google Consent Mode bridge
+    // Reads cookie preferences and updates Google consent accordingly
+    (function() {
+      function getCookie(name) {
+        var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? match[2] : null;
+      }
+
+      function updateConsentFromCookies() {
+        var statistics = getCookie('cmplz_statistics') === 'allow';
+        var marketing = getCookie('cmplz_marketing') === 'allow';
+        if (statistics || marketing) {
+          gtag('consent', 'update', {
+            'analytics_storage': statistics ? 'granted' : 'denied',
+            'ad_storage': marketing ? 'granted' : 'denied',
+            'ad_user_data': marketing ? 'granted' : 'denied',
+            'ad_personalization': marketing ? 'granted' : 'denied'
+          });
+        }
+      }
+
+      // On page load: check if user already consented in a previous visit
+      updateConsentFromCookies();
+
+      // On banner interaction: listen for Complianz consent updates
+      window.addEventListener('cmplz_consent_updated', function(e) {
+        var d = e.detail || {};
+        gtag('consent', 'update', {
+          'analytics_storage': d.statistics ? 'granted' : 'denied',
+          'ad_storage': d.marketing ? 'granted' : 'denied',
+          'ad_user_data': d.marketing ? 'granted' : 'denied',
+          'ad_personalization': d.marketing ? 'granted' : 'denied'
+        });
+      });
+    })();
+  </script>
+
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png">

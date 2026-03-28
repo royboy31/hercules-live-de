@@ -101,5 +101,6 @@ export default defineConfig({
   redirects: {
     '/blog': '/blogs',
     '/blog/': '/blogs',
+    '/sitemap.xml': '/sitemap-index.xml',
   }
 });

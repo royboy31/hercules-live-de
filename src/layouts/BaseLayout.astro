@@ -348,6 +348,28 @@ if (jsonLd) {
     })();
   </script>
 
+  <!-- Microsoft Clarity - Deferred for performance -->
+  <script is:inline>
+    (function() {
+      function loadClarity() {
+        (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window,document,"clarity","script","u9lawpyimd");
+      }
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          if (typeof requestIdleCallback !== 'undefined') {
+            requestIdleCallback(loadClarity);
+          } else {
+            loadClarity();
+          }
+        }, 6500);
+      });
+    })();
+  </script>
+
   <!-- Chathive AI Chat Widget - Heavily deferred for performance (loads after PageSpeed test window) -->
   <script is:inline>
     (function() {

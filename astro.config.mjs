@@ -62,6 +62,8 @@ export default defineConfig({
           '/angebot-anfragen',
           '/search',
           '/api/',
+          '/wishlist',
+          '/kollektionen/unkategorisiert',
         ];
         return !excludePatterns.some(pattern => page.includes(pattern));
       },

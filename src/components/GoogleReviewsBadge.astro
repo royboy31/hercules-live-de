@@ -31,7 +31,7 @@ const aspectRatio = 306 / 50;
 const height = Math.round(width / aspectRatio);
 ---
 
-<a href={url} target="_blank" rel="noopener noreferrer" class:list={["google-reviews-badge", className]} title={`${rating} Sterne aus ${reviewCount}+ Bewertungen`}>
+<span class:list={["google-reviews-badge", className]} title={`${rating} Sterne aus ${reviewCount}+ Bewertungen`}>
   <svg
     viewBox="0 0 306 50"
     width={width}
@@ -92,7 +92,7 @@ const height = Math.round(width / aspectRatio);
       ))}
     </g>
   </svg>
-</a>
+</span>
 
 <style>
   .google-reviews-badge {

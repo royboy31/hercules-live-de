@@ -38,10 +38,15 @@ interface AddonOption {
 interface AddonData {
   id: number;
   name: string;
+  description?: string;
   display_type: 'dropdown' | 'image_selector' | 'select_boxes' | 'multiple_choise';
   parent_id: number;
   visible_if_option: string;
   options: AddonOption[];
+  image_text_position?: 'above' | 'next_to' | 'under';
+  image_items_per_line?: number;
+  image_text_weight?: 'normal' | 'medium' | 'bold';
+  image_footer_text?: string;
 }
 
 interface VariationData {
@@ -801,38 +806,61 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
 
             {isExpanded && (
               <div className="kd-step-collapse">
+                {addon.description && <p style={{ marginBottom: '10px', color: '#666' }}>{addon.description}</p>}
+
                 {/* Image Selector for addons */}
-                {addon.display_type === 'image_selector' && Array.isArray(addon.options) && (
-                  <div className="kd-image-selector" style={{ display: 'flex', flexFlow: 'row wrap', gap: '20px' }}>
-                    {addon.options.map(option => (
-                      <div
-                        key={option.name}
-                        className="kd-image-selector-col kd-img-sel-next_to"
-                        onClick={() => handleAddonSelect(addon.id, option.name, stepIndex)}
-                        style={{
-                          border: selectedValue === option.name ? '2px solid #469ADC' : '1px solid #ccc',
-                          background: selectedValue === option.name ? '#e6f0fa' : '#fff',
-                          padding: '10px',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          flexDirection: 'row',
-                          width: 'calc((100% - 40px) / 3)',
-                        }}
-                      >
-                        <div className="kd-image-selector-title">{option.name}</div>
-                        {option.image && (
-                          <img
-                            src={option.image}
-                            alt={option.name}
-                            style={{ height: '48px', objectFit: 'contain', marginLeft: '5px' }}
-                          />
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                {addon.display_type === 'image_selector' && Array.isArray(addon.options) && (() => {
+                  const textPos = addon.image_text_position || 'next_to';
+                  const perLine = addon.image_items_per_line || 3;
+                  const textWeight = addon.image_text_weight || 'medium';
+                  const weightMap: Record<string, number> = { normal: 400, medium: 500, bold: 700 };
+                  const gapPx = 20;
+                  const colWidth = `calc((100% - ${(perLine - 1) * gapPx}px) / ${perLine})`;
+                  const isVertical = textPos === 'above' || textPos === 'under';
+
+                  return (
+                    <div className="kd-image-selector" style={{ display: 'flex', flexFlow: 'row wrap', gap: `${gapPx}px` }}>
+                      {addon.options.map(option => (
+                        <div
+                          key={option.name}
+                          className={`kd-image-selector-col kd-img-sel-${textPos}`}
+                          onClick={() => handleAddonSelect(addon.id, option.name, stepIndex)}
+                          style={{
+                            border: selectedValue === option.name ? '2px solid #469ADC' : '1px solid #ccc',
+                            background: selectedValue === option.name ? '#e6f0fa' : '#fff',
+                            padding: '10px',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: isVertical ? 'center' : 'stretch',
+                            width: colWidth,
+                            textAlign: isVertical ? 'center' : undefined,
+                          }}
+                        >
+                          {textPos === 'next_to' ? (
+                            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                              <div className="kd-image-selector-title" style={{ fontWeight: weightMap[textWeight] || 500 }}>{option.name}</div>
+                              {option.image && (
+                                <img src={option.image} alt={option.name} style={{ height: '48px', objectFit: 'contain', marginLeft: '5px' }} />
+                              )}
+                            </div>
+                          ) : (
+                            <>
+                              <div className="kd-image-selector-title" style={{ fontWeight: weightMap[textWeight] || 500 }}>{option.name}</div>
+                              {option.image && (
+                                <img src={option.image} alt={option.name} style={{ height: '48px', objectFit: 'contain', margin: '6px 0' }} />
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {addon.display_type === 'image_selector' && addon.image_footer_text && (
+                  <div className="kd-image-selector-desc kd-image-selector-footer" dangerouslySetInnerHTML={{ __html: addon.image_footer_text }} />
                 )}
 
                 {/* Dropdown for addons */}

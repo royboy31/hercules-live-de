@@ -48,3 +48,12 @@ jobs:
 
       - name: Output deployment URL
         run: echo "Deployed to https://hercules-de-live.pages.dev"
+
+      - name: Trigger post-deploy health check
+        if: success()
+        run: |
+          curl -s -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/royboy31/hercules-health-check/dispatches \
+            -d '{"event_type":"deploy-de"}' || true

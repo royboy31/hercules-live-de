@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import GoogleReviewsBadge from '../../components/GoogleReviewsBadge.astro';
 import {
   siteConfig,
   getArticleSchema,
@@ -188,6 +189,11 @@ jsonLdSchemas.push(getBreadcrumbSchema([
 
         <!-- Right Column: Sidebar (35%) -->
         <aside class="blog-sidebar">
+          <!-- Google Reviews Badge -->
+          <div class="sidebar-reviews">
+            <GoogleReviewsBadge width={250} />
+          </div>
+
           <!-- CTA Box -->
           <div class="cta-box">
             <div class="cta-content">
@@ -475,6 +481,16 @@ jsonLdSchemas.push(getBreadcrumbSchema([
       padding-left: 0;
       margin-top: 40px;
     }
+  }
+
+  /* Google Reviews */
+  .sidebar-reviews {
+    background: #253461;
+    border-radius: 15px;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
   }
 
   /* CTA Box */

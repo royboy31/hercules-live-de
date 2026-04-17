@@ -1,0 +1,611 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TrustLogos from '../components/TrustLogos.astro';
+import CustomerReviews from '../components/CustomerReviews.astro';
+
+const pageTitle = "Lassen Sie uns über Ihr Projekt sprechen | Hercules Merchandise";
+const pageDescription = "Kontaktieren Sie Hercules Merchandise für personalisierte Sportartikel. Kostenloser Designservice, schnelle Rückmeldung, Betreuung von der Idee bis zur Lieferung.";
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  pageType="page"
+>
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-container">
+      <div class="hero-text">
+        <h1>Lassen Sie uns über Ihr Projekt sprechen</h1>
+        <p class="hero-intro">Sie haben eine Frage oder möchten ein Projekt starten?</p>
+        <p class="hero-intro">Senden Sie uns eine Nachricht – wir melden uns schnell bei Ihnen zurück, in der Regel innerhalb weniger Stunden an Werktagen.</p>
+        <p class="hero-intro">Ob Sie bereits eine klare Vorstellung haben oder einfach Ihre Möglichkeiten erkunden möchten – wir begleiten Sie durch den Prozess.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Warum Sie uns kontaktieren sollten -->
+  <section class="why-section">
+    <div class="container">
+      <h2 class="section-title">Warum Sie uns kontaktieren sollten</h2>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10C99E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+              <path d="M2 2l7.586 7.586"></path>
+              <circle cx="11" cy="11" r="2"></circle>
+            </svg>
+          </div>
+          <p>Kostenloser und unverbindlicher Designservice</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10C99E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <p>Schnelle Rückmeldungen</p>
+        </div>
+        <div class="why-card">
+          <div class="why-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10C99E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 11l3 3L22 4"></path>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+          </div>
+          <p>Persönliche Betreuung von Anfang bis Ende</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Form Section -->
+  <section class="form-section">
+    <div class="container">
+      <h2 class="section-title">Ihre Nachricht</h2>
+      <div class="form-wrapper">
+        <form class="contact-form" id="contact-form" novalidate>
+          <!-- Name + Email Row -->
+          <div class="form-row">
+            <div class="form-field">
+              <label for="contact-name">Name <span class="required">*</span></label>
+              <input type="text" id="contact-name" name="name" placeholder="Ihr Name" required />
+            </div>
+            <div class="form-field">
+              <label for="contact-email">E-Mail <span class="required">*</span></label>
+              <input type="email" id="contact-email" name="email" placeholder="Ihre E-Mail-Adresse" required />
+            </div>
+          </div>
+
+          <!-- Organisation -->
+          <div class="form-field">
+            <label for="contact-organisation">Organisation <span class="optional">(optional)</span></label>
+            <input type="text" id="contact-organisation" name="organisation" placeholder="Verein, Team, Firma oder Organisation" />
+          </div>
+
+          <!-- Message -->
+          <div class="form-field">
+            <label for="contact-message">Nachricht <span class="required">*</span></label>
+            <textarea id="contact-message" name="message" placeholder="Erzählen Sie uns von Ihrem Projekt..." rows="6" required></textarea>
+          </div>
+
+          <!-- File Upload -->
+          <div class="form-field">
+            <label for="contact-files">Datei hochladen <span class="optional">(optional)</span></label>
+            <input type="file" id="contact-files" name="files" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
+            <span class="file-hint">Logos, Designs oder Referenzbilder</span>
+          </div>
+
+          <!-- Error / Success Messages -->
+          <div class="form-message" id="form-message"></div>
+
+          <!-- Submit Button -->
+          <div class="form-submit">
+            <button type="submit" id="contact-submit">Nachricht senden</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- So geht es weiter -->
+  <section class="next-section">
+    <div class="container">
+      <h2 class="section-title">So geht es weiter</h2>
+      <p class="section-intro">Nachdem Sie uns kontaktiert haben:</p>
+      <div class="steps-grid">
+        <div class="step">
+          <span class="step-number">1</span>
+          <p>Wir prüfen Ihre Anfrage</p>
+        </div>
+        <div class="step">
+          <span class="step-number">2</span>
+          <p>Wir melden uns innerhalb weniger Stunden</p>
+        </div>
+        <div class="step">
+          <span class="step-number">3</span>
+          <p>Wir besprechen Ihr Projekt</p>
+        </div>
+        <div class="step">
+          <span class="step-number">4</span>
+          <p>Wir erstellen Ihr erstes Design kostenlos</p>
+        </div>
+      </div>
+      <p class="no-pressure">Sie entscheiden, ob Sie fortfahren möchten – ganz ohne Druck.</p>
+    </div>
+  </section>
+
+  <!-- Trusted Section -->
+  <section class="trust-section">
+    <div class="container">
+      <h2 class="section-title">Vertrauen von Organisationen in ganz Europa</h2>
+      <p class="section-intro">Wir unterstützen jedes Jahr mehr als 1.000 Kunden.</p>
+      <p class="section-intro">Überzeugen Sie sich selbst – lesen Sie die Bewertungen unserer Kunden weiter unten.</p>
+    </div>
+  </section>
+
+  <!-- Trust Logos -->
+  <TrustLogos />
+
+  <!-- Kundenbewertungen -->
+  <CustomerReviews />
+</BaseLayout>
+
+<style>
+  /* Hero Section */
+  .hero-section {
+    background-color: #444444;
+    background-image: url('/images/about-hero-banner.jpg');
+    background-size: cover;
+    background-position: 50% 0%;
+    background-repeat: no-repeat;
+    position: relative;
+    min-height: 450px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(286deg, rgba(0, 0, 0, 0) 0%, rgb(0, 0, 0) 100%);
+    opacity: 0.6;
+  }
+
+  .hero-container {
+    position: relative;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    width: 100%;
+  }
+
+  .hero-text {
+    max-width: 650px;
+  }
+
+  h1 {
+    font-family: 'Jost', sans-serif;
+    font-size: 52px;
+    font-weight: 600;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin: 0 0 20px;
+  }
+
+  .hero-intro {
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 0 10px;
+  }
+
+  /* Shared */
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .section-title {
+    font-family: 'Jost', sans-serif;
+    font-size: 35px;
+    font-weight: 600;
+    color: #253461;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0 0 15px;
+  }
+
+  .section-intro {
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #5F5F5F;
+    text-align: center;
+    max-width: 750px;
+    margin: 0 auto 10px;
+  }
+
+  .section-intro a {
+    color: #469ADC;
+    text-decoration: underline;
+  }
+
+  .section-intro a:hover {
+    color: #253461;
+  }
+
+  /* Why Contact Us */
+  .why-section {
+    padding: 70px 0;
+    background: #FFFFFF;
+  }
+
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-top: 40px;
+  }
+
+  .why-card {
+    text-align: center;
+    padding: 30px 20px;
+    background: #FAFAFA;
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .why-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .why-icon {
+    margin-bottom: 15px;
+  }
+
+  .why-card p {
+    font-family: 'Jost', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: #253461;
+    margin: 0;
+  }
+
+  /* Form Section */
+  .form-section {
+    padding: 70px 0;
+    background: #FAFAFA;
+  }
+
+  .form-wrapper {
+    max-width: 750px;
+    margin: 30px auto 0;
+    background: #FFFFFF;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 20px;
+  }
+
+  .form-row .form-field {
+    flex: 1;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-field label {
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #253461;
+  }
+
+  .required {
+    color: #e74c3c;
+  }
+
+  .optional {
+    font-weight: 400;
+    color: #999;
+    font-size: 13px;
+  }
+
+  .form-field input[type="text"],
+  .form-field input[type="email"],
+  .form-field input[type="tel"],
+  .form-field textarea {
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    padding: 12px 15px;
+    border: 1px solid #DCDCDC;
+    border-radius: 8px;
+    background: #fff;
+    color: #253461;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-field input:focus,
+  .form-field textarea:focus {
+    outline: none;
+    border-color: #10C99E;
+    box-shadow: 0 0 0 3px rgba(16, 201, 158, 0.1);
+  }
+
+  .form-field input::placeholder,
+  .form-field textarea::placeholder {
+    color: #8D8D8D;
+  }
+
+  .form-field textarea {
+    resize: vertical;
+    min-height: 140px;
+  }
+
+  .form-field input[type="file"] {
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    color: #253461;
+  }
+
+  .file-hint {
+    font-family: 'Roboto', sans-serif;
+    font-size: 13px;
+    color: #999;
+  }
+
+  .form-message {
+    display: none;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+  }
+
+  .form-message.success {
+    display: block;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+  }
+
+  .form-message.error {
+    display: block;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+  }
+
+  .form-submit {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .form-submit button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 50px;
+    background: #10C99E;
+    border: 1px solid #10C99E;
+    border-radius: 50px;
+    color: #fff;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 180px;
+  }
+
+  .form-submit button:hover:not(:disabled) {
+    background: transparent;
+    color: #10C99E;
+  }
+
+  .form-submit button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  /* What Happens Next */
+  .next-section {
+    padding: 70px 0;
+    background: #FFFFFF;
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+    margin-top: 30px;
+  }
+
+  .step {
+    text-align: center;
+    padding: 25px 15px;
+  }
+
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #10C99E;
+    color: #FFFFFF;
+    font-family: 'Jost', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+
+  .step p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #5F5F5F;
+    margin: 0;
+  }
+
+  .no-pressure {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    color: #253461;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 25px;
+  }
+
+  /* Trust Section */
+  .trust-section {
+    padding: 70px 0 30px;
+    background: #FAFAFA;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 1024px) {
+    .why-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .steps-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero-section {
+      min-height: auto;
+    }
+
+    .hero-container {
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 32px;
+    }
+
+    .hero-intro {
+      font-size: 15px;
+    }
+
+    .container {
+      padding: 0 20px;
+    }
+
+    .section-title {
+      font-size: 24px;
+    }
+
+    .why-section,
+    .form-section,
+    .next-section,
+    .trust-section {
+      padding: 45px 0;
+    }
+
+    .form-wrapper {
+      padding: 25px 20px;
+    }
+
+    .form-row {
+      flex-direction: column;
+    }
+
+    .steps-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .step {
+      padding: 15px 10px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('contact-form') as HTMLFormElement;
+    const submitBtn = document.getElementById('contact-submit') as HTMLButtonElement;
+    const messageDiv = document.getElementById('form-message') as HTMLDivElement;
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Wird gesendet...';
+        messageDiv.className = 'form-message';
+        messageDiv.textContent = '';
+
+        try {
+          const formData = new FormData(form);
+          formData.append('date', new Date().toLocaleDateString('de-DE'));
+          formData.append('time', new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
+          formData.append('pageTitle', document.title);
+          formData.append('pageUrl', window.location.href);
+          formData.append('referrer', document.referrer || '(direct)');
+          formData.append('userAgent', navigator.userAgent);
+
+          // Handle file input
+          const fileInput = document.getElementById('contact-files') as HTMLInputElement;
+          if (fileInput && fileInput.files) {
+            for (let i = 0; i < fileInput.files.length; i++) {
+              formData.append(`file_${i}`, fileInput.files[i]);
+            }
+          }
+
+          const response = await fetch('/api/contact', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error('Submission failed');
+          }
+
+          messageDiv.className = 'form-message success';
+          messageDiv.textContent = 'Vielen Dank für Ihre Nachricht! Wir melden uns innerhalb weniger Stunden an Werktagen bei Ihnen.';
+          form.reset();
+        } catch (error) {
+          messageDiv.className = 'form-message error';
+          messageDiv.textContent = 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.';
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Nachricht senden';
+        }
+      });
+    }
+  });
+</script>

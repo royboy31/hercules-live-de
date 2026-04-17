@@ -1,0 +1,815 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TrustLogos from '../components/TrustLogos.astro';
+import ContactFormPopup from '../components/ContactFormPopup.tsx';
+import CustomerReviews from '../components/CustomerReviews.astro';
+
+const pageTitle = 'Über Hercules Merchandise | Personalisierte Sportartikel Deutschland';
+const pageDescription = 'Personalisierte Sportartikel für Vereine, Teams und Organisationen. Kostenloser Designservice, europäische Produktion, 3-4 Wochen Lieferung. Über 1.000 zufriedene Kunden in Deutschland und Europa.';
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  pageType="page"
+>
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-container">
+      <div class="hero-text">
+        <h1>Über Hercules Merchandise</h1>
+        <h2 class="hero-subtitle">Personalisierte Sportartikel für Vereine, Teams und Organisationen</h2>
+      </div>
+    </div>
+  </section>
+
+  <!-- Intro Section -->
+  <section class="intro-section">
+    <div class="container">
+      <div class="intro-content">
+        <p>Sie sind hier, weil Sie personalisierte Sportartikel suchen.</p>
+        <p>Vielleicht haben Sie bereits Erfahrung damit gemacht und festgestellt, dass der Prozess komplizierter war als erwartet. Oder es ist Ihr erstes Projekt und Sie möchten sicherstellen, dass alles reibungslos abläuft.</p>
+        <div class="intro-questions">
+          <p>Wird die Qualität stimmen?</p>
+          <p>Kommt alles pünktlich an?</p>
+          <p>Entspricht das Design wirklich Ihren Vorstellungen?</p>
+          <p>Wie viel Zeit wird das Ganze in Anspruch nehmen?</p>
+        </div>
+        <p>Das sind genau die Fragen, die wir täglich hören – und genau darauf haben wir uns spezialisiert.</p>
+        <p>Wir entwickeln und produzieren personalisierte Sportartikel und Teamwear für Vereine, Teams und Organisationen in ganz Deutschland und Europa.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Warum wir Hercules gegründet haben -->
+  <section class="about-section">
+    <div class="container">
+      <div class="two-col">
+        <div class="col-text">
+          <h2>Warum wir Hercules Merchandise gegründet haben</h2>
+          <p>Mein Name ist Gilles, ich bin der Gründer von Hercules Merchandise.</p>
+          <p>Ich arbeite seit über 15 Jahren im Bereich personalisierte Sportartikel und Teamwear. In dieser Zeit habe ich immer wieder erlebt, wie unnötig kompliziert der Bestellprozess sein kann.</p>
+          <p>Deshalb habe ich Hercules gegründet: um den Prozess einfach, transparent und zuverlässig zu machen.</p>
+          <p>Heute betreuen wir jährlich <strong>mehr als 1.000 Kunden</strong> in Deutschland und Europa, darunter Großbritannien, Irland, Frankreich, Belgien und die Niederlande.</p>
+          <p>Zu unseren Kunden zählen unter anderem Organisationen wie <strong>Leyton Orient, Barnet FC, London Irish, Coca-Cola, Red Bull, Mastercard und Google</strong>.</p>
+          <p>Unsere Kunden bewerten uns regelmäßig sehr positiv – überzeugen Sie sich selbst anhand unserer Kundenbewertungen weiter unten auf dieser Seite.</p>
+        </div>
+        <div class="col-image">
+          <img src="/images/about-hercules-hero.png" alt="Hercules Merchandise - personalisierte Sportartikel" loading="lazy" width="550" height="500" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Was Hercules besonders macht -->
+  <section class="about-section about-section-alt">
+    <div class="container">
+      <h2 class="section-title">Was Hercules besonders macht</h2>
+      <p class="section-intro">Unser Fokus liegt darauf, Komplexität zu reduzieren und den gesamten Ablauf so einfach und zuverlässig wie möglich zu gestalten.</p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10C99E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+              <path d="M2 2l7.586 7.586"></path>
+              <circle cx="11" cy="11" r="2"></circle>
+            </svg>
+          </div>
+          <h3>Kostenloser Designservice – unverbindlich</h3>
+          <p>Wir verwenden keine komplizierten Design-Tools oder Konfiguratoren. Stattdessen bieten wir einen komplett kostenlosen Designservice, der von unserem hauseigenen Team durchgeführt wird.</p>
+          <p>Sie senden uns Ihr Logo, Ihre Farben oder Ihre Ideen, und wir erstellen das Design für Sie. Sie erhalten Ihr Design vor der Produktion und wir passen es gemeinsam an – mit bis zu <strong>fünf Überarbeitungsrunden</strong> – bis alles genau richtig aussieht.</p>
+          <p>Es fallen keine Kosten während der Designphase an und es besteht keine Verpflichtung zur Bestellung.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10C99E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <h3>Schnelle Rückmeldung und klare Kommunikation</h3>
+          <p>Ab dem ersten Kontakt erhalten Sie eine klare Kommunikation und eine schnelle Rückmeldung – in der Regel innerhalb weniger Stunden an Werktagen.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10C99E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 11l3 3L22 4"></path>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+          </div>
+          <h3>Muster und Qualitätssicherung</h3>
+          <p>Für viele Produkte können wir vor der Produktion ein Muster anfertigen und Fotos zur Freigabe senden. Wo es sinnvoll ist, können wir auch ein physisches Muster zusenden.</p>
+          <p>Wir beraten Sie immer, was für Ihr Projekt am sinnvollsten ist.</p>
+        </div>
+      </div>
+
+      <div class="cta-center">
+        <ContactFormPopup client:visible triggerType="button" triggerText="Sprechen Sie mit uns über Ihr Projekt" triggerClassName="about-cta" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Produktion, auf die Sie sich verlassen können -->
+  <section class="about-section">
+    <div class="container">
+      <div class="two-col two-col-reverse">
+        <div class="col-text">
+          <h2>Produktion, auf die Sie sich verlassen können</h2>
+          <p>Wir arbeiten hauptsächlich mit sorgfältig ausgewählten Produktionspartnern in Europa. Wir haben langfristige Beziehungen zu vielen von ihnen aufgebaut, die eine gleichbleibende Qualität und zuverlässige Produktionsprozesse gewährleisten.</p>
+          <p>Die Produktion in Europa gibt uns eine starke Kontrolle über Qualität, Zeitplanung und Kommunikation – für einen vorhersehbaren Ablauf ohne Überraschungen.</p>
+          <p>Wir reduzieren außerdem Transportwege und CO2-Emissionen und bieten Produkte aus recycelten Garnen und Stoffen an.</p>
+          <p>Die Produktionszeit beträgt in der Regel <strong>3 bis 4 Wochen</strong>, Express-Optionen sind möglich. Wir nehmen Aufträge mit Deadline nur an, wenn wir sicher sind, pünktlich liefern zu können.</p>
+          <div class="highlight-box">
+            <p><strong>Beispiel:</strong> Wir haben 1.400 personalisierte Schals in einer Woche für ein Schulprojekt geliefert.</p>
+          </div>
+          <p>Sollte einmal etwas nicht wie geplant laufen, übernehmen wir die Verantwortung und kümmern uns zuverlässig um eine Lösung – einschließlich der Neuproduktion, falls nötig.</p>
+        </div>
+        <div class="col-image">
+          <img src="/images/about-factory.webp" alt="Hercules Merchandise Produktionsstätte" loading="lazy" width="550" height="400" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Unser Sortiment -->
+  <section class="about-section about-section-alt">
+    <div class="container">
+      <h2 class="section-title">Unser Sortiment an personalisierten Sportartikeln</h2>
+
+      <div class="range-grid">
+        <div class="range-card">
+          <h3>Personalisierte Teamwear und Sporttrikots</h3>
+          <p>Wir produzieren personalisierte Fußballtrikots, Rugbytrikots, Laufshirts und Basketballtrikots.</p>
+          <div class="range-links">
+            <a href="/kollektionen/fussball">Fußballtrikots</a>
+            <a href="/kollektionen/personalisierte-sportbekleidung">Sportbekleidung</a>
+          </div>
+        </div>
+
+        <div class="range-card">
+          <h3>Personalisierte Fanschals</h3>
+          <p>Personalisierte Fußballschals gehören zu unseren beliebtesten Produkten.</p>
+          <div class="range-links">
+            <a href="/kollektionen/personalisierte-fanschals">Fanschals</a>
+          </div>
+        </div>
+
+        <div class="range-card">
+          <h3>Weitere Merchandise-Artikel</h3>
+          <p>Wir bieten auch personalisierte Wimpel, Mützen, Badeschlappen, Handtücher und Taschen an.</p>
+          <div class="range-links">
+            <a href="/kollektionen/personalisierte-mutzen">Mützen</a>
+            <a href="/kollektionen/personalisierte-wimpel">Wimpel</a>
+            <a href="/kollektionen/handtucher">Handtücher</a>
+            <a href="/kollektionen/taschen">Taschen</a>
+          </div>
+        </div>
+      </div>
+
+      <p class="range-note">Die meisten Produkte starten ab ca. 50 Stück. Sportbekleidung bereits ab 5 Stück.</p>
+
+      <div class="cta-center">
+        <a href="/kollektionen/" class="explore-cta">Unsere Produkte entdecken</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- So arbeiten wir -->
+  <section class="about-section">
+    <div class="container">
+      <h2 class="section-title">So arbeiten wir</h2>
+      <p class="section-intro">Sie sagen uns, was Sie brauchen, wir erstellen Ihr Design und nichts geht in Produktion ohne Ihre Freigabe. Wir halten Sie während des gesamten Prozesses auf dem Laufenden.</p>
+
+      <div class="steps-grid">
+        <div class="step">
+          <span class="step-number">1</span>
+          <p>Sie kontaktieren uns mit Ihrer Idee</p>
+        </div>
+        <div class="step">
+          <span class="step-number">2</span>
+          <p>Wir erstellen Ihr Design kostenlos</p>
+        </div>
+        <div class="step">
+          <span class="step-number">3</span>
+          <p>Sie geben das Design vor der Produktion frei</p>
+        </div>
+        <div class="step">
+          <span class="step-number">4</span>
+          <p>Wir liefern pünktlich</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lassen Sie uns Ihr Projekt umsetzen -->
+  <section class="about-section about-section-alt">
+    <div class="container">
+      <h2 class="section-title">Lassen Sie uns Ihr Projekt umsetzen</h2>
+      <p class="section-intro">Wir konzentrieren uns darauf, einfach, reaktionsschnell und zuverlässig zu sein. Unser gesamtes Team arbeitet mit Klarheit, Schnelligkeit und Liebe zum Detail.</p>
+      <p class="section-intro">Wenn Sie einen zuverlässigen Partner für personalisierte Sportartikel suchen, helfen wir Ihnen gerne weiter.</p>
+      <div class="cta-center">
+        <ContactFormPopup client:visible triggerType="button" triggerText="Sprechen Sie mit uns über Ihr Projekt" triggerClassName="about-cta" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Häufig gestellte Fragen -->
+  <section class="about-section">
+    <div class="container">
+      <h2 class="section-title">Häufig gestellte Fragen</h2>
+
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Wie hoch ist die Mindestbestellmenge?</summary>
+          <p>Die meisten Produkte starten ab ca. 50 Stück, Sportbekleidung bereits ab 5 Stück.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Wie lange dauert die Produktion?</summary>
+          <p>In der Regel 3 bis 4 Wochen, Expressoptionen sind verfügbar.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Bieten Sie kostenlose Designs an?</summary>
+          <p>Ja, unser Designservice ist komplett kostenlos und unverbindlich.</p>
+        </details>
+
+        <details class="faq-item">
+          <summary>Kann ich ein Muster erhalten?</summary>
+          <p>In vielen Fällen ja – abhängig vom Produkt und der Bestellmenge.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Logos -->
+  <TrustLogos />
+
+  <!-- Kundenbewertungen -->
+  <CustomerReviews />
+
+  <!-- FAQ Schema -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Wie hoch ist die Mindestbestellmenge?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Die meisten Produkte starten ab ca. 50 Stück, Sportbekleidung bereits ab 5 Stück."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Wie lange dauert die Produktion?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In der Regel 3 bis 4 Wochen, Expressoptionen sind verfügbar."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Bieten Sie kostenlose Designs an?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja, unser Designservice ist komplett kostenlos und unverbindlich."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kann ich ein Muster erhalten?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In vielen Fällen ja – abhängig vom Produkt und der Bestellmenge."
+        }
+      }
+    ]
+  })} />
+</BaseLayout>
+
+<style>
+  /* Hero Section */
+  .hero-section {
+    background-color: #444444;
+    background-image: url('/images/about-hero-banner.jpg');
+    background-size: cover;
+    background-position: 50% 0%;
+    background-repeat: no-repeat;
+    position: relative;
+    min-height: 572px;
+    display: flex;
+    align-items: center;
+  }
+
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(286deg, rgba(0, 0, 0, 0) 0%, rgb(0, 0, 0) 100%);
+    opacity: 0.6;
+  }
+
+  .hero-container {
+    position: relative;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    width: 100%;
+  }
+
+  .hero-text {
+    max-width: 650px;
+  }
+
+  h1 {
+    font-family: 'Jost', sans-serif;
+    font-size: 52px;
+    font-weight: 600;
+    color: #FFFFFF;
+    text-transform: uppercase;
+    line-height: 1.1;
+    margin: 0 0 10px;
+  }
+
+  .hero-subtitle {
+    font-family: 'Jost', sans-serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: #10C99E;
+    margin: 0;
+  }
+
+  /* Intro Section */
+  .intro-section {
+    padding: 60px 0;
+    background: #FFFFFF;
+  }
+
+  .intro-content {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .intro-content > p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #5F5F5F;
+    margin: 0 0 15px;
+  }
+
+  .intro-questions {
+    margin: 20px 0;
+    padding-left: 18px;
+    border-left: 3px solid #10C99E;
+  }
+
+  .intro-questions p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    font-style: italic;
+    color: #253461;
+    margin: 0 0 8px;
+    line-height: 1.5;
+  }
+
+  /* Shared Section Styles */
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  .about-section {
+    padding: 70px 0;
+    background: #FFFFFF;
+  }
+
+  .about-section-alt {
+    background: #FAFAFA;
+  }
+
+  .section-title {
+    font-family: 'Jost', sans-serif;
+    font-size: 35px;
+    font-weight: 600;
+    color: #253461;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0 0 15px;
+  }
+
+  .section-intro {
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #5F5F5F;
+    text-align: center;
+    max-width: 750px;
+    margin: 0 auto 10px;
+  }
+
+  /* Two Column Layout */
+  .two-col {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+  }
+
+  .two-col-reverse {
+    flex-direction: row-reverse;
+  }
+
+  .col-text {
+    flex: 1;
+  }
+
+  .col-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .col-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 15px;
+  }
+
+  .col-text h2 {
+    font-family: 'Jost', sans-serif;
+    font-size: 35px;
+    font-weight: 600;
+    color: #253461;
+    text-transform: uppercase;
+    margin: 0 0 20px;
+  }
+
+  .col-text p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #5F5F5F;
+    margin: 0 0 15px;
+  }
+
+  .col-text strong {
+    color: #253461;
+  }
+
+  .col-text a {
+    color: #469ADC;
+    text-decoration: underline;
+  }
+
+  .col-text a:hover {
+    color: #253461;
+  }
+
+  /* Highlight Box */
+  .highlight-box {
+    background: #f0fdf4;
+    border-left: 4px solid #10C99E;
+    padding: 15px 20px;
+    border-radius: 0 10px 10px 0;
+    margin: 20px 0;
+  }
+
+  .highlight-box p {
+    margin: 0;
+    color: #253461;
+  }
+
+  /* Features Grid */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin: 40px 0;
+  }
+
+  .feature-card {
+    background: #FFFFFF;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .feature-icon {
+    margin-bottom: 15px;
+  }
+
+  .feature-card h3 {
+    font-family: 'Jost', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #253461;
+    margin: 0 0 12px;
+  }
+
+  .feature-card p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #5F5F5F;
+    margin: 0 0 10px;
+  }
+
+  .feature-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  .feature-card strong {
+    color: #253461;
+  }
+
+  /* CTA Center */
+  .cta-center {
+    text-align: center;
+    margin-top: 35px;
+  }
+
+  .about-cta :global(.contact-trigger-button) {
+    display: inline-block;
+    padding: 15px 40px;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    background-color: #10C99E;
+    border: 1px solid #10C99E;
+    border-radius: 50px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .about-cta :global(.contact-trigger-button:hover) {
+    background-color: transparent;
+    color: #10C99E;
+  }
+
+  /* Product Range Grid */
+  .range-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin: 40px 0 20px;
+  }
+
+  .range-card {
+    background: #FFFFFF;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .range-card h3 {
+    font-family: 'Jost', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #253461;
+    margin: 0 0 10px;
+  }
+
+  .range-card p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #5F5F5F;
+    margin: 0 0 15px;
+  }
+
+  .range-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .range-links a {
+    display: inline-block;
+    padding: 8px 18px;
+    font-family: 'Jost', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #253461;
+    border: 1px solid #253461;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .range-links a:hover {
+    background: #253461;
+    color: #FFFFFF;
+  }
+
+  .range-note {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    color: #5F5F5F;
+    text-align: center;
+    margin: 0 0 10px;
+  }
+
+  .explore-cta {
+    display: inline-block;
+    padding: 15px 40px;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    background-color: #253461;
+    border: 1px solid #253461;
+    border-radius: 50px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .explore-cta:hover {
+    background-color: transparent;
+    color: #253461;
+  }
+
+  /* Steps Grid */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+    margin-top: 40px;
+  }
+
+  .step {
+    text-align: center;
+    padding: 25px 15px;
+  }
+
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #10C99E;
+    color: #FFFFFF;
+    font-family: 'Jost', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 15px;
+  }
+
+  .step p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #5F5F5F;
+    margin: 0;
+  }
+
+  /* FAQ Section */
+  .faq-list {
+    max-width: 800px;
+    margin: 30px auto 0;
+  }
+
+  .faq-item {
+    border-bottom: 1px solid #E8E8E8;
+  }
+
+  .faq-item summary {
+    font-family: 'Jost', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: #253461;
+    padding: 20px 0;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-item summary::after {
+    content: '+';
+    font-size: 24px;
+    font-weight: 300;
+    color: #10C99E;
+    transition: transform 0.3s ease;
+  }
+
+  .faq-item[open] summary::after {
+    content: '−';
+  }
+
+  .faq-item p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #5F5F5F;
+    padding: 0 0 20px;
+    margin: 0;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 1024px) {
+    .features-grid,
+    .range-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .steps-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero-section {
+      min-height: auto;
+    }
+
+    .hero-container {
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 32px;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+    }
+
+    .intro-section {
+      padding: 35px 0;
+    }
+
+    .intro-content > p {
+      font-size: 15px;
+    }
+
+    .container {
+      padding: 0 20px;
+    }
+
+    .about-section {
+      padding: 45px 0;
+    }
+
+    .section-title {
+      font-size: 24px;
+    }
+
+    .two-col,
+    .two-col-reverse {
+      flex-direction: column;
+    }
+
+    .two-col {
+      gap: 30px;
+    }
+
+    .col-text h2 {
+      font-size: 24px;
+    }
+
+    .col-image img {
+      border-radius: 10px;
+    }
+
+    .steps-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .step {
+      padding: 15px 10px;
+    }
+
+    .faq-item summary {
+      font-size: 16px;
+    }
+  }
+</style>

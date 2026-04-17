@@ -104,11 +104,19 @@ const mapsUrl = placeData.url || '#';
     min-height: 300px;
   }
 
-  /* Hide only TrustIndex branding link at bottom */
+  /* Hide TrustIndex branding link at bottom */
   :global(.ti-widget a[href*="trustindex"]),
   :global(.ti-widget a[title*="Trustindex"]),
   :global(.ti-widget a[title*="trustindex"]) {
     display: none !important;
+  }
+
+  /* Disable all links in TrustIndex widget — no external navigation */
+  :global(.ti-widget a) {
+    pointer-events: none !important;
+    cursor: default !important;
+    text-decoration: none !important;
+    color: inherit !important;
   }
 
   /* ── Static Reviews (build-time rendered) ── */

@@ -29,9 +29,10 @@ const NO_CACHE_PATHS = [
 // Note: English equivalents (/cart, /checkout, /my-account, etc.) are 301-redirected
 // to their German versions in the redirect section above, so they never reach here.
 const WORDPRESS_PATHS = [
-  // Cart & Checkout (German)
+  // Cart & Checkout (German + English fallback for WC payment URLs)
   '/warenkorb',
   '/kasse',
+  '/checkout',
   '/danke',
 
   // Account (German)
@@ -55,13 +56,11 @@ const WORDPRESS_PATHS = [
   // Note: /shop is now redirected to /kollektionen/ via 301
 
   // Contact & Quote pages
-  '/kontakt',
   '/kontaktieren-sie-uns',
   '/angebotsgenerator', // German quote generator
   '/quote-generator',  // English quote generator (legacy)
 
   // About & Info pages
-  '/uber-uns',
   '/lieferungen-und-rucksendungen',
   '/zahlungsmethoden',
 
@@ -80,6 +79,8 @@ const ASTRO_PATHS = [
   '/blogs',
   '/produkte',  // Product detail pages (Astro version)
   '/wishlist',  // Wishlist page (localStorage-based, no WordPress)
+  '/ueber-uns', // About page (Astro)
+  '/kontakt',   // Contact page (Astro)
 ];
 
 function shouldBypassCache(pathname: string, search: string): boolean {
@@ -225,7 +226,10 @@ export default {
       return Response.redirect(new URL('/kontakt/', url.origin).toString(), 301);
     }
     if (pathname === '/about-us' || pathname === '/about-us/') {
-      return Response.redirect(new URL('/uber-uns/', url.origin).toString(), 301);
+      return Response.redirect(new URL('/ueber-uns/', url.origin).toString(), 301);
+    }
+    if (pathname === '/uber-uns' || pathname === '/uber-uns/') {
+      return Response.redirect(new URL('/ueber-uns/', url.origin).toString(), 301);
     }
     if (pathname === '/terms-and-conditions' || pathname === '/terms-and-conditions/') {
       return Response.redirect(new URL('/agb/', url.origin).toString(), 301);
@@ -244,6 +248,14 @@ export default {
     }
     if (pathname === '/payment-methods' || pathname === '/payment-methods/') {
       return Response.redirect(new URL('/zahlungsmethoden/', url.origin).toString(), 301);
+    }
+
+    // Old slug redirects
+    if (pathname === '/produkte/custom-football-beanie-hats' || pathname === '/produkte/custom-football-beanie-hats/') {
+      return Response.redirect(new URL('/kollektionen/personalisierte-mutzen/', url.origin).toString(), 301);
+    }
+    if (pathname === '/blogs/stilsicher-unterwegs-der-aufstieg-der-slides-in-der-modernen-mode' || pathname === '/blogs/stilsicher-unterwegs-der-aufstieg-der-slides-in-der-modernen-mode/') {
+      return Response.redirect(new URL('/blogs/stilsicher-unterwegs-der-aufstieg-der-personalisierten-badeschlappen-in-der-modernen-mode/', url.origin).toString(), 301);
     }
 
     // Handle CORS preflight for API requests

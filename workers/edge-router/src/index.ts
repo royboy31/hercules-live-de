@@ -55,8 +55,7 @@ const WORDPRESS_PATHS = [
   '/kaufen',     // Astro links here for actual purchase - routes to WordPress /produkte/
   // Note: /shop is now redirected to /kollektionen/ via 301
 
-  // Contact & Quote pages
-  '/kontaktieren-sie-uns',
+  // Quote pages
   '/angebotsgenerator', // German quote generator
   '/quote-generator',  // English quote generator (legacy)
 
@@ -222,7 +221,7 @@ export default {
     if (pathname === '/my-account' || pathname === '/my-account/') {
       return Response.redirect(new URL('/mein-konto/', url.origin).toString(), 301);
     }
-    if (pathname === '/contact' || pathname === '/contact/') {
+    if (pathname === '/contact' || pathname === '/contact/' || pathname === '/kontaktieren-sie-uns' || pathname === '/kontaktieren-sie-uns/') {
       return Response.redirect(new URL('/kontakt/', url.origin).toString(), 301);
     }
     if (pathname === '/about-us' || pathname === '/about-us/') {

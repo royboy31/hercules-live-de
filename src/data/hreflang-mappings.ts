@@ -20,8 +20,8 @@ export type Locale = keyof typeof DOMAINS;
  */
 export const PAGE_MAPPINGS: Record<string, Record<Locale, string>> = {
   '/': { de: '/', en: '/', fr: '/' },
-  '/kontaktieren-sie-uns/': { de: '/kontaktieren-sie-uns/', en: '/contact-us/', fr: '/contactez-nous/' },
-  '/uber-uns/': { de: '/uber-uns/', en: '/about/', fr: '/a-propos/' },
+  '/kontakt/': { de: '/kontakt/', en: '/contact-us/', fr: '/contactez-nous/' },
+  '/ueber-uns/': { de: '/ueber-uns/', en: '/about/', fr: '/a-propos/' },
   '/blogs/': { de: '/blogs/', en: '/blogs/uk/', fr: '/blogs/' },
   '/datenschutzerklarung/': { de: '/datenschutzerklarung/', en: '/privacy-policy/', fr: '/politique-de-confidentialite/' },
   '/nutzungsbedingungen/': { de: '/nutzungsbedingungen/', en: '/terms-of-service/', fr: '/conditions-generales-dutilisation/' },

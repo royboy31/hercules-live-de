@@ -205,7 +205,11 @@ if (product) {
     priceMax: priceRange?.max,
     currency: 'EUR',
     availability: 'InStock',
-    condition: 'NewCondition'
+    condition: 'NewCondition',
+    aggregateRating: placeData.rating ? {
+      ratingValue: placeData.rating,
+      reviewCount: placeData.reviewCount,
+    } : undefined,
   }));
 
   // Breadcrumb schema

@@ -159,6 +159,10 @@ export function getProductSchema(product: {
   availability?: 'InStock' | 'OutOfStock' | 'PreOrder';
   condition?: 'NewCondition' | 'UsedCondition' | 'RefurbishedCondition';
   offerCount?: number;
+  aggregateRating?: {
+    ratingValue: number;
+    reviewCount: number;
+  };
 }) {
   const schema: any = {
     '@context': 'https://schema.org',
@@ -186,6 +190,16 @@ export function getProductSchema(product: {
       offerCount: product.offerCount ?? 1,
       availability: `https://schema.org/${product.availability || 'InStock'}`,
       itemCondition: `https://schema.org/${product.condition || 'NewCondition'}`,
+    };
+  }
+
+  if (product.aggregateRating) {
+    schema.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: product.aggregateRating.ratingValue,
+      reviewCount: product.aggregateRating.reviewCount,
+      bestRating: 5,
+      worstRating: 1,
     };
   }
 

@@ -155,7 +155,8 @@ export default {
     }
     if (pathname.startsWith('/collections/')) {
       const slug = pathname.replace('/collections/', '');
-      return Response.redirect(new URL(`/kollektionen/${slug}`, url.origin).toString(), 301);
+      const cleanSlug = slug.replace(/\/+$/, '');
+      return Response.redirect(new URL(`/kollektionen/${cleanSlug}/`, url.origin).toString(), 301);
     }
 
     // /product-category/* -> /kollektionen/* (WooCommerce default category URL)
@@ -163,14 +164,14 @@ export default {
       return Response.redirect(new URL('/kollektionen/', url.origin).toString(), 301);
     }
     if (pathname.startsWith('/product-category/')) {
-      const slug = pathname.replace('/product-category/', '');
-      return Response.redirect(new URL(`/kollektionen/${slug}`, url.origin).toString(), 301);
+      const slug = pathname.replace('/product-category/', '').replace(/\/+$/, '');
+      return Response.redirect(new URL(`/kollektionen/${slug}/`, url.origin).toString(), 301);
     }
 
     // /product/* -> /produkte/* (WooCommerce default product URL - singular)
     if (pathname.startsWith('/product/') && !pathname.startsWith('/product-category/')) {
-      const slug = pathname.replace('/product/', '');
-      return Response.redirect(new URL(`/produkte/${slug}`, url.origin).toString(), 301);
+      const slug = pathname.replace('/product/', '').replace(/\/+$/, '');
+      return Response.redirect(new URL(`/produkte/${slug}/`, url.origin).toString(), 301);
     }
 
     // /products/* -> /produkte/* (English plural)
@@ -178,8 +179,8 @@ export default {
       return Response.redirect(new URL('/produkte/', url.origin).toString(), 301);
     }
     if (pathname.startsWith('/products/')) {
-      const slug = pathname.replace('/products/', '');
-      return Response.redirect(new URL(`/produkte/${slug}`, url.origin).toString(), 301);
+      const slug = pathname.replace('/products/', '').replace(/\/+$/, '');
+      return Response.redirect(new URL(`/produkte/${slug}/`, url.origin).toString(), 301);
     }
 
     // /shop -> /kollektionen (shop page redirect)
@@ -192,8 +193,8 @@ export default {
       return Response.redirect(new URL('/kollektionen/', url.origin).toString(), 301);
     }
     if (pathname.startsWith('/kategorie/')) {
-      const slug = pathname.replace('/kategorie/', '');
-      return Response.redirect(new URL(`/kollektionen/${slug}`, url.origin).toString(), 301);
+      const slug = pathname.replace('/kategorie/', '').replace(/\/+$/, '');
+      return Response.redirect(new URL(`/kollektionen/${slug}/`, url.origin).toString(), 301);
     }
 
     // /category/* -> /kollektionen/* (English category)
@@ -201,14 +202,14 @@ export default {
       return Response.redirect(new URL('/kollektionen/', url.origin).toString(), 301);
     }
     if (pathname.startsWith('/category/')) {
-      const slug = pathname.replace('/category/', '');
-      return Response.redirect(new URL(`/kollektionen/${slug}`, url.origin).toString(), 301);
+      const slug = pathname.replace('/category/', '').replace(/\/+$/, '');
+      return Response.redirect(new URL(`/kollektionen/${slug}/`, url.origin).toString(), 301);
     }
 
     // /artikel/* -> /produkte/* (German article/product)
     if (pathname.startsWith('/artikel/')) {
-      const slug = pathname.replace('/artikel/', '');
-      return Response.redirect(new URL(`/produkte/${slug}`, url.origin).toString(), 301);
+      const slug = pathname.replace('/artikel/', '').replace(/\/+$/, '');
+      return Response.redirect(new URL(`/produkte/${slug}/`, url.origin).toString(), 301);
     }
 
     // English -> German page redirects

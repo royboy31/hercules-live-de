@@ -13,9 +13,8 @@ preview_id = "d063f9226fb448efb168b81562eb45dd"
 # binding = "PRODUCTS_BUCKET"
 # bucket_name = "hercules-products"
 
-# Scheduled triggers disabled - sync happens via webhooks on product/category/post update
-# [triggers]
-# crons = ["0 3 * * *"]  # Run daily at 3 AM UTC (disabled)
+[triggers]
+crons = ["0 5 * * *"]
 
 # Environment variables (set via wrangler secret)
 [vars]
@@ -38,4 +37,11 @@ vars = { WC_STORE_URL = "https://staging.hercules-merchandise.de" }
 
 # Production environment
 [env.production]
-vars = { WC_STORE_URL = "https://hercules-merchandise.de" }
+vars = { WC_STORE_URL = "https://hercules-merchandise.de", ASTRO_SITE_URL = "https://hercules-de-live.pages.dev" }
+
+[[env.production.kv_namespaces]]
+binding = "PRODUCTS_KV"
+id = "9eb4cfdf0e0d4636ad728eeb0ee30557"
+
+[env.production.triggers]
+crons = ["0 5 * * *"]

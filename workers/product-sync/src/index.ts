@@ -73,6 +73,7 @@ interface WCProduct {
   faq?: Array<{ question: string; answer: string }>;
   // Missive-only flag (exposed by hercules-missive-only plugin)
   missive_only?: boolean;
+  date_modified?: string;
 }
 
 interface WCVariation {
@@ -161,6 +162,7 @@ interface SyncedProduct {
   faq: Array<{ question: string; answer: string }>;
   // Number of images successfully cached in KV (for frontend to know how many thumbnails to show)
   cached_image_count: number;
+  date_modified: string;
   synced_at: string;
 }
 
@@ -262,9 +264,12 @@ class WooCommerceClient {
     return `Basic ${credentials}`;
   }
 
-  async fetchProducts(page: number = 1, perPage: number = 100): Promise<WCProduct[]> {
+  async fetchProducts(page: number = 1, perPage: number = 100, modifiedAfter?: string): Promise<WCProduct[]> {
     // Only fetch published products (exclude drafts, private, pending, trash)
-    const url = `${this.baseUrl}/wp-json/wc/v3/products?page=${page}&per_page=${perPage}&status=publish`;
+    let url = `${this.baseUrl}/wp-json/wc/v3/products?page=${page}&per_page=${perPage}&status=publish`;
+    if (modifiedAfter) {
+      url += `&modified_after=${encodeURIComponent(modifiedAfter)}`;
+    }
 
     const response = await fetch(url, {
       headers: {
@@ -280,13 +285,13 @@ class WooCommerceClient {
     return response.json();
   }
 
-  async fetchAllProducts(): Promise<WCProduct[]> {
+  async fetchAllProducts(modifiedAfter?: string): Promise<WCProduct[]> {
     const allProducts: WCProduct[] = [];
     let page = 1;
     let hasMore = true;
 
     while (hasMore) {
-      const products = await this.fetchProducts(page, 100);
+      const products = await this.fetchProducts(page, 100, modifiedAfter);
       allProducts.push(...products);
 
       if (products.length < 100) {
@@ -750,6 +755,7 @@ async function transformProduct(
     missive_only: product.missive_only || getMeta('_missive_only') === 'yes',
     // Will be updated after image caching
     cached_image_count: 0,
+    date_modified: product.date_modified || new Date().toISOString(),
     synced_at: new Date().toISOString(),
   };
 }
@@ -765,7 +771,9 @@ const MAX_GALLERY_IMAGES = 5;
 
 // Main sync function with batching support
 // forceImageRefresh: if true, re-download all images even if already cached (for upgrading image sizes)
-async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: boolean = false, forceIndex: boolean = false): Promise<{ synced: number; errors: string[]; hasMore: boolean; nextOffset: number }> {
+// prefetchedProducts: if provided, skip fetching and use these products (avoids re-fetching on every batch)
+// modifiedAfter: if set, only fetch products modified after this ISO timestamp (delta sync)
+async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: boolean = false, forceIndex: boolean = false, prefetchedProducts?: WCProduct[], modifiedAfter?: string): Promise<{ synced: number; errors: string[]; hasMore: boolean; nextOffset: number }> {
   const client = new WooCommerceClient(
     env.WC_STORE_URL,
     env.WC_CONSUMER_KEY,
@@ -776,10 +784,16 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
   let synced = 0;
 
   try {
-    // Fetch all products (first request)
-    console.log('Fetching all products...');
-    const allProducts = await client.fetchAllProducts();
-    console.log(`Found ${allProducts.length} products total, syncing from offset ${offset}`);
+    // Use pre-fetched products if available, otherwise fetch
+    let allProducts: WCProduct[];
+    if (prefetchedProducts) {
+      allProducts = prefetchedProducts;
+      console.log(`Using pre-fetched ${allProducts.length} products, syncing from offset ${offset}`);
+    } else {
+      console.log(modifiedAfter ? `Fetching products modified after ${modifiedAfter}...` : 'Fetching all products...');
+      allProducts = await client.fetchAllProducts(modifiedAfter);
+      console.log(`Found ${allProducts.length} products${modifiedAfter ? ' (modified)' : ''}, syncing from offset ${offset}`);
+    }
 
     // Fetch categories only on first batch
     if (offset === 0) {
@@ -871,27 +885,41 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
       }
     }
 
-    // Update product index with full list on first batch
+    // Update product index on first batch
     if (offset === 0) {
-      const existingIndexStr = await env.PRODUCTS_KV.get('product:index');
-      const existingCount = existingIndexStr ? JSON.parse(existingIndexStr).length : 0;
-      const threshold = Math.floor(existingCount * 0.8);
+      const toIndexEntry = (p: WCProduct) => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        featured: p.featured,
+        categories: p.categories.map(c => c.slug),
+        menu_order: p.menu_order || 0,
+        missive_only: p.missive_only || p.meta_data?.find((m: any) => m.key === '_missive_only')?.value === 'yes',
+        date_modified: p.date_modified || new Date().toISOString(),
+      });
 
-      if (allProducts.length === 0) {
-        console.error(`syncAllProducts: WooCommerce returned 0 products — skipping product:index write (existing: ${existingCount})`);
-      } else if (existingCount > 0 && allProducts.length < threshold && !forceIndex) {
-        console.error(`syncAllProducts: WooCommerce returned ${allProducts.length} products but existing index has ${existingCount} (threshold: ${threshold}) — skipping product:index write. Add ?force_index=true to /sync to override.`);
+      if (modifiedAfter) {
+        // Delta sync: merge modified products into existing index
+        if (allProducts.length === 0) {
+          console.log('Delta sync: 0 modified products — index unchanged');
+        } else {
+          const existingRaw = await env.PRODUCTS_KV.get('product:index');
+          const existingIndex: any[] = existingRaw ? JSON.parse(existingRaw) : [];
+          const modifiedIds = new Set(allProducts.map(p => p.id));
+          // Remove old entries for modified products, then append updated entries
+          const filtered = existingIndex.filter((e: any) => !modifiedIds.has(e.id));
+          const updatedEntries = allProducts.map(toIndexEntry);
+          await env.PRODUCTS_KV.put('product:index', JSON.stringify([...filtered, ...updatedEntries]));
+          console.log(`Delta index merge: ${updatedEntries.length} updated/added, ${filtered.length + updatedEntries.length} total`);
+        }
       } else {
-        const productIndex = allProducts.map(p => ({
-          id: p.id,
-          name: p.name,
-          slug: p.slug,
-          featured: p.featured,
-          categories: p.categories.map(c => c.slug),
-          menu_order: p.menu_order || 0,
-          missive_only: p.missive_only || p.meta_data?.find((m: any) => m.key === '_missive_only')?.value === 'yes',
-        }));
-        await env.PRODUCTS_KV.put('product:index', JSON.stringify(productIndex));
+        // Full sync: replace entire index
+        if (allProducts.length === 0) {
+          console.error('Full sync: WooCommerce returned 0 products — skipping index write');
+        } else {
+          const productIndex = allProducts.map(toIndexEntry);
+          await env.PRODUCTS_KV.put('product:index', JSON.stringify(productIndex));
+        }
       }
     }
 
@@ -968,35 +996,66 @@ async function syncSingleProduct(env: Env, productId: number): Promise<SyncedPro
     false // Don't sync images - no R2 bucket
   );
 
-  // Cache gallery images in KV — skip if already cached (saves KV writes on title/price/text edits).
-  // Images only need re-caching when the WordPress filename changes (which happens when a new
-  // image is uploaded), so forceRefresh: false is correct here. The batch sync uses forceRefresh: true.
+  // Read old product data BEFORE writing, to detect image changes
+  const oldProductStr = await env.PRODUCTS_KV.get(`product:slug:${product.slug}`);
+  const oldProduct = oldProductStr ? JSON.parse(oldProductStr) : null;
+
+  // Store product data in KV FIRST (before image sync)
+  await env.PRODUCTS_KV.put(`product:${product.id}`, JSON.stringify(syncedProduct));
+  await env.PRODUCTS_KV.put(`product:slug:${product.slug}`, JSON.stringify(syncedProduct));
+
+  // Invalidate product-config cache so next configurator load re-fetches from WordPress
+  await Promise.all([
+    env.PRODUCTS_KV.delete(`product-config:${product.id}`),
+    env.PRODUCTS_KV.delete(`product-config:${product.slug}`),
+  ]);
+
+  // If images were reordered or replaced, delete ALL stale image KV entries first
+  const oldImageIds: number[] = (oldProduct?.images || []).map((img: any) => img.id);
+  const newImageIds: number[] = (product.images || []).map((img: any) => img.id);
+  const imagesChanged =
+    oldImageIds.length !== newImageIds.length ||
+    newImageIds.some((id: number, i: number) => oldImageIds[i] !== id);
+
+  if (imagesChanged && oldProduct) {
+    const staleKeys: string[] = [`image:${product.slug}`, `image:${product.slug}:thumb`];
+    const maxOld = Math.min(oldImageIds.length, MAX_GALLERY_IMAGES);
+    for (let i = 1; i <= maxOld; i++) {
+      staleKeys.push(`image:${product.slug}:${i}`);
+      staleKeys.push(`image:${product.slug}:${i}:thumb`);
+    }
+    await Promise.all(staleKeys.map(key => env.PRODUCTS_KV.delete(key)));
+    console.log(`Image list changed for ${product.slug}: cleared ${staleKeys.length} stale KV entries`);
+  }
+
+  // Force refresh images on webhook updates to ensure image changes are captured
+  const forceImageRefresh = imagesChanged;
+
+  // Cache gallery images in KV
   let cachedImageCount = 0;
   if (product.slug && product.images?.length > 0) {
     const imagesToCache = Math.min(product.images.length, MAX_GALLERY_IMAGES);
     for (let i = 0; i < imagesToCache; i++) {
       const img = product.images[i];
       if (img?.src) {
-        // Cache main size (361x361) for category cards — skip if already in KV
+        // Cache main size (361x361) for category cards
         const mainUrl = img.src.replace(/(\.[^.]+)$/, '-361x361$1');
-        let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, false, 'full');
+        let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, forceImageRefresh, 'full');
         if (!mainSuccess && img.src !== mainUrl) {
-          // Fallback to 300x300, then 600x600, then original
           const fallback300 = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
-          mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback300, product.slug, i, false, 'full');
+          mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback300, product.slug, i, forceImageRefresh, 'full');
           if (!mainSuccess) {
             const fallback600 = img.src.replace(/(\.[^.]+)$/, '-600x600$1');
-            mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback600, product.slug, i, false, 'full');
+            mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback600, product.slug, i, forceImageRefresh, 'full');
           }
         }
 
-        // Cache thumbnail (100x100) — skip if already in KV
+        // Cache thumbnail (100x100)
         const thumbUrl = img.src.replace(/(\.[^.]+)$/, '-100x100$1');
-        let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, false, 'thumb');
+        let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, forceImageRefresh, 'thumb');
         if (!thumbSuccess && img.src !== thumbUrl) {
-          // Fallback to 83x83 if 100x100 doesn't exist
           const fallback83 = img.src.replace(/(\.[^.]+)$/, '-83x83$1');
-          thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback83, product.slug, i, false, 'thumb');
+          thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback83, product.slug, i, forceImageRefresh, 'thumb');
         }
 
         if (mainSuccess || thumbSuccess) {
@@ -1006,24 +1065,12 @@ async function syncSingleProduct(env: Env, productId: number): Promise<SyncedPro
     }
   }
 
-  // Update product with cached image count
-  syncedProduct.cached_image_count = cachedImageCount;
-
-  // Store in KV with updated cached_image_count
-  await env.PRODUCTS_KV.put(
-    `product:${product.id}`,
-    JSON.stringify(syncedProduct)
-  );
-  await env.PRODUCTS_KV.put(
-    `product:slug:${product.slug}`,
-    JSON.stringify(syncedProduct)
-  );
-
-  // Invalidate product-config cache so next configurator load re-fetches from WordPress
-  await Promise.all([
-    env.PRODUCTS_KV.delete(`product-config:${product.id}`),
-    env.PRODUCTS_KV.delete(`product-config:${product.slug}`),
-  ]);
+  // Update cached_image_count and re-save if any images were cached
+  if (cachedImageCount !== syncedProduct.cached_image_count) {
+    syncedProduct.cached_image_count = cachedImageCount;
+    await env.PRODUCTS_KV.put(`product:${product.id}`, JSON.stringify(syncedProduct));
+    await env.PRODUCTS_KV.put(`product:slug:${product.slug}`, JSON.stringify(syncedProduct));
+  }
 
   console.log(`Synced product ${productId} with ${cachedImageCount} cached images`);
 
@@ -1039,6 +1086,7 @@ async function syncSingleProduct(env: Env, productId: number): Promise<SyncedPro
       featured: product.featured,
       categories: product.categories.map(c => c.slug),
       menu_order: product.menu_order || 0,
+      date_modified: product.date_modified || new Date().toISOString(),
     };
 
     if (existingIndex >= 0) {
@@ -1320,6 +1368,7 @@ async function syncAllPosts(env: Env): Promise<{ synced: number; errors: string[
           title: syncedPost.title,
           slug: post.slug,
           date: syncedPost.date,
+          modified: syncedPost.modified || syncedPost.date,
           excerpt: syncedPost.excerpt.substring(0, 200) + (syncedPost.excerpt.length > 200 ? '...' : ''),
           featuredImage: syncedPost.localFeaturedImage,
         });
@@ -1394,6 +1443,7 @@ async function syncSinglePost(env: Env, postId: number): Promise<SyncedPost | nu
         title: syncedPost.title,
         slug: post.slug,
         date: syncedPost.date,
+        modified: syncedPost.modified || syncedPost.date,
         excerpt: syncedPost.excerpt.substring(0, 200) + (syncedPost.excerpt.length > 200 ? '...' : ''),
         featuredImage: syncedPost.localFeaturedImage,
       };
@@ -1442,8 +1492,8 @@ async function deletePost(env: Env, postId: number): Promise<void> {
   console.log(`Deleted post ${postId} from KV`);
 }
 
-// Debounce interval for site rebuilds (60 seconds)
-const REBUILD_DEBOUNCE_MS = 60 * 1000;
+// Debounce interval for site rebuilds (90 seconds)
+const REBUILD_DEBOUNCE_MS = 90 * 1000;
 
 // Trigger GitHub Actions workflow to rebuild and deploy the site
 // Uses workflow_dispatch API to trigger the deploy.yml workflow
@@ -1455,11 +1505,12 @@ async function triggerSiteRebuild(env: Env): Promise<{ triggered: boolean; reaso
   }
 
   try {
-    // Check last rebuild timestamp for debouncing
+    // Check for pending rebuild from a previous failed attempt — skip debounce if so
+    const pendingRebuild = await env.PRODUCTS_KV.get('rebuild_pending');
     const lastRebuildStr = await env.PRODUCTS_KV.get('last_rebuild');
     const now = Date.now();
 
-    if (lastRebuildStr) {
+    if (!pendingRebuild && lastRebuildStr) {
       const lastRebuild = parseInt(lastRebuildStr, 10);
       const elapsed = now - lastRebuild;
 
@@ -1469,9 +1520,6 @@ async function triggerSiteRebuild(env: Env): Promise<{ triggered: boolean; reaso
         return { triggered: false, reason: `Debounced (${remainingSeconds}s remaining)` };
       }
     }
-
-    // Update last rebuild timestamp BEFORE triggering to prevent race conditions
-    await env.PRODUCTS_KV.put('last_rebuild', now.toString());
 
     // Trigger GitHub Actions workflow via workflow_dispatch
     const workflowUrl = `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/${GITHUB_WORKFLOW}/dispatches`;
@@ -1495,13 +1543,27 @@ async function triggerSiteRebuild(env: Env): Promise<{ triggered: boolean; reaso
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`GitHub workflow trigger failed: ${response.status} ${errorText}`);
+      await env.PRODUCTS_KV.put('rebuild_pending', JSON.stringify({
+        failed_at: now,
+        attempts: pendingRebuild ? JSON.parse(pendingRebuild).attempts + 1 : 1,
+        last_error: `${response.status}: ${errorText.substring(0, 200)}`,
+      }));
       return { triggered: false, reason: `GitHub API failed: ${response.status}` };
     }
+
+    // Success — clear pending flag and set timestamp
+    await env.PRODUCTS_KV.delete('rebuild_pending');
+    await env.PRODUCTS_KV.put('last_rebuild', now.toString());
 
     console.log('GitHub Actions workflow triggered successfully');
     return { triggered: true, reason: 'GitHub workflow triggered' };
   } catch (error) {
     console.error('Error triggering site rebuild:', error);
+    await env.PRODUCTS_KV.put('rebuild_pending', JSON.stringify({
+      failed_at: Date.now(),
+      attempts: 1,
+      last_error: String(error).substring(0, 200),
+    }));
     return { triggered: false, reason: `Error: ${error}` };
   }
 }
@@ -1582,17 +1644,66 @@ export default {
 
         console.log(`Webhook received: syncing product ${productId}`);
 
-        // Sync the product in background
-        ctx.waitUntil(syncSingleProduct(env, productId));
-
-        // Trigger site rebuild (debounced)
-        ctx.waitUntil(triggerSiteRebuild(env));
+        // Run sync and rebuild in PARALLEL to avoid ctx.waitUntil() 30s timeout
+        // The rebuild is debounced (90s), so by the time the actual GitHub Actions build runs (~2 min later),
+        // the sync should be complete. This prevents the rebuild from never triggering when sync takes > 30s.
+        ctx.waitUntil(
+          Promise.all([
+            syncSingleProduct(env, productId)
+              .then(result => console.log(`Product ${productId} sync complete`))
+              .catch(error => console.error(`Sync error for product ${productId}:`, error)),
+            triggerSiteRebuild(env)
+              .then(result => console.log(`Rebuild result: ${result.reason}`))
+              .catch(error => console.error(`Rebuild error:`, error)),
+          ])
+        );
 
         return new Response(JSON.stringify({ success: true, productId, action: 'sync' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (error) {
         console.error('Webhook error:', error);
+        return new Response(JSON.stringify({ error: String(error) }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Batch product sync — syncs multiple products then triggers a single rebuild
+    if (url.pathname === '/webhook/batch-product-sync' && request.method === 'POST') {
+      try {
+        const signature = request.headers.get('X-WC-Webhook-Signature') || '';
+        const payload = await request.text();
+
+        const isValid = await verifyWebhookSignature(payload, signature, env.WEBHOOK_SECRET);
+        if (!isValid) {
+          return new Response('Invalid signature', { status: 401 });
+        }
+
+        const data = JSON.parse(payload);
+        const productIds: number[] = data.product_ids || [];
+
+        console.log(`Batch sync: ${productIds.length} products (source: ${data.source})`);
+
+        // Run syncs and rebuild in PARALLEL to avoid ctx.waitUntil() 30s timeout
+        ctx.waitUntil(
+          Promise.all([
+            ...productIds.map(id => syncSingleProduct(env, id).catch(e => {
+              console.error(`Failed to sync product ${id}:`, e);
+              return null;
+            })),
+            triggerSiteRebuild(env)
+              .then(result => console.log(`Batch rebuild result: ${result.reason}`))
+              .catch(error => console.error(`Batch rebuild error:`, error)),
+          ])
+        );
+
+        return new Response(JSON.stringify({ success: true, count: productIds.length }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (error) {
+        console.error('Batch sync error:', error);
         return new Response(JSON.stringify({ error: String(error) }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -1662,11 +1773,10 @@ export default {
 
         console.log(`Webhook received: syncing category ${categoryId}`);
 
-        // Sync the category in background
-        ctx.waitUntil(syncSingleCategory(env, categoryId));
-
-        // Trigger site rebuild (debounced)
-        ctx.waitUntil(triggerSiteRebuild(env));
+        // Sync category to KV first, THEN trigger rebuild
+        ctx.waitUntil(
+          syncSingleCategory(env, categoryId).then(() => triggerSiteRebuild(env))
+        );
 
         return new Response(JSON.stringify({ success: true, categoryId, action: 'sync' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -1777,11 +1887,10 @@ export default {
 
         console.log(`Webhook received: syncing post ${postId}`);
 
-        // Sync the post in background
-        ctx.waitUntil(syncSinglePost(env, postId));
-
-        // Trigger site rebuild (debounced)
-        ctx.waitUntil(triggerSiteRebuild(env));
+        // Sync post to KV first, THEN trigger rebuild
+        ctx.waitUntil(
+          syncSinglePost(env, postId).then(() => triggerSiteRebuild(env))
+        );
 
         return new Response(JSON.stringify({ success: true, postId, action: 'sync' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -2293,6 +2402,7 @@ export default {
               'Content-Type': 'application/json',
               'User-Agent': 'Hercules-Product-Sync-Worker/1.0',
             },
+            cf: { cacheTtl: 0 },
           });
 
           if (!response.ok) {
@@ -2447,15 +2557,49 @@ export default {
       });
     }
 
+    // Health check endpoint (machine-parseable, returns 503 if degraded)
+    if (url.pathname === '/health') {
+      const lastSync = await env.PRODUCTS_KV.get('last_sync');
+      const lastRebuild = await env.PRODUCTS_KV.get('last_rebuild');
+      const pendingRebuild = await env.PRODUCTS_KV.get('rebuild_pending');
+      const productIndex = await env.PRODUCTS_KV.get('product:index');
+      const now = Date.now();
+
+      const lastSyncAge = lastSync ? now - new Date(lastSync).getTime() : Infinity;
+      const syncStale = lastSyncAge > 26 * 60 * 60 * 1000;
+      const hasPendingRebuild = !!pendingRebuild;
+      const productCount = productIndex ? JSON.parse(productIndex).length : 0;
+
+      const healthy = !syncStale && !hasPendingRebuild && productCount > 0;
+
+      return new Response(JSON.stringify({
+        status: healthy ? 'healthy' : 'degraded',
+        checks: {
+          last_sync_age_hours: Math.round(lastSyncAge / 3600000 * 10) / 10,
+          sync_stale: syncStale,
+          pending_rebuild: hasPendingRebuild,
+          pending_rebuild_details: pendingRebuild ? JSON.parse(pendingRebuild) : null,
+          product_count: productCount,
+          github_token_configured: !!env.GITHUB_TOKEN,
+        },
+        timestamp: new Date().toISOString(),
+      }), {
+        status: healthy ? 200 : 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Get sync status
     if (url.pathname === '/status') {
       const lastSync = await env.PRODUCTS_KV.get('last_sync');
       const lastPostSync = await env.PRODUCTS_KV.get('last_post_sync');
+      const lastDeltaSync = await env.PRODUCTS_KV.get('last_delta_sync');
       const lastRebuild = await env.PRODUCTS_KV.get('last_rebuild');
       const hasGithubToken = !!env.GITHUB_TOKEN;
       return new Response(JSON.stringify({
         last_sync: lastSync,
         last_post_sync: lastPostSync,
+        last_delta_sync: lastDeltaSync,
         last_rebuild: lastRebuild,
         last_rebuild_date: lastRebuild ? new Date(parseInt(lastRebuild)).toISOString() : null,
         github_token_configured: hasGithubToken,
@@ -2858,7 +3002,10 @@ export default {
 
   // Scheduled (cron) handler - runs multiple batches
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
-    console.log('Starting scheduled sync...');
+    // Read last successful sync timestamp for delta filtering
+    const lastSyncAt = await env.PRODUCTS_KV.get('last_delta_sync');
+    const syncStartedAt = new Date().toISOString();
+    console.log(`Starting delta sync (modified after: ${lastSyncAt ?? 'never — full sync'})...`);
 
     // Sync categories first (smaller, no batching needed)
     console.log('Syncing categories...');
@@ -2870,14 +3017,20 @@ export default {
     const postResult = await syncAllPosts(env);
     console.log(`Posts synced: ${postResult.synced}, errors: ${postResult.errors.length}`);
 
-    // Sync products in batches
+    // Fetch products ONCE (delta or full), then pass pre-fetched list to avoid re-fetching per batch
     console.log('Syncing products...');
+    const client = new WooCommerceClient(env.WC_STORE_URL, env.WC_CONSUMER_KEY, env.WC_CONSUMER_SECRET);
+    console.log(lastSyncAt ? `Fetching products modified after ${lastSyncAt}...` : 'Fetching all products (first run)...');
+    const allProducts = await client.fetchAllProducts(lastSyncAt ?? undefined);
+    console.log(`Found ${allProducts.length} products to sync`);
+
     let offset = 0;
     let hasMore = true;
     let totalSynced = 0;
+    let consecutiveEmpty = 0;
 
     while (hasMore) {
-      const result = await syncAllProducts(env, offset);
+      const result = await syncAllProducts(env, offset, false, false, allProducts, lastSyncAt ?? undefined);
       totalSynced += result.synced;
       hasMore = result.hasMore;
       offset = result.nextOffset;
@@ -2885,16 +3038,40 @@ export default {
       if (result.errors.length > 0) {
         console.log(`Batch had ${result.errors.length} errors`);
       }
+
+      // Stall protection: stop if 3 consecutive batches produce nothing
+      if (result.synced === 0) {
+        consecutiveEmpty++;
+        if (consecutiveEmpty >= 3) {
+          console.log('Stopping sync: 3 consecutive batches with 0 products synced');
+          hasMore = false;
+        }
+      } else {
+        consecutiveEmpty = 0;
+      }
     }
 
-    console.log(`Scheduled sync complete. Products: ${totalSynced}, Categories: ${categoryResult.synced}, Posts: ${postResult.synced}`);
+    console.log(`Delta sync complete. Products: ${totalSynced}, Categories: ${categoryResult.synced}, Posts: ${postResult.synced}`);
 
-    // Trigger site rebuild after full sync (force rebuild, ignore debounce for scheduled sync)
+    // Store the timestamp we started the sync at (not 'now' at end, to avoid missing products
+    // that were modified while the sync was running)
+    await env.PRODUCTS_KV.put('last_delta_sync', syncStartedAt);
+
+    // Trigger site rebuild after sync (force rebuild, ignore debounce for scheduled sync)
     if (totalSynced > 0 || categoryResult.synced > 0 || postResult.synced > 0) {
       // Clear the debounce timestamp to force a rebuild after scheduled sync
       await env.PRODUCTS_KV.delete('last_rebuild');
       const rebuildResult = await triggerSiteRebuild(env);
       console.log(`Site rebuild: ${rebuildResult.reason}`);
+    } else {
+      // Even if nothing changed, retry any pending rebuilds from failed webhook attempts
+      const pending = await env.PRODUCTS_KV.get('rebuild_pending');
+      if (pending) {
+        console.log('Retrying pending rebuild from failed webhook attempt');
+        await env.PRODUCTS_KV.delete('last_rebuild');
+        const retryResult = await triggerSiteRebuild(env);
+        console.log(`Retry rebuild: ${retryResult.reason}`);
+      }
     }
   },
 };

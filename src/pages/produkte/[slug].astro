@@ -6,6 +6,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ProductConfigurator from '../../components/ProductConfigurator.tsx';
 import ContactFormPopup from '../../components/ContactFormPopup.tsx';
+import TrustLogos from '../../components/TrustLogos.astro';
 import '../../styles/steps.css';
 import placeData from '../../data/google-place-data.json';
 import {
@@ -591,6 +592,9 @@ if (product) {
       </>
     )}
   </div>
+
+  <!-- Trust Logos Section -->
+  <TrustLogos />
 </BaseLayout>
 
 <style>

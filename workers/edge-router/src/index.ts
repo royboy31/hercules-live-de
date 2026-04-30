@@ -67,7 +67,6 @@ const WORDPRESS_PATHS = [
   '/rechtlicher-hinweis',
   '/nutzungsbedingungen',
   '/datenschutzerklarung',
-  '/impressum',
   '/agb',
 ];
 
@@ -80,6 +79,7 @@ const ASTRO_PATHS = [
   '/wishlist',  // Wishlist page (localStorage-based, no WordPress)
   '/ueber-uns', // About page (Astro)
   '/kontakt',   // Contact page (Astro)
+  '/impressum', // Impressum page (Astro)
 ];
 
 function shouldBypassCache(pathname: string, search: string): boolean {

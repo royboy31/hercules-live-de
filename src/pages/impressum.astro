@@ -1,0 +1,222 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const pageTitle = 'Impressum | Hercules Merchandise';
+const pageDescription = 'Impressum und rechtliche Angaben von Be Ventures BV, Betreiber von hercules-merchandise.de.';
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  pageType="page"
+>
+  <!-- Breadcrumb -->
+  <section class="breadcrumb-section">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+          <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+            <a href="/" itemprop="item">
+              <span itemprop="name">Startseite</span>
+            </a>
+            <meta itemprop="position" content="1" />
+            <span class="separator"><img src="/images/breadcrumb-separator.svg" alt="" width="6" height="12" /></span>
+          </li>
+          <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+            <span itemprop="name">Impressum</span>
+            <meta itemprop="position" content="2" />
+          </li>
+        </ol>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <section class="page-section">
+    <div class="container">
+      <div class="content-wrapper">
+        <h1>Impressum</h1>
+
+        <div class="content-card">
+          <div class="legal-section">
+            <h2>Angaben gem&auml;&szlig; &sect; 5 TMG</h2>
+            <p>
+              <strong>Be Ventures BV</strong><br>
+              Avenue Paul de Merten 32<br>
+              1090 Jette<br>
+              Belgien
+            </p>
+          </div>
+
+          <div class="legal-section">
+            <h2>Vertreten durch den Gesch&auml;ftsf&uuml;hrer</h2>
+            <p>Gilles Van Doorne</p>
+          </div>
+
+          <div class="legal-section">
+            <h2>Kontakt</h2>
+            <p>
+              E-Mail: <a href="mailto:info@hercules-merchandise.de">info@hercules-merchandise.de</a><br>
+              Telefon: <a href="tel:+498001833745">+49 800 1833745</a>
+            </p>
+          </div>
+
+          <div class="legal-section">
+            <h2>Unternehmensnummer</h2>
+            <p>BE0536337051</p>
+          </div>
+
+          <div class="legal-section">
+            <h2>Umsatzsteuer-Identifikationsnummer</h2>
+            <p>BE 0536.337.051</p>
+          </div>
+
+          <div class="legal-section">
+            <h2>Verantwortlich f&uuml;r den Inhalt nach &sect; 18 MStV</h2>
+            <p>
+              Gilles Van Doorne<br>
+              Avenue Paul de Merten 32<br>
+              1090 Jette<br>
+              Belgien
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .breadcrumb-section {
+    background: #FAFAFA;
+    padding: 15px 0;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .breadcrumb {
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+  }
+
+  .breadcrumb ol {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .breadcrumb li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .breadcrumb a {
+    color: #787878;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .breadcrumb a:hover {
+    color: #469ADC;
+  }
+
+  .breadcrumb li:last-child span {
+    color: #469ADC;
+  }
+
+  .breadcrumb .separator {
+    display: flex;
+    align-items: center;
+  }
+
+  .page-section {
+    background: #FAFAFA;
+    padding: 40px 0 80px;
+  }
+
+  .content-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-family: 'Jost', sans-serif;
+    font-size: 42px;
+    font-weight: 600;
+    color: #253461;
+    text-align: center;
+    margin-bottom: 40px;
+    text-transform: uppercase;
+  }
+
+  .content-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 50px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .legal-section {
+    margin-bottom: 30px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #E8E8E8;
+  }
+
+  .legal-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .legal-section h2 {
+    font-family: 'Jost', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #253461;
+    margin: 0 0 12px;
+  }
+
+  .legal-section p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #5F5F5F;
+    margin: 0 0 10px;
+  }
+
+  .legal-section p:last-child {
+    margin-bottom: 0;
+  }
+
+  .legal-section a {
+    color: #469ADC;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .legal-section a:hover {
+    color: #253461;
+  }
+
+  @media (max-width: 768px) {
+    h1 {
+      font-size: 28px;
+    }
+
+    .content-card {
+      padding: 30px 20px;
+    }
+
+    .legal-section h2 {
+      font-size: 18px;
+    }
+  }
+</style>

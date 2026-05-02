@@ -3,7 +3,11 @@
 // Reduced logos in HTML — JS clones them for seamless marquee loop
 // This cuts ~270 DOM elements and ~30KB HTML vs duplicating in markup
 
-const logosRow1 = [
+// Worker URL for fetching synced logo data
+const WORKER_URL = import.meta.env.WORKER_URL || 'https://hercules-product-sync-live.gilles-86d.workers.dev';
+
+// Fallback logos (used if worker fetch fails)
+const fallbackRow1 = [
   { src: '/images/logos/Glasgow-Saints.webp', alt: 'Glasgow Saints' },
   { src: '/images/logos/Glasgow-Tigers.webp', alt: 'Glasgow Tigers' },
   { src: '/images/logos/afc-1.webp', alt: 'AFC' },
@@ -31,7 +35,7 @@ const logosRow1 = [
   { src: '/images/logos/Gillingham-Football-Club.webp', alt: 'Gillingham Football Club' },
 ];
 
-const logosRow2 = [
+const fallbackRow2 = [
   { src: '/images/logos/Harrogate-Town-AFC.webp', alt: 'Harrogate Town AFC' },
   { src: '/images/logos/Hayes-Yeading-UFC.webp', alt: 'Hayes & Yeading UFC' },
   { src: '/images/logos/Imperial-College-Football-Club.webp', alt: 'Imperial College Football Club' },
@@ -57,6 +61,37 @@ const logosRow2 = [
   { src: '/images/logos/Witham-Town-FC.webp', alt: 'Witham Town FC' },
   { src: '/images/logos/wix.webp', alt: 'Wix' },
 ];
+
+// Try to fetch logos from worker (synced from WordPress)
+let logosRow1 = fallbackRow1;
+let logosRow2 = fallbackRow2;
+
+try {
+  const res = await fetch(`${WORKER_URL}/client-logos`);
+  if (res.ok) {
+    const logos = await res.json() as Array<{ name: string; slug: string; row: number; order: number; r2_key: string }>;
+    if (logos.length > 0) {
+      const row1 = logos.filter(l => l.row === 1).sort((a, b) => a.order - b.order);
+      const row2 = logos.filter(l => l.row === 2).sort((a, b) => a.order - b.order);
+
+      if (row1.length > 0) {
+        logosRow1 = row1.map(l => ({
+          src: `${WORKER_URL}/client-logo-image/${l.slug}`,
+          alt: l.name,
+        }));
+      }
+      if (row2.length > 0) {
+        logosRow2 = row2.map(l => ({
+          src: `${WORKER_URL}/client-logo-image/${l.slug}`,
+          alt: l.name,
+        }));
+      }
+    }
+  }
+} catch (e) {
+  // Fallback to hardcoded logos if worker is unreachable
+  console.error('Failed to fetch client logos from worker, using fallback:', e);
+}
 ---
 
 <section class="trust-section">

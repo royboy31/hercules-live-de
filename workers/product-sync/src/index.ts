@@ -3199,17 +3199,15 @@ export default {
 
         console.log('Logos webhook received — syncing from WordPress');
 
-        // Run sync and rebuild in PARALLEL (same pattern as product webhooks)
-        // This ensures rebuild fires even if sync hits subrequest limits
+        // Sync logos first, THEN trigger rebuild so KV has fresh data before build fetches it
         ctx.waitUntil(
-          Promise.all([
-            syncClientLogos(env)
-              .then(result => console.log(`Client logos sync complete: ${result.count} logos`))
-              .catch(error => console.error('Client logos sync error:', error)),
-            triggerSiteRebuild(env)
-              .then(result => console.log(`Logos rebuild result: ${result.reason}`))
-              .catch(error => console.error('Logos rebuild error:', error)),
-          ])
+          syncClientLogos(env)
+            .then(result => {
+              console.log(`Client logos sync complete: ${result.count} logos`);
+              return triggerSiteRebuild(env);
+            })
+            .then(result => console.log(`Logos rebuild result: ${result.reason}`))
+            .catch(error => console.error('Client logos sync/rebuild error:', error))
         );
 
         return new Response(JSON.stringify({ success: true, action: 'logos_sync' }), {

@@ -419,14 +419,17 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     config.addons
       .filter(a => a.parent_id === 0)
       .forEach(parent => {
-        visible.push(parent);
+        // Only include addon if it has valid options array
+        if (Array.isArray(parent.options) && parent.options.length > 0) {
+          visible.push(parent);
+        }
 
         // Find child if parent selection matches visible_if_option
         const child = config.addons.find(
           a => a.parent_id === parent.id && selectedAddons[parent.id] === a.visible_if_option
         );
 
-        if (child) {
+        if (child && Array.isArray(child.options) && child.options.length > 0) {
           visible.push(child);
 
           // Find grandchild
@@ -434,7 +437,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
             a => a.parent_id === child.id && selectedAddons[child.id] === a.visible_if_option
           );
 
-          if (grandchild) {
+          if (grandchild && Array.isArray(grandchild.options) && grandchild.options.length > 0) {
             visible.push(grandchild);
           }
         }

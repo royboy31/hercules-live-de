@@ -132,7 +132,7 @@ function getAddonPriceAtTierQty(addon: AddonData, selectedValue: string | string
 
   for (const name of selectedNames) {
     // Skip "Keine" selection - it has no price
-    if (name === 'Keine') continue;
+    if (['none', 'keine', 'aucun'].includes(name.toLowerCase())) continue;
 
     const option = addon.options.find(o => o.name === name);
     if (!option || !option.price_table || option.price_table.length === 0) continue;
@@ -937,16 +937,19 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                 {/* Multiple Choice (checkboxes) for addons like Zubehör - auto-advances on selection */}
                 {addon.display_type === 'multiple_choise' && (() => {
                   const currentSelected = Array.isArray(selectedValue) ? selectedValue : (selectedValue ? [selectedValue] : []);
-                  const isNoneChecked = currentSelected.includes('Keine');
+                  // Detect the "none" option dynamically from DB (first option is typically None/Keine/Aucun)
+                  const noneOption = addon.options.find(o => ['none', 'keine', 'aucun'].includes(o.name.toLowerCase()));
+                  const noneName = noneOption ? noneOption.name : '';
+                  const isNoneChecked = noneName ? currentSelected.includes(noneName) : false;
 
                   const handleCheckboxChange = (value: string, checked: boolean) => {
                     let newSelected: string[];
-                    if (value === 'Keine') {
-                      // "Keine" clears all other selections and advances immediately
-                      newSelected = checked ? ['Keine'] : [];
+                    if (noneName && value === noneName) {
+                      // "None" clears all other selections and advances immediately
+                      newSelected = checked ? [noneName] : [];
                     } else {
-                      // Remove 'Keine' if selecting an actual option
-                      const withoutNone = currentSelected.filter(v => v !== 'Keine');
+                      // Remove none option if selecting an actual option
+                      const withoutNone = noneName ? currentSelected.filter(v => v !== noneName) : currentSelected;
                       if (checked) {
                         newSelected = [...withoutNone, value];
                       } else {
@@ -962,21 +965,8 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
 
                   return (
                     <div className="kd-step-choises">
-                      {/* "Keine" (None) checkbox - always first */}
-                      <label style={{ display: 'block', marginBottom: '8px' }}>
-                        <input
-                          type="checkbox"
-                          name={String(addon.id)}
-                          value="Keine"
-                          checked={isNoneChecked}
-                          onChange={(e) => handleCheckboxChange('Keine', e.target.checked)}
-                          style={{ marginRight: '8px' }}
-                        />
-                        Keine
-                      </label>
-                      {/* Dynamic options from database */}
                       {addon.options.map((option, index) => {
-                        const isChecked = currentSelected.includes(option.name);
+                        const isChecked = option.name === noneName ? isNoneChecked : currentSelected.includes(option.name);
                         return (
                           <label key={index} style={{ display: 'block', marginBottom: '8px' }}>
                             <input

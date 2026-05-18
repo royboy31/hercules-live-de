@@ -1,6 +1,8 @@
 ---
 // Global Footer Component - Matches WordPress Elementor footer exactly
 import ContactFormPopup from './ContactFormPopup.tsx';
+
+const currentYear = new Date().getFullYear();
 ---
 
 <footer class="site-footer">
@@ -112,13 +114,14 @@ import ContactFormPopup from './ContactFormPopup.tsx';
       <!-- Row 1: Legal links, Payment icons, Language switcher -->
       <div class="bottom-footer-row">
         <div class="legal-links">
+          <a href="/agb/">AGB</a>
+          <span class="legal-separator">|</span>
+          <a href="/datenschutzerklaerung-und-cookie-richtlinie/">Datenschutzerklärung und Cookie-Richtlinie</a>
+          <span class="legal-separator">|</span>
           <a href="/impressum/">Impressum</a>
-          <a href="/rechtlicher-hinweis/">Rechtliche Hinweise</a>
-          <a href="/nutzungsbedingungen/">Nutzungsbedingungen</a>
-          <a href="/datenschutzerklarung/">Datenschutzbestimmungen</a>
         </div>
         <div class="payment-icons">
-          <img src="/images/pay-her-2.png" alt="Zahlungsmethoden" loading="lazy" width="300" height="30" />
+          <img src="/images/pay-her-2.png" alt="Zahlungsmethoden" loading="lazy" width="220" height="22" />
         </div>
         <div class="language-switcher">
           <button class="language-current" type="button">
@@ -152,7 +155,7 @@ import ContactFormPopup from './ContactFormPopup.tsx';
       </div>
       <!-- Row 2: Copyright -->
       <div class="copyright">
-        © 2025. Hercules Merchandise Deutschland. Alle Rechte vorbehalten | Design & Entwicklung von <a href="/design-by-perelweb/">Perel Web Studio</a>
+        &copy; {currentYear} Be Ventures BV, handelnd unter dem Handelsnamen Hercules Merchandising. Alle Rechte vorbehalten.
       </div>
     </div>
   </div>
@@ -487,9 +490,14 @@ import ContactFormPopup from './ContactFormPopup.tsx';
     transition: all 0.3s ease;
   }
 
+  .legal-separator {
+    color: #253461;
+    font-size: 14px;
+    opacity: 0.4;
+  }
+
   .legal-links a:hover {
     color: #469ADC;
-    transform: translateX(3px);
   }
 
   .payment-icons {
@@ -498,7 +506,7 @@ import ContactFormPopup from './ContactFormPopup.tsx';
   }
 
   .payment-icons img {
-    max-width: 300px;
+    max-width: 220px;
     height: auto;
   }
 

@@ -63,11 +63,7 @@ const WORDPRESS_PATHS = [
   '/lieferungen-und-rucksendungen',
   '/zahlungsmethoden',
 
-  // Legal pages
-  '/rechtlicher-hinweis',
-  '/nutzungsbedingungen',
-  '/datenschutzerklarung',
-  '/agb',
+  // Legal pages served by Astro: /agb, /datenschutzerklaerung-und-cookie-richtlinie, /impressum
 ];
 
 // Paths that should always go to Astro
@@ -80,6 +76,8 @@ const ASTRO_PATHS = [
   '/ueber-uns', // About page (Astro)
   '/kontakt',   // Contact page (Astro)
   '/impressum', // Impressum page (Astro)
+  '/agb',       // AGB page (Astro)
+  '/datenschutzerklaerung-und-cookie-richtlinie', // Privacy + Cookie page (Astro)
 ];
 
 function shouldBypassCache(pathname: string, search: string): boolean {
@@ -231,11 +229,20 @@ export default {
     if (pathname === '/uber-uns' || pathname === '/uber-uns/') {
       return Response.redirect(new URL('/ueber-uns/', url.origin).toString(), 301);
     }
-    if (pathname === '/terms-and-conditions' || pathname === '/terms-and-conditions/') {
+    // Old legal page redirects (renamed 2026-05-18)
+    if (pathname === '/terms-and-conditions' || pathname === '/terms-and-conditions/' ||
+        pathname === '/nutzungsbedingungen' || pathname === '/nutzungsbedingungen/' ||
+        pathname === '/terms-of-service' || pathname === '/terms-of-service/') {
       return Response.redirect(new URL('/agb/', url.origin).toString(), 301);
     }
-    if (pathname === '/privacy-policy' || pathname === '/privacy-policy/') {
-      return Response.redirect(new URL('/datenschutzerklarung/', url.origin).toString(), 301);
+    if (pathname === '/privacy-policy' || pathname === '/privacy-policy/' ||
+        pathname === '/datenschutzerklarung' || pathname === '/datenschutzerklarung/' ||
+        pathname === '/datenschutzerklaerung' || pathname === '/datenschutzerklaerung/') {
+      return Response.redirect(new URL('/datenschutzerklaerung-und-cookie-richtlinie/', url.origin).toString(), 301);
+    }
+    if (pathname === '/rechtlicher-hinweis' || pathname === '/rechtlicher-hinweis/' ||
+        pathname === '/legal-notice' || pathname === '/legal-notice/') {
+      return Response.redirect(new URL('/impressum/', url.origin).toString(), 301);
     }
     if (pathname === '/imprint' || pathname === '/imprint/') {
       return Response.redirect(new URL('/impressum/', url.origin).toString(), 301);

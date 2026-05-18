@@ -139,6 +139,11 @@ interface EmailRecipient {
   name?: string;
 }
 
+interface BrevoAttachment {
+  name: string;
+  content: string; // base64 encoded
+}
+
 interface SendEmailParams {
   to: EmailRecipient[];
   cc?: EmailRecipient[];
@@ -146,6 +151,7 @@ interface SendEmailParams {
   subject: string;
   htmlContent: string;
   textContent?: string;
+  attachment?: BrevoAttachment[];
 }
 
 async function sendEmail(
@@ -171,6 +177,7 @@ async function sendEmail(
         subject: params.subject,
         htmlContent: params.htmlContent,
         textContent: params.textContent,
+        ...(params.attachment && params.attachment.length > 0 ? { attachment: params.attachment } : {}),
       }),
     });
 
@@ -351,7 +358,7 @@ function getEmailFooter(): string {
         <p>
           <a href="${SITE_URL}" style="color:#253461; text-decoration:none;"><strong>Hercules Merchandise DE</strong></a>
           <strong style="color:#000;"> | </strong>
-          <a href="${SITE_URL}/nutzungsbedingungen/" style="color:#253461; text-decoration:none;"><strong>AGB</strong></a>
+          <a href="${SITE_URL}/agb/" style="color:#253461; text-decoration:none;"><strong>AGB</strong></a>
           <strong style="color:#000;"> | </strong>
           <a href="${SITE_URL}/mein-konto/" style="color:#253461; text-decoration:none;"><strong>Ihr Konto</strong></a><br>
           📧 <a href="mailto:info@hercules-merchandise.de" style="color:#253461; text-decoration:none;">info@hercules-merchandise.de</a><br>
@@ -475,6 +482,7 @@ function getQuantityRequestEmailHtml(data: {
   attributes: string;
   addons: string;
   pageUrl: string;
+  uploadedFiles?: UploadedFileResult[];
 }): string {
   return `
 <!DOCTYPE html>
@@ -570,6 +578,19 @@ function getQuantityRequestEmailHtml(data: {
       <tr>
         <td style="padding:6px 8px; border-bottom:1px solid #ccc; vertical-align:top;"><strong>Zusätzliche Nachricht:</strong></td>
         <td style="padding:6px 8px; border-bottom:1px solid #ccc;">${escapeHtml(data.message).replace(/\n/g, '<br>')}</td>
+      </tr>
+    </table>
+    ` : ''}
+
+    ${data.uploadedFiles && data.uploadedFiles.length > 0 ? `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%; margin:15px 0;">
+      <tr>
+        <td style="padding:6px 8px; border-bottom:1px solid #ccc; vertical-align:top;"><strong>Angehängte Dateien:</strong></td>
+        <td style="padding:6px 8px; border-bottom:1px solid #ccc;">${data.uploadedFiles.map(file => {
+          const sizeKB = Math.round(file.size / 1024);
+          const sizeDisplay = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(1)} MB` : `${sizeKB} KB`;
+          return `<a href="${escapeHtml(file.url)}" target="_blank" style="color:#469ADC; text-decoration:none;">📎 ${escapeHtml(file.name)}</a> <span style="color:#888; font-size:12px;">(${sizeDisplay})</span>`;
+        }).join('<br>')}</td>
       </tr>
     </table>
     ` : ''}
@@ -829,6 +850,7 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
             attributes: contactData.attributes,
             addons: contactData.addons,
             pageUrl: contactData.pageUrl,
+            uploadedFiles: uploadedFiles,
           });
         } else {
           // General contact form (with file URLs)
@@ -847,6 +869,22 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
           });
         }
 
+        // Build Brevo file attachments from uploaded files (base64 data)
+        const brevoAttachments: BrevoAttachment[] = [];
+        if (body.uploadFiles && body.uploadFiles.length > 0) {
+          for (const file of body.uploadFiles) {
+            if (file.name && file.data) {
+              brevoAttachments.push({
+                name: file.name,
+                content: file.data,
+              });
+            }
+          }
+          if (brevoAttachments.length > 0) {
+            console.log(`[Brevo] Attaching ${brevoAttachments.length} file(s) to email`);
+          }
+        }
+
         // Send email based on form type (matching WordPress flow)
         // - Contact Form: TO admin, CC customer
         // - Express Delivery: TO admin only, Reply-To customer
@@ -861,6 +899,7 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
             replyTo: { email: contactData.email, name: contactData.name },
             subject: `Dringende Angebotsanfrage - ${contactData.productName || 'Express'}`,
             htmlContent,
+            attachment: brevoAttachments.length > 0 ? brevoAttachments : undefined,
           };
         } else if (formType === 'quantity' || formType === 'quantity_request' || contactData.productName) {
           // Quantity request: TO admin, CC info, Reply-To customer
@@ -870,6 +909,7 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
             replyTo: { email: contactData.email, name: contactData.name },
             subject,
             htmlContent,
+            attachment: brevoAttachments.length > 0 ? brevoAttachments : undefined,
           };
         } else {
           // General contact form: TO admin, Reply-To customer
@@ -878,6 +918,7 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
             replyTo: { email: contactData.email, name: contactData.name },
             subject,
             htmlContent,
+            attachment: brevoAttachments.length > 0 ? brevoAttachments : undefined,
           };
         }
 

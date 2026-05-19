@@ -36,13 +36,14 @@ const pageDescription = 'Impressum und rechtliche Angaben von Be Ventures BV, Be
     <div class="container">
       <div class="content-wrapper">
         <h1>Impressum</h1>
+        <p class="page-subtitle">Be Ventures BV &mdash; Hercules Merchandise</p>
 
         <div class="content-card">
           <div class="legal-section">
             <h2>Angaben gem&auml;&szlig; &sect; 5 DDG</h2>
             <p>
               <strong>Be Ventures BV</strong><br>
-              handelnd unter dem Handelsnamen Hercules Merchandising<br>
+              handelnd unter dem Handelsnamen Hercules Merchandise<br>
               Avenue Paul de Merten 32/12<br>
               1090 Jette<br>
               Belgien
@@ -190,8 +191,17 @@ const pageDescription = 'Impressum und rechtliche Angaben von Be Ventures BV, Be
     font-weight: 600;
     color: #253461;
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 10px;
     text-transform: uppercase;
+  }
+
+  .page-subtitle {
+    font-family: 'Jost', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: #5F5F5F;
+    text-align: center;
+    margin: 0 0 40px;
   }
 
   .content-card {
@@ -246,6 +256,10 @@ const pageDescription = 'Impressum und rechtliche Angaben von Be Ventures BV, Be
   @media (max-width: 768px) {
     h1 {
       font-size: 28px;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
     }
 
     .content-card {

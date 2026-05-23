@@ -1158,10 +1158,21 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                   />
                   <button type="button" className="kd-round-btn" onClick={() => setTempQuantity(prev => Math.min(quantityRange.max, prev + 1))}>+</button>
                   <button type="button" className="kd-round-btn" onClick={() => setTempQuantity(prev => Math.max(quantityRange.min, prev - 1))}>-</button>
-                  <button type="button" className="kd-verify-qty-btn" onClick={handleQuantityConfirm}>
-                    BESTÄTIGEN
-                  </button>
+                  {tempQuantity > quantityRange.max ? (
+                    <button type="button" className="kd-verify-qty-btn kd-qty-warning-btn" onClick={() => setShowQuantityPopup(true)}>
+                      KONTAKTIEREN SIE UNS
+                    </button>
+                  ) : (
+                    <button type="button" className="kd-verify-qty-btn" onClick={handleQuantityConfirm}>
+                      BESTÄTIGEN
+                    </button>
+                  )}
                 </div>
+                {tempQuantity > quantityRange.max && (
+                  <p className="kd-qty-warning">
+                    Für diese Menge kontaktieren Sie uns bitte, und wir erstellen Ihnen ein individuelles Angebot.
+                  </p>
+                )}
               </div>
             </div>
           )}

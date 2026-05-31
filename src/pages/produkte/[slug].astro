@@ -38,244 +38,41 @@ try {
   error = `Failed to load product: ${e instanceof Error ? e.message : 'Unknown error'}`;
 }
 
-// Parse price string that may use comma as decimal separator (e.g. "24,95" → 24.95)
-const parsePrice = (val: number | string): number => {
-  if (typeof val === 'number') return val;
-  return parseFloat(val.replace(',', '.'));
-};
-
-// Format price for DE: €XX,XX
-const formatPriceDE = (price: number | string) => {
+// Helper to format price
+const formatPrice = (price: number | string) => {
   const num = typeof price === 'string' ? parseFloat(price) : price;
   return `€${num.toFixed(2).replace('.', ',')}`;
 };
 
-// Fetch product config from WP API at build time (includes addons with price_tables)
-let productConfig: any = null;
-if (product) {
-  try {
-    const configRes = await fetch(`https://hercules-merchandise.de/wp-json/hercules/v1/product-config-by-slug/${slug}`);
-    if (configRes.ok) {
-      productConfig = await configRes.json();
-    }
-  } catch (e) {
-    console.error('Failed to fetch product config:', e);
-  }
-}
-
-// Build pricing table mirroring the steps form logic.
-// Steps = visible attributes (variation selectors) + parent addons (with price_tables).
-// Each row = one complete combination of all steps.
-// Price = matched variation base price + addon surcharges at each quantity tier.
-const buildPricingCombinations = () => {
-  if (!productConfig) return { tiers: [], combos: [] };
-
-  const variations = productConfig.variations || [];
-  const pricedVariations = variations.filter((v: any) => v.conditional_prices?.length > 0);
-  if (!pricedVariations.length) return { tiers: [], combos: [] };
-
-  // Get quantity tiers from the first variation
-  const tiers = pricedVariations[0].conditional_prices.map((cp: any) =>
-    typeof cp.qty === 'string' ? parseInt(cp.qty) : cp.qty
-  );
-
-  // --- Step 1: Visible attributes (same filter as steps form) ---
-  const allAttrKeys = Object.keys(productConfig.attributes || {});
-  const visibleAttrKeys = allAttrKeys.filter((key: string) => {
-    const attr = productConfig.attributes[key];
-    return !(attr.terms?.length === 1 && attr.terms[0].slug === 'default');
-  });
-
-  // --- Step 2: Parent addons with priced options ---
-  const addons = (productConfig.addons || []) as any[];
-  const pricedParentAddons = addons.filter((a: any) =>
-    a.parent_id === 0 && a.options?.some((o: any) => o.price_table?.length > 0)
-  );
-
-  // --- Step 3: Build step options (attribute terms + addon options) ---
-  type StepOption = { label: string; attrSlug?: string; attrKey?: string; addonId?: number; addonName?: string; priceTable?: any[] };
-  type Step = { name: string; options: StepOption[] };
-  const steps: Step[] = [];
-
-  // Add attribute steps
-  for (const attrKey of visibleAttrKeys) {
-    const attr = productConfig.attributes[attrKey];
-    steps.push({
-      name: attr.display_title || attrKey,
-      options: attr.terms.map((t: any) => ({
-        label: t.name,
-        attrSlug: t.slug,
-        attrKey,
-      })),
-    });
-  }
-
-  // Add addon steps — collapse same-priced color options into "Mit X / Ohne X"
-  for (const addon of pricedParentAddons) {
-    const opts = addon.options || [];
-    const freeOpts = opts.filter((o: any) => !o.price_table?.length);
-    const pricedOpts = opts.filter((o: any) => o.price_table?.length > 0);
-
-    // If addon has ≤4 options total, list each by name (e.g. Ärmel: Kurze/Lange)
-    if (opts.length <= 4) {
-      steps.push({
-        name: addon.name,
-        options: opts.map((o: any) => ({
-          label: o.name,
-          addonId: addon.id,
-          addonName: o.name,
-          priceTable: o.price_table || [],
-        })),
-      });
-    } else {
-      // Many options (e.g. Shorts with 10 colors at same price + Ohne):
-      // Group by price level → "Ohne X" (free) + one entry per unique price level ("Mit X")
-      const stepOptions: StepOption[] = [];
-
-      // Add free option (e.g. "Ohne Shorts")
-      if (freeOpts.length > 0) {
-        stepOptions.push({
-          label: freeOpts[0].name,
-          addonId: addon.id,
-          addonName: freeOpts[0].name,
-          priceTable: [],
-        });
-      }
-
-      // Group priced options by their first price tier value
-      const priceGroups = new Map<string, any>();
-      for (const opt of pricedOpts) {
-        const key = opt.price_table.map((p: any) => `${p.qty}:${p.price}`).join('|');
-        if (!priceGroups.has(key)) {
-          priceGroups.set(key, opt);
-        }
-      }
-
-      // Create one entry per unique price level
-      const addonBaseName = addon.name
-        .replace(/-Auswahl/i, '').replace(/Auswahl/i, '').replace(/-Farbe/i, '').trim();
-      if (priceGroups.size === 1) {
-        // All priced options have same price → single "Mit X" row
-        const representative = priceGroups.values().next().value;
-        stepOptions.push({
-          label: `Mit ${addonBaseName}`,
-          addonId: addon.id,
-          addonName: representative.name,
-          priceTable: representative.price_table,
-        });
-      } else {
-        // Multiple price levels → use representative option names
-        for (const [, opt] of priceGroups) {
-          stepOptions.push({
-            label: opt.name,
-            addonId: addon.id,
-            addonName: opt.name,
-            priceTable: opt.price_table,
-          });
-        }
-      }
-
-      steps.push({ name: addon.name, options: stepOptions });
-    }
-  }
-
-  if (steps.length === 0) return { tiers: [], combos: [] };
-
-  // Keep steps in WP order (matches the configurator steps form)
-
-  // --- Step 4: Generate cartesian product of all step options ---
-  type ComboRow = { labels: string[]; attrSelections: Record<string, string>; priceTables: any[][] };
-  let rows: ComboRow[] = [{ labels: [], attrSelections: {}, priceTables: [] }];
-
-  for (const step of steps) {
-    // Skip steps that would exceed 100 rows — accessories get dropped, core config stays
-    if (rows.length * step.options.length > 100) continue;
-    const newRows: ComboRow[] = [];
-    for (const row of rows) {
-      for (const opt of step.options) {
-        const newAttrSelections = { ...row.attrSelections };
-        if (opt.attrKey) {
-          newAttrSelections[opt.attrKey] = opt.attrSlug!;
-        }
-        newRows.push({
-          labels: [...row.labels, opt.label],
-          attrSelections: newAttrSelections,
-          priceTables: [...row.priceTables, ...(opt.priceTable?.length ? [opt.priceTable] : [])],
-        });
-      }
-    }
-    rows = newRows;
-  }
-
-  // --- Step 5: Calculate prices for each row × tier ---
-  const getAddonPrice = (priceTable: any[], qty: number): number => {
-    if (!priceTable?.length) return 0;
-    const sorted = [...priceTable]
-      .map((p: any) => ({ qty: typeof p.qty === 'string' ? parseInt(p.qty) : p.qty, price: parsePrice(p.price) }))
-      .sort((a: any, b: any) => a.qty - b.qty);
-    let price = 0;
-    for (const tier of sorted) {
-      if (tier.qty <= qty) price = tier.price;
-    }
-    return price;
-  };
-
-  const combos = rows.map((row: ComboRow) => {
-    // Find matching variation for this attribute selection
-    const matchedVar = pricedVariations.find((v: any) => {
-      return Object.entries(v.attributes).every(([key, value]: [string, any]) => {
-        const normalizedKey = key.replace('attribute_', '');
-        const selected = row.attrSelections[key] || row.attrSelections[normalizedKey];
-        return selected === value || value === 'default';
-      });
-    });
-
-    const prices = tiers.map((qty: number) => {
-      // Base price from variation
-      let basePrice = 0;
-      if (matchedVar) {
-        const cp = matchedVar.conditional_prices.find((c: any) => {
-          const cpQty = typeof c.qty === 'string' ? parseInt(c.qty) : c.qty;
-          return cpQty === qty;
-        });
-        basePrice = cp ? (parsePrice(cp.price)) : 0;
-      }
-
-      // Add addon surcharges
-      let addonTotal = 0;
-      for (const pt of row.priceTables) {
-        addonTotal += getAddonPrice(pt, qty);
-      }
-
-      return basePrice + addonTotal;
-    });
-
-    return { label: row.labels.join(' + '), prices, hasMatch: !!matchedVar };
-  });
-
-  // Filter out combos where no variation matched (invalid attribute combinations)
-  const validCombos = combos.filter((c: any) => c.hasMatch && c.prices.some((p: number) => p > 0));
-
-  // Sort by first tier price (cheapest first)
-  validCombos.sort((a: any, b: any) => a.prices[0] - b.prices[0]);
-
-  return { tiers, combos: validCombos };
+// Get conditional prices for display (use first variation with prices)
+const getConditionalPrices = () => {
+  if (!product?.variations?.length) return [];
+  const variation = product.variations.find((v: any) => v.conditional_prices?.length);
+  return variation?.conditional_prices || [];
 };
 
-const pricingTable = buildPricingCombinations();
+// Get price range from all variations
+const getPriceRange = () => {
+  if (!product?.variations?.length) return null;
 
-// Starting price = cheapest combo at minimum order quantity (first tier)
-const startingPrice = pricingTable.combos.length > 0
-  ? Math.min(...pricingTable.combos.map((c: any) => c.prices[0]))
-  : null;
+  let minPrice = Infinity;
+  let maxPrice = 0;
 
-// Flat tierPrices for JSON-LD (use first combo = base/cheapest)
-const tierPrices = pricingTable.combos.length > 0
-  ? pricingTable.tiers.map((qty: number, i: number) => ({
-      qty,
-      price: pricingTable.combos[0].prices[i],
-    }))
-  : [];
+  for (const variation of product.variations) {
+    if (variation.conditional_prices?.length) {
+      for (const cp of variation.conditional_prices) {
+        if (cp.price < minPrice) minPrice = cp.price;
+        if (cp.price > maxPrice) maxPrice = cp.price;
+      }
+    }
+  }
+
+  if (minPrice === Infinity) return null;
+  return { min: minPrice, max: maxPrice };
+};
+
+const conditionalPrices = getConditionalPrices();
+const priceRange = getPriceRange();
 
 // Generate WordPress thumbnail URL at specific size
 const wpThumb = (url: string, size: number) => {
@@ -373,14 +170,14 @@ const productDescription = product?.short_description
 
 const productImage = galleryImages[0]?.src || `${siteConfig.siteUrl}${siteConfig.defaultImage}`;
 
-// Build breadcrumb schema — prefer primary_category for consistent breadcrumbs
+// Build breadcrumb schema
 const breadcrumbItems = [
   { name: 'Home', url: siteConfig.siteUrl },
 ];
-const breadcrumbCat = product?.primary_category || product?.categories?.[0];
-if (breadcrumbCat) {
-  const catName = typeof breadcrumbCat === 'string' ? breadcrumbCat : breadcrumbCat.name;
-  const catSlug = typeof breadcrumbCat === 'string' ? breadcrumbCat : breadcrumbCat.slug;
+if (product?.categories?.[0]) {
+  const cat = product.categories[0];
+  const catName = typeof cat === 'string' ? cat : cat.name;
+  const catSlug = typeof cat === 'string' ? cat : cat.slug;
   breadcrumbItems.push({
     name: catName,
     url: `${siteConfig.siteUrl}/kollektionen/${catSlug}/`
@@ -397,28 +194,19 @@ if (product) {
 const jsonLdSchemas: object[] = [];
 
 if (product) {
-  // Product schema — full description for JSON-LD (not truncated)
-  const fullDescription = product.description
-    ? stripHtml(product.description)
-    : productDescription;
-
+  // Product schema
   jsonLdSchemas.push(getProductSchema({
     name: product.name,
-    description: fullDescription,
+    description: productDescription,
     image: productImage,
     url: productUrl,
     sku: product.sku || `HERC-${product.id}`,
     brand: siteConfig.siteName,
-    priceMin: startingPrice,
-    priceMax: tierPrices.length > 0 ? Math.max(...tierPrices.map((t: { price: number }) => t.price)) : undefined,
+    priceMin: priceRange?.min,
+    priceMax: priceRange?.max,
     currency: 'EUR',
     availability: 'InStock',
     condition: 'NewCondition',
-    offerCount: tierPrices.length || 1,
-    priceSpecification: tierPrices.map((tp: any) => ({
-      price: tp.price,
-      quantity: tp.qty,
-    })),
     aggregateRating: placeData.rating ? {
       ratingValue: placeData.rating,
       reviewCount: placeData.reviewCount,
@@ -442,7 +230,7 @@ if (product) {
   pageType="product"
   ogType="product"
   ogImage={productImage}
-  productPrice={startingPrice?.toString()}
+  productPrice={priceRange?.min?.toString()}
   productCurrency="EUR"
   productAvailability="InStock"
   jsonLd={jsonLdSchemas}
@@ -464,9 +252,9 @@ if (product) {
           <div class="container">
             <a href="/">Home</a>
             <span class="separator"><svg xmlns="http://www.w3.org/2000/svg" width="6" height="12" viewBox="0 0 6 12" fill="none"><path d="M6 6L0.75 11.1962L0.75 0.803848L6 6Z" fill="#469ADC"></path></svg></span>
-            {breadcrumbCat && (
+            {product.categories?.[0] && (
               <>
-                <a href={`/kollektionen/${typeof breadcrumbCat === 'string' ? breadcrumbCat : breadcrumbCat.slug}/`}>{typeof breadcrumbCat === 'string' ? breadcrumbCat : breadcrumbCat.name}</a>
+                <a href={`/kollektionen/${product.categories[0].slug}/`}>{product.categories[0].name}</a>
                 <span class="separator"><svg xmlns="http://www.w3.org/2000/svg" width="6" height="12" viewBox="0 0 6 12" fill="none"><path d="M6 6L0.75 11.1962L0.75 0.803848L6 6Z" fill="#469ADC"></path></svg></span>
               </>
             )}
@@ -483,9 +271,6 @@ if (product) {
                 <!-- Product Title wrapper - edge-to-edge border like WordPress -->
                 <div class="product-title-wrapper">
                   <h1 class="product-title">{product.name}</h1>
-                  {startingPrice && (
-                    <p class="product-starting-price">Ab {formatPriceDE(startingPrice)} <span class="price-tax-note">zzgl. MwSt.</span></p>
-                  )}
                 </div>
 
                 <!-- Main Image Container (badges positioned inside) -->
@@ -576,35 +361,6 @@ if (product) {
 
               </div>
             </div>
-
-            {/* Tiered pricing table — full-width below product grid for SEO and users */}
-            {pricingTable.combos.length > 0 && (
-              <div class="tier-pricing-section">
-                <h3 class="tier-pricing-title">Staffelpreise <span class="price-tax-note">(Alle Preise zzgl. MwSt.)</span></h3>
-                <div class="tier-pricing-table-wrapper">
-                  <table class="tier-pricing-table">
-                    <thead>
-                      <tr>
-                        <th>Konfiguration</th>
-                        {pricingTable.tiers.map((qty: number) => (
-                          <th>{qty}+ Stk.</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pricingTable.combos.map((combo: any, idx: number) => (
-                        <tr class={idx === 0 ? 'base-row' : ''}>
-                          <td class="combo-label">{combo.label}</td>
-                          {combo.prices.map((price: number) => (
-                            <td class="combo-price">{formatPriceDE(price)}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
 
             <!-- Product Description Card -->
             <div class="product-description">
@@ -1179,105 +935,6 @@ if (product) {
     text-transform: uppercase;
   }
 
-  .product-starting-price {
-    margin: 8px 0 0 0;
-    font-family: 'Jost', sans-serif;
-    font-size: 18px;
-    font-weight: 600;
-    color: #10C99E;
-  }
-
-  .price-tax-note {
-    font-size: 12px;
-    font-weight: 400;
-    color: #888;
-  }
-
-  .tier-pricing-section {
-    margin-top: 50px;
-    border: 1px solid #DCDCDC;
-    border-radius: 20px;
-    padding: 30px 35px;
-    background: #fff;
-  }
-
-  .tier-pricing-title {
-    font-family: 'Jost', sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    color: #253461;
-    margin: 0 0 20px 0;
-    text-transform: uppercase;
-  }
-
-  .tier-pricing-table-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .tier-pricing-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'Roboto', sans-serif;
-    font-size: 14px;
-    min-width: 600px;
-  }
-
-  .tier-pricing-table th {
-    font-family: 'Jost', sans-serif;
-    font-weight: 600;
-    font-size: 13px;
-    color: #253461;
-    text-transform: uppercase;
-    padding: 12px 16px;
-    border-bottom: 2px solid #253461;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  .tier-pricing-table th:first-child {
-    text-align: left;
-  }
-
-  .tier-pricing-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f0f0f0;
-    text-align: center;
-  }
-
-  .tier-pricing-table .combo-label {
-    text-align: left;
-    font-weight: 500;
-    color: #333;
-    white-space: nowrap;
-  }
-
-  .tier-pricing-table .combo-price {
-    font-family: 'Jost', sans-serif;
-    font-weight: 600;
-    color: #253461;
-  }
-
-  .tier-pricing-table tr.base-row {
-    background: #f8fffe;
-  }
-
-  .tier-pricing-table tr.base-row .combo-price {
-    color: #10C99E;
-  }
-
-  .tier-pricing-table tr:hover {
-    background: #f5f7ff;
-  }
-
-  .tier-pricing-table tr.base-row:hover {
-    background: #f0fdf9;
-  }
-
-  .tier-pricing-table tr:last-child td {
-    border-bottom: none;
-  }
-
   @media (max-width: 768px) {
     .product-title-wrapper {
       margin: -20px -20px 15px -20px; /* Match gallery padding on mobile too */
@@ -1286,20 +943,6 @@ if (product) {
     .product-title {
       font-size: 14px;
       line-height: 14px;
-    }
-    .product-starting-price {
-      font-size: 16px;
-    }
-    .tier-pricing-section {
-      margin-top: 30px;
-      padding: 20px;
-    }
-    .tier-pricing-table {
-      font-size: 13px;
-    }
-    .tier-pricing-table th,
-    .tier-pricing-table td {
-      padding: 10px 10px;
     }
   }
 

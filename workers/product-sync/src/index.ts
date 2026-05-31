@@ -74,6 +74,8 @@ interface WCProduct {
   faq?: Array<{ question: string; answer: string }>;
   // Missive-only flag (exposed by hercules-missive-only plugin)
   missive_only?: boolean;
+  // Primary category for breadcrumbs (exposed by hercules-primary-category plugin)
+  primary_category?: { id: number; name: string; slug: string } | null;
   date_modified?: string;
 }
 
@@ -163,6 +165,8 @@ interface SyncedProduct {
   faq: Array<{ question: string; answer: string }>;
   // Missive-only flag (hidden from website, visible in Missive CRM)
   missive_only: boolean;
+  // Primary category for breadcrumbs (from hercules-primary-category plugin)
+  primary_category: { id: number; name: string; slug: string } | null;
   // Number of images successfully cached in KV (for frontend to know how many thumbnails to show)
   cached_image_count: number;
   date_modified: string;
@@ -756,6 +760,8 @@ async function transformProduct(
     faq: product.faq || [],
     // Missive-only flag (hidden from website, visible in Missive CRM)
     missive_only: product.missive_only || getMeta('_missive_only') === 'yes',
+    // Primary category for breadcrumbs
+    primary_category: product.primary_category || null,
     // Will be updated after image caching
     cached_image_count: 0,
     date_modified: product.date_modified || new Date().toISOString(),
@@ -1433,9 +1439,9 @@ async function syncSinglePost(env: Env, postId: number): Promise<SyncedPost | nu
       JSON.stringify(syncedPost)
     );
 
-    // Cache featured image
+    // Cache featured image (force refresh to pick up changed images)
     if (syncedPost.featuredImage && post.slug) {
-      await syncImageToKV(env.PRODUCTS_KV, syncedPost.featuredImage, `post:${post.slug}`);
+      await syncImageToKV(env.PRODUCTS_KV, syncedPost.featuredImage, `post:${post.slug}`, 0, true);
     }
 
     // Update index

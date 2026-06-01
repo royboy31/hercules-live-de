@@ -12,7 +12,7 @@ import {
   stripHtml
 } from '../../config/seo';
 
-const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
+const WORKER_URL = 'https://hercules-product-sync-live.gilles-86d.workers.dev';
 
 // Get the category slug from the URL
 const { slug } = Astro.params;
@@ -72,7 +72,7 @@ try {
 
 // Generate static paths for all categories
 export async function getStaticPaths() {
-  const WORKER_URL = 'https://hercules-product-sync.gilles-86d.workers.dev';
+  const WORKER_URL = 'https://hercules-product-sync-live.gilles-86d.workers.dev';
 
   try {
     const res = await fetch(`${WORKER_URL}/categories`);
@@ -240,7 +240,7 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
               <li class="related-product-item">
                 <a href={`/produkte/${product.slug}/`} class="related-product-link">
                   <img
-                    src={`https://hercules-product-sync.gilles-86d.workers.dev/image/${product.slug}/0`}
+                    src={`https://hercules-product-sync-live.gilles-86d.workers.dev/image/${product.slug}/0`}
                     alt={product.name}
                     loading="lazy"
                     width="1000"

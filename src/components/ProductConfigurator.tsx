@@ -209,7 +209,7 @@ function getInterpolatedPriceWithAddons(
   return combinedTiers[0]?.price || 0;
 }
 
-export default function ProductConfigurator({ productSlug, workerUrl = 'https://hercules-product-sync.gilles-86d.workers.dev' }: ProductConfiguratorProps) {
+export default function ProductConfigurator({ productSlug, workerUrl = 'https://hercules-product-sync-live.gilles-86d.workers.dev' }: ProductConfiguratorProps) {
   const [config, setConfig] = useState<ProductConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

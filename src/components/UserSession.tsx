@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { cartStore, type CartData } from '../lib/cartStore';
+import { distributorStore } from '../lib/distributorStore';
 
 interface UserSessionProps {
   type: 'cart' | 'account' | 'cart-count';
@@ -11,6 +12,8 @@ interface UserData {
   email: string;
   first_name: string;
   avatar: string;
+  is_distributor?: boolean;
+  distributor_discount?: number;
 }
 
 // Use the same domain when accessed through Edge Router, otherwise use staging
@@ -67,6 +70,15 @@ export default function UserSession({ type }: UserSessionProps) {
         if (data.logged_in !== undefined) {
           setIsLoggedIn(data.logged_in);
           setUser(data.user);
+          // Populate distributor store
+          if (data.user?.is_distributor) {
+            distributorStore.set({
+              isDistributor: true,
+              discount: data.user.distributor_discount || 0,
+            });
+          } else {
+            distributorStore.clear();
+          }
         }
       }
     } catch (err) {
@@ -91,6 +103,16 @@ export default function UserSession({ type }: UserSessionProps) {
         const data = await response.json();
         setIsLoggedIn(data.logged_in || false);
         setUser(data.user || null);
+
+        // Populate distributor store
+        if (data.user?.is_distributor) {
+          distributorStore.set({
+            isDistributor: true,
+            discount: data.user.distributor_discount || 0,
+          });
+        } else {
+          distributorStore.clear();
+        }
 
         // Also sync cart data while we're at it
         if (data.cart) {

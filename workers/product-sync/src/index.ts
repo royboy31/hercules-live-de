@@ -184,6 +184,9 @@ interface WCCategory {
   second_description?: string;
   // FAQ items from category custom fields
   faq?: Array<{ question: string; answer: string }>;
+  // SEO override fields
+  seo_h1?: string;
+  seo_title?: string;
 }
 
 // WordPress Post from REST API
@@ -243,6 +246,9 @@ interface SyncedCategory {
   second_description: string | null;
   // FAQ items from category custom fields
   faq: Array<{ question: string; answer: string }>;
+  // SEO override fields
+  seo_h1: string | null;
+  seo_title: string | null;
   image: string | null;
   localImage: string | null;
   productCount: number;
@@ -370,6 +376,9 @@ class WooCommerceClient {
       second_description: cat.second_description,
       // FAQ items from category custom fields
       faq: cat.faq || [],
+      // SEO override fields
+      seo_h1: cat.seo_h1,
+      seo_title: cat.seo_title,
     }));
   }
 
@@ -1117,6 +1126,9 @@ function transformCategory(category: WCCategory): SyncedCategory {
     second_description: category.second_description || null,
     // FAQ items from category custom fields
     faq: category.faq || [],
+    // SEO override fields
+    seo_h1: category.seo_h1 || null,
+    seo_title: category.seo_title || null,
     image: category.image?.src || null,
     localImage: category.slug ? `${WORKER_URL}/category-image/${category.slug}` : null,
     productCount: category.count,

@@ -132,7 +132,7 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
 ---
 
 <BaseLayout
-  title={category.name}
+  title={category.seo_title || category.name}
   description={categoryDescription}
   pageType="collection"
   ogImage={categoryImage}
@@ -160,7 +160,7 @@ const preloadImages = lcpImageUrl ? [lcpImageUrl] : [];
 
       <!-- Category Header -->
       <header class="category-header">
-        <h1 class="category-title">{category.name}</h1>
+        <h1 class="category-title">{category.seo_h1 || category.name}</h1>
         {category.description && (
           <div class="category-description" set:html={category.description} />
         )}

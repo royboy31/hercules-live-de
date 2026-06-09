@@ -79,6 +79,10 @@ function hercules_format_category($category) {
     // Get second description from term meta
     $second_description = get_term_meta($category->term_id, 'seconddesc', true);
 
+    // Get SEO override fields from term meta
+    $seo_h1 = get_term_meta($category->term_id, 'seo_h1', true);
+    $seo_title = get_term_meta($category->term_id, 'seo_title', true);
+
     // Get FAQ from ACF repeater field (if using ACF)
     // Field name: 'category_faq' - repeater with sub-fields 'question' and 'answer'
     $faq = [];
@@ -122,5 +126,7 @@ function hercules_format_category($category) {
         'description' => $category->description,
         'second_description' => $second_description ?: null,
         'faq' => $faq,
+        'seo_h1' => $seo_h1 ?: null,
+        'seo_title' => $seo_title ?: null,
     ];
 }

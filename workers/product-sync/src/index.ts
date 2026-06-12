@@ -396,7 +396,23 @@ class WooCommerceClient {
       throw new Error(`Failed to fetch category ${categoryId}: ${response.status}`);
     }
 
-    return response.json();
+    const wcCategory: WCCategory = await response.json();
+
+    // Enrich with custom fields from Hercules API (seo_h1, seo_title, second_description, faq)
+    try {
+      const herculesRes = await fetch(`${this.baseUrl}/wp-json/hercules/v1/category/${wcCategory.slug}`);
+      if (herculesRes.ok) {
+        const herculesData: any = await herculesRes.json();
+        wcCategory.seo_h1 = herculesData.seo_h1 || undefined;
+        wcCategory.seo_title = herculesData.seo_title || undefined;
+        wcCategory.second_description = herculesData.second_description || undefined;
+        wcCategory.faq = herculesData.faq || [];
+      }
+    } catch (e) {
+      console.error(`Failed to enrich category ${categoryId} from Hercules API: ${e}`);
+    }
+
+    return wcCategory;
   }
 
   // WordPress Posts API (standard WP REST API, no auth required for public posts)

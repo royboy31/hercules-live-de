@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Hercules Category API
  * Description: Custom REST API endpoint for product categories with second_description and FAQ
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Hercules Merchandise
  */
 
@@ -79,10 +79,6 @@ function hercules_format_category($category) {
     // Get second description from term meta
     $second_description = get_term_meta($category->term_id, 'seconddesc', true);
 
-    // Get SEO override fields from term meta
-    $seo_h1 = get_term_meta($category->term_id, 'seo_h1', true);
-    $seo_title = get_term_meta($category->term_id, 'seo_title', true);
-
     // Get FAQ from ACF repeater field (if using ACF)
     // Field name: 'category_faq' - repeater with sub-fields 'question' and 'answer'
     $faq = [];
@@ -117,6 +113,10 @@ function hercules_format_category($category) {
         }
     }
 
+    // Get SEO override fields from term meta
+    $seo_h1 = get_term_meta($category->term_id, 'seo_h1', true);
+    $seo_title = get_term_meta($category->term_id, 'seo_title', true);
+
     return [
         'id' => $category->term_id,
         'name' => $category->name,
@@ -129,4 +129,70 @@ function hercules_format_category($category) {
         'seo_h1' => $seo_h1 ?: null,
         'seo_title' => $seo_title ?: null,
     ];
+}
+
+/**
+ * Add SEO fields to the Edit Category form
+ */
+add_action('product_cat_edit_form_fields', function($term) {
+    $seo_h1 = get_term_meta($term->term_id, 'seo_h1', true);
+    $seo_title = get_term_meta($term->term_id, 'seo_title', true);
+    ?>
+    <tr class="form-field">
+        <th scope="row"><label for="seo_h1">SEO H1</label></th>
+        <td>
+            <input type="text" name="seo_h1" id="seo_h1" value="<?php echo esc_attr($seo_h1); ?>" style="width: 100%;" />
+            <p class="description">Override the &lt;h1&gt; on the collection page. Leave empty to use the category name.</p>
+        </td>
+    </tr>
+    <tr class="form-field">
+        <th scope="row"><label for="seo_title">SEO Title</label></th>
+        <td>
+            <input type="text" name="seo_title" id="seo_title" value="<?php echo esc_attr($seo_title); ?>" style="width: 100%;" />
+            <p class="description">Override the meta &lt;title&gt; on the collection page. Leave empty to use the category name. Do not include the site name — it is appended automatically.</p>
+        </td>
+    </tr>
+    <?php
+});
+
+/**
+ * Add SEO fields to the Add Category form
+ */
+add_action('product_cat_add_form_fields', function() {
+    ?>
+    <div class="form-field">
+        <label for="seo_h1">SEO H1</label>
+        <input type="text" name="seo_h1" id="seo_h1" value="" />
+        <p class="description">Override the &lt;h1&gt; on the collection page. Leave empty to use the category name.</p>
+    </div>
+    <div class="form-field">
+        <label for="seo_title">SEO Title</label>
+        <input type="text" name="seo_title" id="seo_title" value="" />
+        <p class="description">Override the meta &lt;title&gt; on the collection page. Leave empty to use the category name. Do not include the site name — it is appended automatically.</p>
+    </div>
+    <?php
+});
+
+/**
+ * Save SEO fields when category is created or updated
+ */
+add_action('edited_product_cat', 'hercules_save_category_seo_fields');
+add_action('created_product_cat', 'hercules_save_category_seo_fields');
+function hercules_save_category_seo_fields($term_id) {
+    if (isset($_POST['seo_h1'])) {
+        $value = sanitize_text_field($_POST['seo_h1']);
+        if ($value) {
+            update_term_meta($term_id, 'seo_h1', $value);
+        } else {
+            delete_term_meta($term_id, 'seo_h1');
+        }
+    }
+    if (isset($_POST['seo_title'])) {
+        $value = sanitize_text_field($_POST['seo_title']);
+        if ($value) {
+            update_term_meta($term_id, 'seo_title', $value);
+        } else {
+            delete_term_meta($term_id, 'seo_title');
+        }
+    }
 }

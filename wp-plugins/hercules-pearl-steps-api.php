@@ -96,6 +96,9 @@ function hercules_build_product_config($product) {
         $enabled_if = '';
         $enabled_if_value = '';
         $minimum_qty = '';
+        $image_icon_size = 'medium';
+        $image_icon_width = '';
+        $image_icon_height = '';
 
         // Find attribute settings
         foreach ($registered_attrs as $attr_obj) {
@@ -107,6 +110,9 @@ function hercules_build_product_config($product) {
                 $enabled_if = get_post_meta($product_id, 'attribute_enabled_if_pa_' . $attr_obj->attribute_name, true);
                 $enabled_if_value = get_post_meta($product_id, 'attribute_enabled_if_value_pa_' . $attr_obj->attribute_name, true);
                 $minimum_qty = get_post_meta($product_id, 'attribute_minimum_qty_pa_' . $attr_obj->attribute_name, true);
+                $image_icon_size = get_option("wc_attribute_image_icon_size_{$attribute_id}", 'medium');
+                $image_icon_width = get_option("wc_attribute_image_icon_width_{$attribute_id}", '');
+                $image_icon_height = get_option("wc_attribute_image_icon_height_{$attribute_id}", '');
                 break;
             }
         }
@@ -135,12 +141,19 @@ function hercules_build_product_config($product) {
                 $thumbnail_url = wp_get_attachment_image_url($thumbnail_id, 'full');
             }
 
+            $term_icon_size = get_term_meta($term_obj->term_id, 'term_icon_size', true) ?: '';
+            $term_icon_width = get_term_meta($term_obj->term_id, 'term_icon_width', true) ?: '';
+            $term_icon_height = get_term_meta($term_obj->term_id, 'term_icon_height', true) ?: '';
+
             $terms_info[] = [
                 'slug' => $single_term_slug,
                 'name' => $term_obj->name,
                 'description' => $term_obj->description,
                 'thumbnail_id' => $thumbnail_id ? (int) $thumbnail_id : 0,
                 'thumbnail_url' => $thumbnail_url ?: '',
+                'icon_size' => $term_icon_size ?: null,
+                'icon_width' => $term_icon_width ? (int) $term_icon_width : null,
+                'icon_height' => $term_icon_height ? (int) $term_icon_height : null,
             ];
         }
 
@@ -152,6 +165,9 @@ function hercules_build_product_config($product) {
             'enabled_if' => $enabled_if ?: '',
             'enabled_if_value' => $enabled_if_value ?: '',
             'minimum_qty' => $minimum_qty ?: '',
+            'image_icon_size' => $image_icon_size,
+            'image_icon_width' => $image_icon_width ? (int) $image_icon_width : null,
+            'image_icon_height' => $image_icon_height ? (int) $image_icon_height : null,
         ];
     }
 
@@ -192,11 +208,21 @@ function hercules_build_product_config($product) {
                 'display_type' => get_term_meta($parent->term_id, 'addon_display', true) ?: 'dropdown',
                 'parent_id' => 0,
                 'visible_if_option' => $parent_visible_if,
+                'image_text_position' => get_term_meta($parent->term_id, 'addon_image_text_position', true) ?: 'next_to',
+                'image_items_per_line' => (int) (get_term_meta($parent->term_id, 'addon_image_items_per_line', true) ?: '3'),
+                'image_text_weight' => get_term_meta($parent->term_id, 'addon_image_text_weight', true) ?: 'medium',
+                'image_footer_text' => get_term_meta($parent->term_id, 'addon_image_footer_text', true) ?: '',
+                'image_icon_size' => get_term_meta($parent->term_id, 'addon_image_icon_size', true) ?: 'medium',
+                'image_icon_width' => ($w = get_term_meta($parent->term_id, 'addon_image_icon_width', true)) ? (int) $w : null,
+                'image_icon_height' => ($h = get_term_meta($parent->term_id, 'addon_image_icon_height', true)) ? (int) $h : null,
                 'options' => array_map(function($opt) {
                     return [
                         'name' => $opt['name'] ?? '',
                         'image' => $opt['image'] ?? '',
                         'price_table' => $opt['price_table'] ?? [],
+                        'icon_size' => $opt['icon_size'] ?? null,
+                        'icon_width' => !empty($opt['icon_width']) ? (int) $opt['icon_width'] : null,
+                        'icon_height' => !empty($opt['icon_height']) ? (int) $opt['icon_height'] : null,
                     ];
                 }, $parent_options)
             ];
@@ -217,11 +243,21 @@ function hercules_build_product_config($product) {
                     'display_type' => get_term_meta($child->term_id, 'addon_display', true) ?: 'dropdown',
                     'parent_id' => $parent_id,
                     'visible_if_option' => $child_visible_if,
+                    'image_text_position' => get_term_meta($child->term_id, 'addon_image_text_position', true) ?: 'next_to',
+                    'image_items_per_line' => (int) (get_term_meta($child->term_id, 'addon_image_items_per_line', true) ?: '3'),
+                    'image_text_weight' => get_term_meta($child->term_id, 'addon_image_text_weight', true) ?: 'medium',
+                    'image_footer_text' => get_term_meta($child->term_id, 'addon_image_footer_text', true) ?: '',
+                    'image_icon_size' => get_term_meta($child->term_id, 'addon_image_icon_size', true) ?: 'medium',
+                    'image_icon_width' => ($w = get_term_meta($child->term_id, 'addon_image_icon_width', true)) ? (int) $w : null,
+                    'image_icon_height' => ($h = get_term_meta($child->term_id, 'addon_image_icon_height', true)) ? (int) $h : null,
                     'options' => array_map(function($opt) {
                         return [
                             'name' => $opt['name'] ?? '',
                             'image' => $opt['image'] ?? '',
                             'price_table' => $opt['price_table'] ?? [],
+                            'icon_size' => $opt['icon_size'] ?? null,
+                            'icon_width' => !empty($opt['icon_width']) ? (int) $opt['icon_width'] : null,
+                            'icon_height' => !empty($opt['icon_height']) ? (int) $opt['icon_height'] : null,
                         ];
                     }, $child_options)
                 ];

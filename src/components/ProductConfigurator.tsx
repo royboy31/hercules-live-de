@@ -3,6 +3,7 @@ import QuantityRequestPopup from './QuantityRequestPopup';
 import ExpressDeliveryPopup from './ExpressDeliveryPopup';
 import ContactFormPopup from './ContactFormPopup';
 import { cartStore } from '../lib/cartStore';
+import { distributorStore } from '../lib/distributorStore';
 
 // Types matching the API response
 interface TermInfo {
@@ -243,6 +244,9 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
   // Track natural image sizes per attribute for proportional scaling
   const [imageSizes, setImageSizes] = useState<Record<string, Record<string, number>>>({}); // { attrKey: { termSlug: naturalWidth } }
 
+  // Distributor discount
+  const [distributorDiscount, setDistributorDiscount] = useState(0);
+
   // Fetch product config on mount (with retry for transient server errors)
   useEffect(() => {
     async function fetchConfig() {
@@ -321,6 +325,12 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     return cartStore.subscribe(checkCart);
   }, []);
 
+  // Read distributor discount from store and subscribe to changes
+  useEffect(() => {
+    setDistributorDiscount(distributorStore.get().discount);
+    return distributorStore.onChange((data) => setDistributorDiscount(data.discount));
+  }, []);
+
   // Pre-load images to detect natural sizes for proportional scaling
   useEffect(() => {
     if (!config) return;
@@ -389,7 +399,9 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
   const getTermIconHeight = (attrKey: string, term: TermInfo, attr: AttributeData): number => {
     const { size, height } = resolveTermIconSize(term, attr);
     const baseH = getIconBaseHeight(size, height);
+    // If term has its own explicit size, use fixed height (no proportional scaling)
     if (term.icon_size) return baseH;
+    // Otherwise use proportional scaling within the group
     return getProportionalHeight(attrKey, term.slug, baseH);
   };
 
@@ -536,24 +548,36 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
 
     // Use combined-tier interpolation (WordPress style)
     // Round to 2 decimal places to match displayed price
-    const pricePerPiece = Math.round(getInterpolatedPriceWithAddons(
+    const originalPricePerPiece = Math.round(getInterpolatedPriceWithAddons(
       matchedVariation.conditional_prices,
       quantitySelected,
       visibleAddons,
       selectedAddons
     ) * 100) / 100;
 
+    // Apply distributor discount if applicable
+    const pricePerPiece = distributorDiscount > 0
+      ? Math.round(originalPricePerPiece * (1 - distributorDiscount / 100) * 100) / 100
+      : originalPricePerPiece;
+
     const totalExclVat = Math.round(pricePerPiece * quantitySelected * 100) / 100;
     const taxMultiplier = config ? 1 + (config.tax_percent / 100) : 1.19;
     const totalInclVat = Math.round(totalExclVat * taxMultiplier * 100) / 100;
 
+    // Original totals (before discount) for strikethrough display
+    const originalTotalExclVat = Math.round(originalPricePerPiece * quantitySelected * 100) / 100;
+    const originalTotalInclVat = Math.round(originalTotalExclVat * taxMultiplier * 100) / 100;
+
     return {
+      originalPricePerPiece,
       pricePerPiece,
       totalExclVat,
       totalInclVat,
+      originalTotalExclVat,
+      originalTotalInclVat,
       leadTime: matchedVariation.lead_time || '5 Wochen',
     };
-  }, [matchedVariation, quantitySelected, visibleAddons, selectedAddons, config]);
+  }, [matchedVariation, quantitySelected, visibleAddons, selectedAddons, config, distributorDiscount]);
 
   // Handle attribute selection
   const handleAttributeSelect = (attrKey: string, value: string, stepIndex: number) => {
@@ -623,6 +647,7 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
         addons: selectedAddons,
         addonsPricePerpiece: addonPricePerPiece,
         minQty: quantityRange.min,
+        ...(distributorDiscount > 0 && { distributor_discount: distributorDiscount }),
       };
 
       // Call Hercules Cart REST API endpoint
@@ -726,8 +751,9 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
     <div id="pearl-wc-steps-form" className="pearl-wc-steps-form">
       {/* Step indicator - matches WordPress exactly */}
       <div className="pearl-step-indicator">
-        <h2>ERSTELLEN SIE IHR PRODUKT — SCHRITT {currentStepNum} VON {totalSteps}</h2>
-        <span>Ab {minQuantity} Stück</span>
+        <h2>KONFIGURIEREN SIE IHR PRODUKT</h2>
+        <span className="pearl-step-counter">SCHRITT {currentStepNum} VON {totalSteps}</span>
+        <span className="pearl-min-qty-badge">AB {minQuantity} STÜCK</span>
       </div>
 
       {/* Attribute Steps - Only render visible attributes (excludes single default options) */}
@@ -1243,15 +1269,42 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
               </tr>
               <tr>
                 <td>Preis netto pro Stück</td>
-                <td className="kd-price-value">{currencySymbol}{priceInfo.pricePerPiece.toFixed(2).replace('.', ',')}</td>
+                <td className="kd-price-value">
+                  {distributorDiscount > 0 ? (
+                    <>
+                      <s style={{ color: '#999', marginRight: '6px' }}>{currencySymbol}{priceInfo.originalPricePerPiece.toFixed(2).replace('.', ',')}</s>
+                      {currencySymbol}{priceInfo.pricePerPiece.toFixed(2).replace('.', ',')}
+                    </>
+                  ) : (
+                    <>{currencySymbol}{priceInfo.pricePerPiece.toFixed(2).replace('.', ',')}</>
+                  )}
+                </td>
               </tr>
+              {distributorDiscount > 0 && (
+                <tr style={{ color: '#10C99E', fontWeight: 600 }}>
+                  <td style={{ color: '#10C99E' }}>Händlerrabatt ({distributorDiscount}%)</td>
+                  <td className="kd-discount-value" style={{ color: '#10C99E', fontWeight: 600 }}>
+                    -{currencySymbol}{(priceInfo.originalTotalExclVat - priceInfo.totalExclVat).toFixed(2).replace('.', ',')}
+                  </td>
+                </tr>
+              )}
               <tr>
                 <td>Gesamt (netto)</td>
-                <td className="kd-total-value">{currencySymbol}{priceInfo.totalExclVat.toFixed(2).replace('.', ',')}</td>
+                <td className="kd-total-value">
+                  {distributorDiscount > 0 && (
+                    <s style={{ color: '#999', marginRight: '6px' }}>{currencySymbol}{priceInfo.originalTotalExclVat.toFixed(2).replace('.', ',')}</s>
+                  )}
+                  {currencySymbol}{priceInfo.totalExclVat.toFixed(2).replace('.', ',')}
+                </td>
               </tr>
               <tr>
                 <td>Gesamt (brutto)</td>
-                <td>{currencySymbol}{priceInfo.totalInclVat.toFixed(2).replace('.', ',')}</td>
+                <td>
+                  {distributorDiscount > 0 && (
+                    <s style={{ color: '#999', marginRight: '6px' }}>{currencySymbol}{priceInfo.originalTotalInclVat.toFixed(2).replace('.', ',')}</s>
+                  )}
+                  {currencySymbol}{priceInfo.totalInclVat.toFixed(2).replace('.', ',')}
+                </td>
               </tr>
               <tr>
                 <td className="kd-lieferzeit-cell">

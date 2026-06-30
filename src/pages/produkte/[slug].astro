@@ -54,7 +54,7 @@ const formatPriceDE = (price: number | string) => {
 let productConfig: any = null;
 if (product) {
   try {
-    const configRes = await fetch(`https://hercules-merchandise.de/wp-json/hercules/v1/product-config-by-slug/${slug}`);
+    const configRes = await fetch(`${WORKER_URL}/product-config/${slug}`);
     if (configRes.ok) {
       productConfig = await configRes.json();
     }
@@ -74,10 +74,14 @@ const buildPricingCombinations = () => {
   const pricedVariations = variations.filter((v: any) => v.conditional_prices?.length > 0);
   if (!pricedVariations.length) return { tiers: [], combos: [] };
 
-  // Get quantity tiers from the first variation
-  const tiers = pricedVariations[0].conditional_prices.map((cp: any) =>
-    typeof cp.qty === 'string' ? parseInt(cp.qty) : cp.qty
-  );
+  // Get quantity tiers as union from ALL variations
+  const tierSet = new Set<number>();
+  for (const v of pricedVariations) {
+    for (const cp of v.conditional_prices) {
+      tierSet.add(typeof cp.qty === 'string' ? parseInt(cp.qty) : cp.qty);
+    }
+  }
+  const tiers = [...tierSet].sort((a: number, b: number) => a - b);
 
   // --- Step 1: Visible attributes (same filter as steps form) ---
   const allAttrKeys = Object.keys(productConfig.attributes || {});
@@ -242,23 +246,16 @@ const buildPricingCombinations = () => {
       });
     });
 
-    // Check if matched variation covers all tiers
-    const coversAllTiers = matchedVar ? tiers.every((qty: number) => {
-      return matchedVar.conditional_prices.some((c: any) => {
-        const cpQty = typeof c.qty === 'string' ? parseInt(c.qty) : c.qty;
-        return cpQty === qty;
-      });
-    }) : false;
-
     const prices = tiers.map((qty: number) => {
-      // Base price from variation
+      // Base price from variation — use closest tier <= qty
       let basePrice = 0;
       if (matchedVar) {
-        const cp = matchedVar.conditional_prices.find((c: any) => {
-          const cpQty = typeof c.qty === 'string' ? parseInt(c.qty) : c.qty;
-          return cpQty === qty;
-        });
-        basePrice = cp ? (parsePrice(cp.price)) : 0;
+        const sorted = [...matchedVar.conditional_prices]
+          .map((c: any) => ({ qty: typeof c.qty === 'string' ? parseInt(c.qty) : c.qty, price: parsePrice(c.price) }))
+          .sort((a: any, b: any) => a.qty - b.qty);
+        for (const tier of sorted) {
+          if (tier.qty <= qty) basePrice = tier.price;
+        }
       }
 
       // Add addon surcharges
@@ -270,11 +267,11 @@ const buildPricingCombinations = () => {
       return basePrice + addonTotal;
     });
 
-    return { label: row.labels.join(' + '), prices, hasMatch: !!matchedVar, coversAllTiers };
+    return { label: row.labels.join(' + '), prices, hasMatch: !!matchedVar };
   });
 
-  // Filter out combos where variation doesn't exist or doesn't cover all quantity tiers
-  const validCombos = combos.filter((c: any) => c.hasMatch && c.coversAllTiers);
+  // Filter out combos where variation doesn't exist
+  const validCombos = combos.filter((c: any) => c.hasMatch);
 
   // Sort by first tier price (cheapest first)
   validCombos.sort((a: any, b: any) => a.prices[0] - b.prices[0]);
@@ -287,9 +284,9 @@ const pricingTable = buildPricingCombinations();
 // Get lead time from first variation
 const leadTime = product?.variations?.[0]?.lead_time || '';
 
-// Starting price = absolute minimum across ALL tiers and ALL combos
+// Starting price = absolute minimum across ALL tiers and ALL combos (exclude 0 = no price at that tier)
 const startingPrice = pricingTable.combos.length > 0
-  ? Math.min(...pricingTable.combos.flatMap((c: any) => c.prices))
+  ? Math.min(...pricingTable.combos.flatMap((c: any) => c.prices).filter((p: number) => p > 0))
   : null;
 
 // Flat tierPrices for JSON-LD (use first combo = base/cheapest)
@@ -507,7 +504,7 @@ if (product) {
                 <div class="product-title-wrapper">
                   <h1 class="product-title">{product.name}</h1>
                   {startingPrice && (
-                    <span class="product-starting-price">AB {formatPriceDE(startingPrice)} ZZGL. MWST.</span>
+                    <span class="product-starting-price" id="starting-price-badge" data-original-price={startingPrice}>AB {formatPriceDE(startingPrice)} ZZGL. MWST.</span>
                   )}
                 </div>
 
@@ -601,25 +598,28 @@ if (product) {
             </div>
 
 
-            <!-- Tabbed Section: Description / Prices / Design -->
+            <!-- Tabbed Section: Description / Prices / Design (CSS-only, no JS required) -->
             <div class="product-tabs-section" id="product-tabs">
+              <input type="radio" name="product-tab" id="radio-description" class="tab-radio" checked />
+              <input type="radio" name="product-tab" id="radio-prices" class="tab-radio" />
+              <input type="radio" name="product-tab" id="radio-design" class="tab-radio" />
               <div class="product-tabs-bar">
-                <button class="product-tab active" data-tab="description">
+                <label for="radio-description" class="product-tab">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                   Produktbeschreibung
-                </button>
-                <button class="product-tab" data-tab="prices">
+                </label>
+                <label for="radio-prices" class="product-tab">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
                   Preise
-                </button>
-                <button class="product-tab" data-tab="design">
+                </label>
+                <label for="radio-design" class="product-tab">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
                   Design
-                </button>
+                </label>
               </div>
 
               <!-- Tab 1: Product Description -->
-              <div class="product-tab-content active" id="tab-description">
+              <div class="product-tab-content" id="tab-description">
                 <div class="description-content" set:html={product.description} />
               </div>
 
@@ -702,7 +702,7 @@ if (product) {
                                 <tr>
                                   <td class="combo-label">{combo.label}</td>
                                   {combo.prices.map((price: number) => (
-                                    <td class="combo-price">{formatPriceDE(price)}</td>
+                                    <td class="combo-price distributor-price-cell" data-original-price={price}>{price > 0 ? formatPriceDE(price) : '—'}</td>
                                   ))}
                                 </tr>
                               ))}
@@ -811,8 +811,8 @@ if (product) {
                 </div>
                 <div class="faq-accordion">
                   {product.faq.map((item: { question: string; answer: string }, index: number) => (
-                    <div class="faq-item" data-faq-index={index}>
-                      <button class="faq-question" aria-expanded="false">
+                    <details class="faq-item" data-faq-index={index}>
+                      <summary class="faq-question">
                         <span>{item.question}</span>
                         <!-- Plus icon (collapsed state) -->
                         <svg class="faq-icon faq-icon-plus" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none">
@@ -822,11 +822,11 @@ if (product) {
                         <svg class="faq-icon faq-icon-minus" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none">
                           <path d="M20.7143 14.2857C21.1088 14.2857 21.4286 14.6055 21.4286 15C21.4286 15.3945 21.1088 15.7143 20.7143 15.7143H9.28571C8.89123 15.7143 8.57143 15.3945 8.57143 15C8.57143 14.6055 8.89123 14.2857 9.28571 14.2857H20.7143ZM15 30C6.71573 30 0 23.2843 0 15C0 6.71573 6.71573 0 15 0C23.2843 0 30 6.71573 30 15C30 23.2843 23.2843 30 15 30ZM15 28.5714C22.4953 28.5714 28.5714 22.4953 28.5714 15C28.5714 7.50471 22.4953 1.42857 15 1.42857C7.50471 1.42857 1.42857 7.50471 1.42857 15C1.42857 22.4953 7.50471 28.5714 15 28.5714Z" fill="#469ADC"/>
                         </svg>
-                      </button>
+                      </summary>
                       <div class="faq-answer">
                         <div class="faq-answer-content" set:html={item.answer}></div>
                       </div>
-                    </div>
+                    </details>
                   ))}
                 </div>
               </div>
@@ -1318,6 +1318,8 @@ if (product) {
   }
 
   /* Product Tabs Section */
+  .tab-radio { position: absolute; opacity: 0; pointer-events: none; }
+
   .product-tabs-section {
     margin-top: 40px;
   }
@@ -1361,15 +1363,6 @@ if (product) {
     background: #dfe5ef;
   }
 
-  .product-tab.active {
-    color: #ffffff;
-    background: #253461;
-  }
-
-  .product-tab.active svg {
-    stroke: #ffffff;
-  }
-
   .product-tab svg {
     flex-shrink: 0;
   }
@@ -1388,8 +1381,23 @@ if (product) {
     color: #5F5F5F;
   }
 
-  .product-tab-content.active {
+  #radio-description:checked ~ #tab-description,
+  #radio-prices:checked ~ #tab-prices,
+  #radio-design:checked ~ #tab-design {
     display: block;
+  }
+
+  #radio-description:checked ~ .product-tabs-bar label[for="radio-description"],
+  #radio-prices:checked ~ .product-tabs-bar label[for="radio-prices"],
+  #radio-design:checked ~ .product-tabs-bar label[for="radio-design"] {
+    color: #ffffff;
+    background: #253461;
+  }
+
+  #radio-description:checked ~ .product-tabs-bar label[for="radio-description"] svg,
+  #radio-prices:checked ~ .product-tabs-bar label[for="radio-prices"] svg,
+  #radio-design:checked ~ .product-tabs-bar label[for="radio-design"] svg {
+    stroke: #ffffff;
   }
 
   .no-pricing-message {
@@ -2470,7 +2478,10 @@ if (product) {
     font-size: 25px;
     font-weight: 400;
     color: #253461;
+    list-style: none;
   }
+
+  .faq-question::-webkit-details-marker { display: none; }
 
   .faq-question:hover {
     color: #253461;
@@ -2490,11 +2501,11 @@ if (product) {
     display: none;
   }
 
-  .faq-item.active .faq-icon-plus {
+  .faq-item[open] .faq-icon-plus {
     display: none;
   }
 
-  .faq-item.active .faq-icon-minus {
+  .faq-item[open] .faq-icon-minus {
     display: block;
   }
 
@@ -2504,7 +2515,7 @@ if (product) {
     transition: max-height 0.3s ease;
   }
 
-  .faq-item.active .faq-answer {
+  .faq-item[open] .faq-answer {
     max-height: 500px;
   }
 
@@ -2855,27 +2866,49 @@ if (product) {
 </style>
 
 <script>
-  // Product Tabs switching
-  const tabButtons = document.querySelectorAll('.product-tab');
-  const tabContents = document.querySelectorAll('.product-tab-content');
+  // Distributor discount: apply to static prices (FROM badge + pricing table)
+  function applyDistributorPrices() {
+    try {
+      const distRaw = localStorage.getItem('hercules_distributor');
+      if (!distRaw) return;
+      const distData = JSON.parse(distRaw);
+      if (!distData.isDistributor || distData.discount <= 0) return;
 
-  tabButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const targetTab = (btn as HTMLElement).dataset.tab;
+      const pct = distData.discount / 100;
+      const fmtDE = (n: number) => `€${n.toFixed(2).replace('.', ',')}`;
 
-      // Update active tab button
-      tabButtons.forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
+      // Fix 1: FROM badge
+      const badge = document.getElementById('starting-price-badge');
+      if (badge && !badge.dataset.discounted) {
+        const orig = parseFloat(badge.dataset.originalPrice || '0');
+        if (orig > 0) {
+          const discounted = Math.round(orig * (1 - pct) * 100) / 100;
+          badge.textContent = `AB ${fmtDE(discounted)} ZZGL. MWST.`;
+          badge.dataset.discounted = 'true';
+        }
+      }
 
-      // Update active tab content
-      tabContents.forEach((content) => {
-        content.classList.remove('active');
-        if ((content as HTMLElement).id === `tab-${targetTab}`) {
-          content.classList.add('active');
+      // Fix 2: Pricing table cells
+      document.querySelectorAll('.distributor-price-cell').forEach((cell) => {
+        const el = cell as HTMLElement;
+        if (el.dataset.discounted) return;
+        const orig = parseFloat(el.dataset.originalPrice || '0');
+        if (orig > 0) {
+          const discounted = Math.round(orig * (1 - pct) * 100) / 100;
+          el.textContent = fmtDE(discounted);
+          el.dataset.discounted = 'true';
         }
       });
-    });
-  });
+    } catch (e) { /* graceful degradation: show original prices */ }
+  }
+
+  // Run immediately (works if localStorage already has distributor data from previous visit)
+  applyDistributorPrices();
+
+  // Also listen for distributor store changes (handles first login when UserSession populates the store)
+  window.addEventListener('hercules:distributor-changed', applyDistributorPrices);
+
+  // Product tabs now work via CSS-only radio inputs (no JS needed)
 
   // Mobile pricing scroll indicator buttons
   const scrollLeftBtn = document.querySelector('.pricing-scroll-btn-left');
@@ -3186,27 +3219,7 @@ if (product) {
 
   // Product configurator handles all quantity and add-to-cart functionality via React component
 
-  // FAQ Accordion toggle
-  const faqItems = document.querySelectorAll('.faq-item');
-  faqItems.forEach(item => {
-    const question = item.querySelector('.faq-question');
-    if (question) {
-      question.addEventListener('click', () => {
-        // Close other open items
-        faqItems.forEach(other => {
-          if (other !== item && other.classList.contains('active')) {
-            other.classList.remove('active');
-            const btn = other.querySelector('.faq-question');
-            if (btn) btn.setAttribute('aria-expanded', 'false');
-          }
-        });
-        // Toggle current item
-        item.classList.toggle('active');
-        const isActive = item.classList.contains('active');
-        question.setAttribute('aria-expanded', isActive ? 'true' : 'false');
-      });
-    }
-  });
+  // FAQ accordion now works via native <details>/<summary> elements (no JS needed)
 
   // Load TrustIndex widget when visible — replaces static reviews with live widget
   (function() {

@@ -74,6 +74,8 @@ interface WCProduct {
   faq?: Array<{ question: string; answer: string }>;
   // Missive-only flag (exposed by hercules-missive-only plugin)
   missive_only?: boolean;
+  // Primary category from Rank Math (exposed by hercules-primary-category-api.php)
+  primary_category?: { id: number; name: string; slug: string } | null;
   date_modified?: string;
 }
 
@@ -163,6 +165,8 @@ interface SyncedProduct {
   faq: Array<{ question: string; answer: string }>;
   // Missive-only flag (hidden from website, visible in Missive CRM)
   missive_only: boolean;
+  // Primary category for breadcrumbs (from Rank Math via hercules-primary-category-api.php)
+  primary_category: { id: number; name: string; slug: string } | null;
   // Number of images successfully cached in KV (for frontend to know how many thumbnails to show)
   cached_image_count: number;
   date_modified: string;
@@ -781,6 +785,18 @@ async function transformProduct(
     faq: product.faq || [],
     // Missive-only flag (hidden from website, visible in Missive CRM)
     missive_only: product.missive_only || getMeta('_missive_only') === 'yes',
+    // Primary category for breadcrumbs (from Rank Math meta)
+    primary_category: (() => {
+      const primaryCatId = getMeta('rank_math_primary_product_cat');
+      if (primaryCatId && primaryCatId !== '0') {
+        const catId = parseInt(primaryCatId, 10);
+        const matchedCat = product.categories.find((c: any) => c.id === catId);
+        if (matchedCat) {
+          return { id: matchedCat.id, name: matchedCat.name, slug: matchedCat.slug };
+        }
+      }
+      return product.primary_category || null;
+    })(),
     // Will be updated after image caching
     cached_image_count: 0,
     date_modified: product.date_modified || new Date().toISOString(),

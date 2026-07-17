@@ -1126,6 +1126,10 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                   }
                 }
                 const totalPrice = tierPrice + addonPrice;
+                // Distributor discount applied to this qty-tier option row (client fix #3)
+                const discountedTotalPrice = distributorDiscount > 0
+                  ? Math.round(totalPrice * (1 - distributorDiscount / 100) * 100) / 100
+                  : totalPrice;
 
                 // Calculate savings percentage vs first tier
                 const pricesArray = matchedVariation?.conditional_prices || [];
@@ -1153,7 +1157,14 @@ export default function ProductConfigurator({ productSlug, workerUrl = 'https://
                       {savings > 0 && (
                         <span className="save">Sparen Sie {savings}%</span>
                       )}
-                      <span>{currencySymbol}{totalPrice.toFixed(2).replace('.', ',')}</span>
+                      {distributorDiscount > 0 ? (
+                        <span>
+                          <s style={{ color: '#999', marginRight: '4px' }}>{currencySymbol}{totalPrice.toFixed(2).replace('.', ',')}</s>
+                          <span style={{ color: '#10C99E', fontWeight: 700 }}>{currencySymbol}{discountedTotalPrice.toFixed(2).replace('.', ',')}</span>
+                        </span>
+                      ) : (
+                        <span>{currencySymbol}{totalPrice.toFixed(2).replace('.', ',')}</span>
+                      )}
                     </div>
                   </label>
                 );

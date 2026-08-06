@@ -18,8 +18,11 @@ preview_id = "d063f9226fb448efb168b81562eb45dd"
 binding = "CLIENT_LOGOS_BUCKET"
 bucket_name = "hercules-de-client-logos"
 
+# "0 5 * * *" is the daily delta sync. "* * * * *" only flushes a deferred
+# rebuild: scheduled() gates the full sync on FULL_SYNC_CRONS, so the frequent
+# trigger cannot start one — normally it is a single KV read.
 [triggers]
-crons = ["0 5 * * *"]
+crons = ["0 5 * * *", "* * * * *"]
 
 # Environment variables (set via wrangler secret)
 [vars]

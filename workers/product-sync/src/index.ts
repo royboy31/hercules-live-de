@@ -456,7 +456,12 @@ class WooCommerceClient {
     return allPosts;
   }
 
-  async fetchPost(postId: number): Promise<WPPost> {
+  // Returns null when the post is no longer publicly visible, so the caller can
+  // evict it from KV. WordPress answers 401/403 for a scheduled, draft or private
+  // post and 404 once it is gone — it never reveals the status in those cases, so
+  // throwing here would leave the post cached forever. Any other failure (5xx,
+  // network) still throws, so a transient WordPress outage cannot empty the cache.
+  async fetchPost(postId: number): Promise<WPPost | null> {
     const url = `${this.baseUrl}/wp-json/wp/v2/posts/${postId}?_embed`;
 
     const response = await fetch(url, {
@@ -464,6 +469,10 @@ class WooCommerceClient {
         'Content-Type': 'application/json',
       },
     });
+
+    if (response.status === 401 || response.status === 403 || response.status === 404) {
+      return null;
+    }
 
     if (!response.ok) {
       throw new Error(`Failed to fetch post ${postId}: ${response.status}`);
@@ -1458,9 +1467,14 @@ async function syncSinglePost(env: Env, postId: number): Promise<SyncedPost | nu
   try {
     const post = await client.fetchPost(postId);
 
-    // If post is not published, remove from KV
-    if (post.status !== 'publish') {
-      console.log(`Post ${postId} is not published (status: ${post.status}), removing from KV`);
+    // If post is not published, remove from KV.
+    // A null post means WordPress refused to serve it (401/403/404) — i.e. it was
+    // scheduled, drafted, made private or deleted. That is the common case for
+    // "we changed the publishing date", and it must evict just like an explicit
+    // non-publish status would.
+    if (!post || post.status !== 'publish') {
+      const reason = post ? `status: ${post.status}` : 'no longer publicly visible';
+      console.log(`Post ${postId} is not published (${reason}), removing from KV`);
       await deletePost(env, postId);
       return null;
     }
@@ -1543,6 +1557,22 @@ async function deletePost(env: Env, postId: number): Promise<void> {
 
 // Debounce interval for site rebuilds (90 seconds)
 const REBUILD_DEBOUNCE_MS = 90 * 1000;
+
+// KV key set when a content change arrives inside the debounce window.
+// The debounce used to just drop that change: if nothing else was edited
+// afterwards, the site was never rebuilt and the edit stayed invisible
+// (or, for an unpublished post, stayed visible) until the next unrelated
+// change. The flag turns the debounce into "defer" instead of "discard".
+//
+// Deliberately NOT the existing 'rebuild_pending' key: that one means "the last
+// GitHub dispatch failed" and drives /health, which returns 503 while it is set.
+// Reusing it would mark the site degraded on every ordinary deferred rebuild.
+const REBUILD_DIRTY_KEY = 'rebuild_dirty';
+
+// Cron expressions allowed to run the full delta sync in scheduled().
+// Anything else reaching scheduled() — i.e. the every-minute flush cron —
+// only flushes a deferred rebuild and must never start a full sync.
+const FULL_SYNC_CRONS = ['0 5 * * *'];
 
 // Verify KV product count matches WooCommerce before allowing a rebuild.
 async function verifyProductCounts(env: Env): Promise<{
@@ -1726,8 +1756,10 @@ async function triggerSiteRebuild(env: Env): Promise<{ triggered: boolean; reaso
 
       if (elapsed < REBUILD_DEBOUNCE_MS) {
         const remainingSeconds = Math.ceil((REBUILD_DEBOUNCE_MS - elapsed) / 1000);
-        console.log(`Skipping rebuild - ${remainingSeconds}s remaining in debounce window`);
-        return { triggered: false, reason: `Debounced (${remainingSeconds}s remaining)` };
+        // Defer, don't discard — the flush cron picks this up once the window closes.
+        await env.PRODUCTS_KV.put(REBUILD_DIRTY_KEY, now.toString());
+        console.log(`Deferring rebuild - ${remainingSeconds}s remaining in debounce window`);
+        return { triggered: false, reason: `Debounced (${remainingSeconds}s remaining), rebuild deferred` };
       }
     }
 
@@ -1758,24 +1790,69 @@ async function triggerSiteRebuild(env: Env): Promise<{ triggered: boolean; reaso
         attempts: pendingRebuild ? JSON.parse(pendingRebuild).attempts + 1 : 1,
         last_error: `${response.status}: ${errorText.substring(0, 200)}`,
       }));
+      // rebuild_pending only bypasses the debounce on the *next* call, and nothing
+      // makes that call until someone edits again. Mark it deferred so the flush
+      // cron retries on its own.
+      await env.PRODUCTS_KV.put(REBUILD_DIRTY_KEY, now.toString());
       return { triggered: false, reason: `GitHub API failed: ${response.status}` };
     }
 
     // Success — clear pending flag and set timestamp
     await env.PRODUCTS_KV.delete('rebuild_pending');
+    // This build covers whatever was deferred earlier.
+    await env.PRODUCTS_KV.delete(REBUILD_DIRTY_KEY);
     await env.PRODUCTS_KV.put('last_rebuild', now.toString());
 
     console.log('GitHub Actions workflow triggered successfully');
     return { triggered: true, reason: 'GitHub workflow triggered' };
   } catch (error) {
     console.error('Error triggering site rebuild:', error);
-    await env.PRODUCTS_KV.put('rebuild_pending', JSON.stringify({
-      failed_at: Date.now(),
-      attempts: 1,
-      last_error: String(error).substring(0, 200),
-    }));
+    try {
+      await env.PRODUCTS_KV.put('rebuild_pending', JSON.stringify({
+        failed_at: Date.now(),
+        attempts: 1,
+        last_error: String(error).substring(0, 200),
+      }));
+      await env.PRODUCTS_KV.put(REBUILD_DIRTY_KEY, Date.now().toString());
+    } catch { /* KV unavailable — nothing further we can do here */ }
     return { triggered: false, reason: `Error: ${error}` };
   }
+}
+
+// Give up on a deferred rebuild after this long, so a persistently failing
+// GitHub dispatch cannot retry every minute forever.
+const REBUILD_DIRTY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+// Runs on the every-minute cron. Rebuilds the site if a content change was
+// deferred by the debounce (or lost to a failed dispatch) and the window has
+// since closed. No-op — a single KV read — when nothing is pending.
+async function flushDeferredRebuild(env: Env): Promise<{ flushed: boolean; reason: string }> {
+  const dirty = await env.PRODUCTS_KV.get(REBUILD_DIRTY_KEY);
+  if (!dirty) {
+    return { flushed: false, reason: 'nothing deferred' };
+  }
+
+  const now = Date.now();
+  const dirtyAt = parseInt(dirty, 10);
+
+  if (Number.isFinite(dirtyAt) && now - dirtyAt > REBUILD_DIRTY_MAX_AGE_MS) {
+    await env.PRODUCTS_KV.delete(REBUILD_DIRTY_KEY);
+    console.error(`Abandoning deferred rebuild queued at ${new Date(dirtyAt).toISOString()} - older than 24h`);
+    return { flushed: false, reason: 'deferred rebuild abandoned (>24h old)' };
+  }
+
+  const lastRebuildStr = await env.PRODUCTS_KV.get('last_rebuild');
+  if (lastRebuildStr) {
+    const elapsed = now - parseInt(lastRebuildStr, 10);
+    if (elapsed < REBUILD_DEBOUNCE_MS) {
+      return { flushed: false, reason: 'still inside debounce window' };
+    }
+  }
+
+  // triggerSiteRebuild clears the flag on success and re-sets it on failure.
+  const result = await triggerSiteRebuild(env);
+  console.log(`Flushing deferred rebuild: ${result.reason}`);
+  return { flushed: result.triggered, reason: result.reason };
 }
 
 // Verify webhook signature using HMAC-SHA256
@@ -2807,6 +2884,7 @@ export default {
       const lastPostSync = await env.PRODUCTS_KV.get('last_post_sync');
       const lastDeltaSync = await env.PRODUCTS_KV.get('last_delta_sync');
       const lastRebuild = await env.PRODUCTS_KV.get('last_rebuild');
+      const deferredRebuild = await env.PRODUCTS_KV.get(REBUILD_DIRTY_KEY);
       const hasGithubToken = !!env.GITHUB_TOKEN;
       return new Response(JSON.stringify({
         last_sync: lastSync,
@@ -2814,6 +2892,8 @@ export default {
         last_delta_sync: lastDeltaSync,
         last_rebuild: lastRebuild,
         last_rebuild_date: lastRebuild ? new Date(parseInt(lastRebuild)).toISOString() : null,
+        deferred_rebuild_pending: !!deferredRebuild,
+        deferred_rebuild_since: deferredRebuild ? new Date(parseInt(deferredRebuild)).toISOString() : null,
         github_token_configured: hasGithubToken,
         current_time: Date.now(),
         current_time_iso: new Date().toISOString(),
@@ -3361,6 +3441,17 @@ export default {
 
   // Scheduled (cron) handler - runs multiple batches
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    // Only the explicitly listed cron may run the full delta sync. Every other
+    // cron — currently just the every-minute rebuild flush — takes this branch,
+    // so adding a frequent trigger can never start an uncontrolled full sync.
+    if (!FULL_SYNC_CRONS.includes(event.cron)) {
+      const result = await flushDeferredRebuild(env);
+      if (result.flushed) {
+        console.log(`[rebuild-flush] ${result.reason}`);
+      }
+      return;
+    }
+
     // Read last successful sync timestamp for delta filtering
     const lastSyncAt = await env.PRODUCTS_KV.get('last_delta_sync');
     const syncStartedAt = new Date().toISOString();

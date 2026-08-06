@@ -46,6 +46,19 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config workers/product-sync/wrangler.toml --env production
 
+      # hercules-product-sync-live is the worker WordPress actually calls: every
+      # DE mu-plugin webhook and the Astro build's WORKER_URL point at it, and it
+      # holds the GITHUB_TOKEN / WC / webhook secrets. The --env production step
+      # above deploys hercules-product-sync-live-production, which nothing calls
+      # and which has no secrets, so without this step CI never updates the live
+      # worker — it was last deployed by hand on 2026-07-02.
+      - name: Deploy Product Sync Worker (live)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config workers/product-sync/wrangler.toml
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:

@@ -196,7 +196,38 @@ jsonLdSchemas.push(getBreadcrumbSchema([
               <h2 class="cta-heading-main">Die Nummer 1</h2>
               <h3 class="cta-heading-sub">in Sachen individueller Sport-merchandise</h3>
               <p class="cta-description">Wir sind auf die Herstellung von individuell gestalteten, personalisierten Sport-Merchandise-Artikeln wie Fußballschals, Jacken, Hoodies, Fanwear und Teamkleidung spezialisiert.</p>
-              <a href="/kollektionen/personalisierte-sportbekleidung/" class="cta-button">Produkte entdecken</a>
+              <div class="cta-buttons">
+                <a href="/kollektionen/personalisierte-sportbekleidung/" class="cta-cat-button">
+                  <img src="/images/menu/teamwear-1.svg" alt="" class="cta-cat-icon" />
+                  <span>Sport&shy;bekleidung</span>
+                  <span class="cta-cat-arrow"><svg width="10" height="10" viewBox="0 0 8 14" fill="none"><path d="M1 1L7 7L1 13" stroke="#10C99E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </a>
+                <a href="/kollektionen/personalisierte-fanschals/" class="cta-cat-button">
+                  <img src="/images/menu/scarves-1.svg" alt="" class="cta-cat-icon" />
+                  <span>Fanschals</span>
+                  <span class="cta-cat-arrow"><svg width="10" height="10" viewBox="0 0 8 14" fill="none"><path d="M1 1L7 7L1 13" stroke="#10C99E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </a>
+                <a href="/kollektionen/kopfbedeckung/" class="cta-cat-button">
+                  <img src="/images/menu/cap-1.svg" alt="" class="cta-cat-icon" />
+                  <span>Kopf&shy;bedeckung</span>
+                  <span class="cta-cat-arrow"><svg width="10" height="10" viewBox="0 0 8 14" fill="none"><path d="M1 1L7 7L1 13" stroke="#10C99E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </a>
+                <a href="/kollektionen/personalisierte-mutzen/" class="cta-cat-button">
+                  <img src="/images/menu/beanies-3.svg" alt="" class="cta-cat-icon" />
+                  <span>Mützen</span>
+                  <span class="cta-cat-arrow"><svg width="10" height="10" viewBox="0 0 8 14" fill="none"><path d="M1 1L7 7L1 13" stroke="#10C99E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </a>
+                <a href="/kollektionen/personalisierte-textilien/" class="cta-cat-button">
+                  <img src="/images/menu/textile-1.svg" alt="" class="cta-cat-icon" />
+                  <span>Fanwear</span>
+                  <span class="cta-cat-arrow"><svg width="10" height="10" viewBox="0 0 8 14" fill="none"><path d="M1 1L7 7L1 13" stroke="#10C99E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </a>
+                <a href="/kollektionen/personalisierte-wimpel/" class="cta-cat-button">
+                  <img src="/images/menu/pennants-3.svg" alt="" class="cta-cat-icon" />
+                  <span>Wimpel</span>
+                  <span class="cta-cat-arrow"><svg width="10" height="10" viewBox="0 0 8 14" fill="none"><path d="M1 1L7 7L1 13" stroke="#10C99E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </a>
+              </div>
             </div>
           </div>
 
@@ -555,24 +586,69 @@ jsonLdSchemas.push(getBreadcrumbSchema([
     margin: 0 0 30px;
   }
 
-  .cta-button {
-    display: inline-block;
-    font-family: 'Jost', sans-serif;
-    font-size: 15px;
-    font-weight: 500;
-    text-transform: uppercase;
-    color: #fff;
-    background: #10C99E;
-    border: 1px solid #10C99E;
-    border-radius: 100px;
-    padding: 15px 50px;
-    text-decoration: none;
-    transition: all 0.3s ease;
+  /* CTA Collection Buttons — 2-column grid */
+  .cta-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
 
-  .cta-button:hover {
-    background: transparent;
-    color: #10C99E;
+  .cta-cat-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #10C99E;
+    border-radius: 100px;
+    padding: 8px 8px 8px 6px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    min-width: 0;
+  }
+
+  .cta-cat-button:hover {
+    background: #0eb88e;
+  }
+
+  .cta-cat-icon {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    filter: brightness(0) invert(1);
+    object-fit: contain;
+  }
+
+  .cta-cat-button span {
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #fff;
+    line-height: 1.2;
+    text-align: left;
+    flex: 1;
+    min-width: 0;
+    /* Long German compounds would otherwise run under the arrow; the labels
+       carry a &shy; at the compound boundary, this is the safety net. */
+    overflow-wrap: anywhere;
+  }
+
+  .cta-cat-arrow {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    flex: none !important;
+  }
+
+  @media (max-width: 480px) {
+    .cta-buttons {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* Sidebar Related Posts */

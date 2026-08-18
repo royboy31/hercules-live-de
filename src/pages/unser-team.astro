@@ -1,0 +1,438 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const pageTitle = 'Unser Team | Hercules Merchandise';
+const pageDescription = 'Lernen Sie die Menschen hinter Hercules Merchandise kennen — die Projektmanager, Designer und Entwickler, die Ihr individuelles Merchandise-Projekt vom Konzept bis zur Lieferung begleiten.';
+
+const team = [
+  {
+    name: 'Lea-Marie',
+    role: 'Projektmanagerin',
+    image: '/images/team/lea-marie.webp',
+    favourite: 'Schal aus recycelter Baumwolle',
+    linkedin: 'https://www.linkedin.com/in/lea-marie-g%C3%B6tze/',
+    bio: "Lea-Marie sorgt dafür, dass Projekte sowohl auf dem britischen als auch auf dem deutschen Markt reibungslos vorankommen. Organisiert, zugänglich und detailorientiert hilft sie dabei, Kundenideen in die richtigen Produkte zu verwandeln, und stellt sicher, dass unterwegs nichts übersehen wird. Außerdem unterstützt sie die Website, indem sie neue Produkte anlegt und Produktinformationen aktuell, klar und hilfreich für Kunden hält."
+  },
+  {
+    name: 'Cedric',
+    role: 'Projektmanager',
+    image: '/images/team/cedric.webp',
+    favourite: 'HD-Fußballschal',
+    linkedin: 'https://www.linkedin.com/in/cedricdeschrijver/',
+    bio: "Für Cedric steht der Kunde immer an erster Stelle. Klar, strukturiert und aufmerksam in seiner Kommunikation nimmt er sich die Zeit, die Bedürfnisse jedes Kunden zu verstehen, und hält Projekte auf dem richtigen Kurs. Daneben arbeitet er an der Verbesserung interner Prozesse, hält die Dokumentation auf dem neuesten Stand und unterstützt die Marketingstrategie, damit Hercules Merchandise professionell, relevant und unkompliziert in der Zusammenarbeit bleibt."
+  },
+  {
+    name: 'Gilles',
+    role: 'Projektmanager',
+    image: '/images/team/gilles.webp',
+    favourite: 'Retro-Fußballtrikot',
+    linkedin: 'https://www.linkedin.com/in/gillesvandoorne/',
+    bio: "Gilles hilft Kunden, Ideen in klare, realistische Merchandise-Projekte zu verwandeln. Er konzentriert sich darauf zu verstehen, was jeder Verein, jede Marke oder Organisation erreichen möchte, und begleitet das Projekt von der ersten Idee bis zur finalen Lieferung. Mit einem praktischen Blick für Design, Produktion und Planung stellt er sicher, dass Kunden eine Beratung erhalten, die ehrlich, hilfreich und leicht umsetzbar ist."
+  },
+  {
+    name: 'Zhaks',
+    role: 'Designer',
+    image: '/images/team/zhaks.webp',
+    favourite: 'Personalisierte Mütze',
+    linkedin: null,
+    bio: "Zhaks entwirft Merchandise-Designs für Sportvereine, Marken und Organisationen. Seine Arbeit reicht von Schals und Strickwaren bis hin zu Verpackungen, Fahnen und Werbeartikeln. Er liebt es, eine Idee in ein fertiges Produkt zu verwandeln, das gut aussieht, in der Produktion funktioniert und das Menschen wirklich nutzen, tragen und genießen können."
+  },
+  {
+    name: 'Dilan',
+    role: 'Designer',
+    image: '/images/team/dilan.webp',
+    favourite: 'Personalisierter Fanschal',
+    linkedin: null,
+    bio: "Dilan verwandelt Kundenideen in produktionsreife Designs. Jedes Produkt bringt eigene Herausforderungen mit sich – von Schals und Fußballtrikots bis zu Wimpeln, Handtüchern und anderem individuellen Merchandise – und er achtet darauf, dass jedes Detail stimmt, bevor es in den Druck geht. Sein Lieblingsprodukt ist der personalisierte Fanschal, weil er so viele kreative Möglichkeiten bietet, von kräftigen Fanfarben bis zu detaillierten Webmustern."
+  },
+  {
+    name: 'Roy',
+    role: 'Entwickler',
+    image: '/images/team/roy.webp',
+    favourite: 'Personalisiertes Fußballtrikot',
+    linkedin: null,
+    bio: "Roy arbeitet daran, die Website von Hercules Merchandise so klar, einfach und angenehm wie möglich zu machen. Sein Ziel ist, dass jeder Kunde Produkte entdecken, die verfügbaren Optionen verstehen und Preise klar einsehen kann, ohne zusätzliche Hilfe zu benötigen. Sein Lieblingsprodukt ist das personalisierte Fußballtrikot, weil es Menschen zusammenbringt und Unternehmen, Vereinen und Fangruppen etwas gibt, das sich sofort wie ihr Eigenes anfühlt."
+  }
+];
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  pageType="page"
+>
+  <!-- Hero Section -->
+  <section class="team-hero">
+    <div class="container">
+      <div class="team-hero-text">
+        <h1>Das Team hinter<br />Hercules Merchandise</h1>
+        <div class="hero-accent"></div>
+        <p>Hinter jedem erfolgreichen Projekt steht ein Team von Menschen, die Wert auf Details legen. Bei Hercules Merchandise arbeiten Sie mit echten Menschen zusammen, die Ihr Projekt vom Konzept bis zur Lieferung begleiten – mit Produktwissen, praktischer Beratung und Liebe zum Detail.</p>
+        <p>Wir glauben an ehrliche Kommunikation, realistische Zeitpläne und produktionsfreundliches Design. Unser Ziel ist einfach: den Prozess leicht, transparent und angenehm zu gestalten und Merchandise zu liefern, das Ihre Community mit Stolz trägt.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Our Team -->
+  <section class="team-section">
+    <div class="container">
+      <h2 class="section-title">Unser Team</h2>
+      <p class="section-intro">Die Menschen, die Ihr Projekt begleiten, Ihre Designs gestalten und alles am Laufen halten.</p>
+
+      <div class="team-list">
+        {team.map((member) => (
+          <article class="team-card">
+            <div class="team-photo">
+              <img src={member.image} alt={`${member.name} — ${member.role} bei Hercules Merchandise`} width="140" height="140" loading="lazy" />
+            </div>
+            <div class="team-identity">
+              <h3>{member.name}</h3>
+              <p class="team-role">{member.role}</p>
+            </div>
+            <div class="team-bio">
+              <p>{member.bio}</p>
+            </div>
+            <div class="team-meta">
+              <p class="team-favourite"><span>Lieblings-Merch-Artikel:</span>{member.favourite}</p>
+              {member.linkedin && (
+                <a class="team-linkedin" href={member.linkedin} target="_blank" rel="noopener noreferrer">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                  </svg>
+                  LinkedIn
+                </a>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- How We Work -->
+  <section class="team-section team-section-alt">
+    <div class="container">
+      <h2 class="section-title">So arbeiten wir</h2>
+      <p class="section-intro">Wir folgen einem einfachen, bewährten Prozess, bei dem Ihre Ziele an erster Stelle stehen. Wir hören zu, beraten und begleiten Sie bei jeder Entscheidung, damit Sie immer wissen, was passiert und warum. Unsere Prinzipien halten Projekte auf Kurs und machen die Zusammenarbeit stressfrei.</p>
+
+      <div class="values-grid">
+        <div class="value-card">
+          <div class="value-icon">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#10C99E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              <line x1="8" y1="9" x2="16" y2="9"></line>
+              <line x1="8" y1="13" x2="13" y2="13"></line>
+            </svg>
+          </div>
+          <h3>Ehrliche Beratung</h3>
+          <p>Wir empfehlen, was funktioniert – nicht nur, was gut klingt. Klare Beratung, auf die Sie sich verlassen können.</p>
+        </div>
+
+        <div class="value-card">
+          <div class="value-icon">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#10C99E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <h3>Liebe zum Detail</h3>
+          <p>Von der Designprüfung bis zur Lieferplanung konzentrieren wir uns auf die kleinen Dinge, die den großen Unterschied machen.</p>
+        </div>
+
+        <div class="value-card">
+          <div class="value-icon">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#10C99E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+            </svg>
+          </div>
+          <h3>Langfristiges Denken</h3>
+          <p>Wir bauen verlässliche Partnerschaften auf und kümmern uns um Ihren Erfolg – heute und für viele Saisons.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+
+  /* Hero Section */
+  .team-hero {
+    background: #EFF4FA;
+    padding: 70px 0;
+  }
+
+  .team-hero-text {
+    max-width: 760px;
+  }
+
+  h1 {
+    font-family: 'Jost', sans-serif;
+    font-size: 48px;
+    font-weight: 600;
+    color: #253461;
+    text-transform: uppercase;
+    line-height: 1.15;
+    margin: 0 0 18px;
+  }
+
+  .hero-accent {
+    width: 70px;
+    height: 4px;
+    background: #10C99E;
+    margin: 0 0 25px;
+  }
+
+  .team-hero-text p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #5F5F5F;
+    margin: 0 0 15px;
+  }
+
+  /* Shared Section Styles */
+  .team-section {
+    padding: 70px 0;
+    background: #FFFFFF;
+  }
+
+  .team-section-alt {
+    background: #FAFAFA;
+  }
+
+  .section-title {
+    font-family: 'Jost', sans-serif;
+    font-size: 35px;
+    font-weight: 600;
+    color: #253461;
+    text-transform: uppercase;
+    text-align: center;
+    margin: 0 0 15px;
+  }
+
+  .section-intro {
+    font-family: 'Roboto', sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #5F5F5F;
+    text-align: center;
+    max-width: 750px;
+    margin: 0 auto;
+  }
+
+  /* Team Cards */
+  .team-list {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    margin-top: 45px;
+  }
+
+  .team-card {
+    display: grid;
+    grid-template-columns: 140px 170px 1fr 220px;
+    gap: 30px;
+    align-items: center;
+    background: #FFFFFF;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .team-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .team-photo img {
+    display: block;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #EFF4FA;
+  }
+
+  .team-identity h3 {
+    font-family: 'Jost', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #253461;
+    text-transform: uppercase;
+    margin: 0 0 5px;
+  }
+
+  .team-role {
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #10C99E;
+    margin: 0;
+  }
+
+  .team-bio p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #5F5F5F;
+    margin: 0;
+  }
+
+  .team-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .team-favourite {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #253461;
+    margin: 0;
+  }
+
+  .team-favourite span {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+
+  .team-linkedin {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #469ADC;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .team-linkedin:hover {
+    color: #253461;
+  }
+
+  /* Values Grid */
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-top: 45px;
+  }
+
+  .value-card {
+    background: #FFFFFF;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .value-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .value-icon {
+    margin-bottom: 15px;
+  }
+
+  .value-card h3 {
+    font-family: 'Jost', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #253461;
+    margin: 0 0 12px;
+  }
+
+  .value-card p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #5F5F5F;
+    margin: 0;
+  }
+
+  /* Tablet */
+  @media (max-width: 1024px) {
+    .team-card {
+      grid-template-columns: 120px 1fr;
+      grid-template-rows: auto auto auto;
+      row-gap: 15px;
+    }
+
+    .team-photo img {
+      width: 120px;
+      height: 120px;
+    }
+
+    .team-bio,
+    .team-meta {
+      grid-column: 1 / -1;
+    }
+
+    .values-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .container {
+      padding: 0 20px;
+    }
+
+    .team-hero {
+      padding: 45px 0;
+    }
+
+    h1 {
+      font-size: 30px;
+    }
+
+    .team-hero-text p {
+      font-size: 15px;
+    }
+
+    .team-section {
+      padding: 45px 0;
+    }
+
+    .section-title {
+      font-size: 24px;
+    }
+
+    .section-intro {
+      font-size: 15px;
+    }
+
+    .team-card {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      text-align: center;
+      padding: 25px 20px;
+    }
+
+    .team-photo img {
+      width: 110px;
+      height: 110px;
+    }
+
+    .team-bio,
+    .team-meta {
+      grid-column: auto;
+    }
+
+    .team-meta {
+      align-items: center;
+    }
+  }
+</style>

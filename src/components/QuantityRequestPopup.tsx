@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { pushGenerateLead } from '../lib/tracking';
 
 interface QuantityRequestPopupProps {
   isOpen: boolean;
@@ -180,6 +181,7 @@ export default function QuantityRequestPopup({
         throw new Error('Submission failed');
       }
 
+      pushGenerateLead('quantity_request');
       setIsSuccess(true);
     } catch (err) {
       setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');

@@ -345,7 +345,15 @@ if (jsonLd) {
         window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
         var j = document.createElement('script');
         j.async = true;
-        j.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-MJKQ32P5';
+        // Served first-party through Cloudflare Google Tag Gateway (/hmmesure).
+        // Falls back to googletagmanager.com if the gateway path fails.
+        j.src = '/hmmesure/gtm.js?id=GTM-MJKQ32P5';
+        j.onerror = function() {
+          var k = document.createElement('script');
+          k.async = true;
+          k.src = 'https://www.googletagmanager.com/gtm.js?id=GTM-MJKQ32P5';
+          document.head.appendChild(k);
+        };
         document.head.appendChild(j);
       }
       // Load GTM after 5s — no interaction trigger to avoid PageSpeed TBT penalty

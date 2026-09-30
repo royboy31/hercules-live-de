@@ -1778,6 +1778,10 @@ async function triggerSiteRebuild(env: Env): Promise<{ triggered: boolean; reaso
         ref: 'main',
         inputs: {
           reason: 'WooCommerce product sync webhook',
+          // deploy.yml defaults `target` to staging, so omitting it sent every
+          // content rebuild to hercules-de-staging and left production frozen at
+          // the last push to main. The workflow still guards ref=main itself.
+          target: 'production',
         },
       }),
     });

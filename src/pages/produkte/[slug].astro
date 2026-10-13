@@ -304,8 +304,11 @@ const wpThumb = (url: string, size: number) => {
 };
 
 // Generate Worker API image URL (cached on Cloudflare edge, served as WebP)
-const workerImage = (index: number) => `${WORKER_URL}/image/${slug}/${index}`;
-const workerThumb = (index: number) => `${WORKER_URL}/image/${slug}/${index}?size=thumb`;
+// ?v={attachment id} versions the URL so browsers/edge never keep a replaced image
+const workerImage = (index: number, v?: number) =>
+  `${WORKER_URL}/image/${slug}/${index}${v ? `?v=${v}` : ''}`;
+const workerThumb = (index: number, v?: number) =>
+  `${WORKER_URL}/image/${slug}/${index}?size=thumb${v ? `&v=${v}` : ''}`;
 
 // Convert image URL to WebP format (WordPress fallback)
 const toWebP = (url: string) => {
@@ -318,8 +321,8 @@ const getGalleryImages = () => {
   if (!product?.images?.length) return [];
   return product.images.map((img: any, index: number) => {
     // Worker API images (cached on Cloudflare edge, WebP format) - fast but 361x361
-    const workerSrc = workerImage(index);
-    const workerThumbSrc = workerThumb(index);
+    const workerSrc = workerImage(index, img.id);
+    const workerThumbSrc = workerThumb(index, img.id);
 
     // WordPress full-size URL - higher quality for progressive enhancement
     const fullSrc = img.src || img.local_src;
@@ -846,7 +849,7 @@ if (product) {
                   <li class="related-product-item">
                     <a href={`/produkte/${relProduct.slug}/`} class="related-product-link">
                       <img
-                        src={`https://hercules-product-sync-live.gilles-86d.workers.dev/image/${relProduct.slug}/0`}
+                        src={`https://hercules-product-sync-live.gilles-86d.workers.dev/image/${relProduct.slug}/0${(relProduct.image_v ?? relProduct.images?.[0]?.id) ? `?v=${relProduct.image_v ?? relProduct.images[0].id}` : ''}`}
                         alt={relProduct.name}
                         loading="lazy"
                         decoding="async"

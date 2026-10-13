@@ -492,7 +492,8 @@ async function syncImageToKV(
   productSlug: string,
   imageIndex: number = 0,
   forceRefresh: boolean = false,
-  size: 'full' | 'thumb' = 'full'
+  size: 'full' | 'thumb' = 'full',
+  attachmentId?: number
 ): Promise<boolean> {
   if (!imageUrl || !productSlug) {
     return false;
@@ -506,11 +507,16 @@ async function syncImageToKV(
   }
 
   try {
-    // Check if image already exists in KV (skip download to save API calls)
+    // Check if image already exists in KV (skip download to save API calls).
+    // When the caller knows the WP attachment id, a cached entry only counts as
+    // current if its stored attachmentId matches - a replaced image (new id,
+    // same slug/index) falls through and gets re-downloaded.
     if (!forceRefresh) {
-      const existing = await kv.get(kvKey);
-      if (existing) {
-        // Image already cached, skip
+      const { value: existing, metadata: existingMeta } = await kv.getWithMetadata<{
+        attachmentId?: number;
+      }>(kvKey);
+      if (existing && (attachmentId === undefined || existingMeta?.attachmentId === attachmentId)) {
+        // Image already cached and still current, skip
         return true;
       }
     }
@@ -589,6 +595,7 @@ async function syncImageToKV(
           syncedAt: new Date().toISOString(),
           imageIndex,
           size,
+          attachmentId,
         },
       }
     );
@@ -609,7 +616,8 @@ async function cacheImageInKV(
   originalUrl: string,
   kvKey: string,
   imageIndex: number,
-  size: string
+  size: string,
+  attachmentId?: number
 ): Promise<void> {
   try {
     const bytes = new Uint8Array(imageBuffer);
@@ -620,7 +628,7 @@ async function cacheImageInKV(
       binaryString += String.fromCharCode.apply(null, Array.from(chunk));
     }
     await kv.put(kvKey, btoa(binaryString), {
-      metadata: { contentType, originalUrl, syncedAt: new Date().toISOString(), imageIndex, size },
+      metadata: { contentType, originalUrl, syncedAt: new Date().toISOString(), imageIndex, size, attachmentId },
     });
   } catch (e) {
     console.error('Failed to async cache image in KV:', e);
@@ -892,24 +900,24 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
             if (img?.src) {
               // Cache main size (361x361) for category cards - exact match for display size
               const mainUrl = img.src.replace(/(\.[^.]+)$/, '-361x361$1');
-              let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, forceImageRefresh, 'full');
+              let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, forceImageRefresh, 'full', img.id);
               if (!mainSuccess && img.src !== mainUrl) {
                 // Fallback to 300x300, then 600x600, then original
                 const fallback300 = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
-                mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback300, product.slug, i, true, 'full');
+                mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback300, product.slug, i, true, 'full', img.id);
                 if (!mainSuccess) {
                   const fallback600 = img.src.replace(/(\.[^.]+)$/, '-600x600$1');
-                  mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback600, product.slug, i, true, 'full');
+                  mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback600, product.slug, i, true, 'full', img.id);
                 }
               }
 
               // Cache thumbnail (100x100) for thumbnail carousels - ~2-5KB WebP
               const thumbUrl = img.src.replace(/(\.[^.]+)$/, '-100x100$1');
-              let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, forceImageRefresh, 'thumb');
+              let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, forceImageRefresh, 'thumb', img.id);
               if (!thumbSuccess && img.src !== thumbUrl) {
                 // Fallback to 83x83 (exact display size) if 100x100 doesn't exist
                 const fallback83 = img.src.replace(/(\.[^.]+)$/, '-83x83$1');
-                thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback83, product.slug, i, true, 'thumb');
+                thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback83, product.slug, i, true, 'thumb', img.id);
               }
 
               if (mainSuccess || thumbSuccess) {
@@ -949,6 +957,8 @@ async function syncAllProducts(env: Env, offset: number = 0, forceImageRefresh: 
         menu_order: p.menu_order || 0,
         missive_only: p.missive_only || p.meta_data?.find((m: any) => m.key === '_missive_only')?.value === 'yes',
         date_modified: p.date_modified || new Date().toISOString(),
+        // First image's attachment id, used by the Astro build to version /image URLs
+        image_v: p.images?.[0]?.id,
       });
 
       if (modifiedAfter) {
@@ -1131,22 +1141,22 @@ async function syncSingleProduct(
       if (img?.src) {
         // Cache main size (361x361) for category cards
         const mainUrl = img.src.replace(/(\.[^.]+)$/, '-361x361$1');
-        let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, forceImageRefresh, 'full');
+        let mainSuccess = await syncImageToKV(env.PRODUCTS_KV, mainUrl, product.slug, i, forceImageRefresh, 'full', img.id);
         if (!mainSuccess && img.src !== mainUrl) {
           const fallback300 = img.src.replace(/(\.[^.]+)$/, '-300x300$1');
-          mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback300, product.slug, i, forceImageRefresh, 'full');
+          mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback300, product.slug, i, forceImageRefresh, 'full', img.id);
           if (!mainSuccess) {
             const fallback600 = img.src.replace(/(\.[^.]+)$/, '-600x600$1');
-            mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback600, product.slug, i, forceImageRefresh, 'full');
+            mainSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback600, product.slug, i, forceImageRefresh, 'full', img.id);
           }
         }
 
         // Cache thumbnail (100x100)
         const thumbUrl = img.src.replace(/(\.[^.]+)$/, '-100x100$1');
-        let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, forceImageRefresh, 'thumb');
+        let thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, thumbUrl, product.slug, i, forceImageRefresh, 'thumb', img.id);
         if (!thumbSuccess && img.src !== thumbUrl) {
           const fallback83 = img.src.replace(/(\.[^.]+)$/, '-83x83$1');
-          thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback83, product.slug, i, forceImageRefresh, 'thumb');
+          thumbSuccess = await syncImageToKV(env.PRODUCTS_KV, fallback83, product.slug, i, forceImageRefresh, 'thumb', img.id);
         }
 
         if (mainSuccess || thumbSuccess) {
@@ -1184,6 +1194,8 @@ async function updateProductIndex(env: Env, product: WCProduct, syncedProduct: S
       menu_order: product.menu_order || 0,
       date_modified: product.date_modified || new Date().toISOString(),
       missive_only: product.missive_only || getMeta('_missive_only') === 'yes',
+      // First image's attachment id, used by the Astro build to version /image URLs
+      image_v: product.images?.[0]?.id,
     };
 
     if (existingIndex >= 0) {
@@ -2457,7 +2469,8 @@ export default {
               product.slug,
               i,
               true, // forceRefresh
-              'full'
+              'full',
+              images[i].id
             );
 
             // Sync thumbnail (100x100) for thumbnail carousels - displayed at 83px
@@ -2468,7 +2481,8 @@ export default {
               product.slug,
               i,
               true, // forceRefresh
-              'thumb'
+              'thumb',
+              images[i].id
             );
 
             if (fullSuccess || thumbSuccess) {
@@ -2569,7 +2583,8 @@ export default {
             slug,
             i,
             true, // forceRefresh
-            'full'
+            'full',
+            images[i].id
           );
 
           // Sync thumbnail (100x100) for thumbnail carousels - displayed at 83px
@@ -2580,7 +2595,8 @@ export default {
             slug,
             i,
             true, // forceRefresh
-            'thumb'
+            'thumb',
+            images[i].id
           );
 
           imageResults.push({
@@ -2648,7 +2664,8 @@ export default {
         return new Response('Product not found', { status: 404 });
       }
       if (product.slug) {
-        product.localThumbnail = `${WORKER_URL}/image/${product.slug}`;
+        const v = product.images?.[0]?.id;
+        product.localThumbnail = `${WORKER_URL}/image/${product.slug}${v ? `?v=${v}` : ''}`;
       }
 
       return new Response(JSON.stringify(product), {
@@ -3004,6 +3021,10 @@ export default {
       const requestedWidth = url.searchParams.get('w');
       const requestedFormat = url.searchParams.get('format');
       const requestedSize = url.searchParams.get('size'); // 'thumb' for 300x300 thumbnails
+      // ?v={attachmentId} - content version. Astro appends the WP attachment id so a
+      // replaced image gets a new URL; if the KV copy was stored for a different
+      // attachment we refetch from WordPress instead of serving stale bytes.
+      const requestedVersion = url.searchParams.get('v');
 
       if (!slug) {
         return new Response('Missing product slug', { status: 400 });
@@ -3023,6 +3044,7 @@ export default {
         syncedAt: string;
         imageIndex?: number;
         size?: string;
+        attachmentId?: number;
       }>(kvKey);
 
       // If requesting thumb but not cached, fall back to full size
@@ -3034,6 +3056,7 @@ export default {
           syncedAt: string;
           imageIndex?: number;
           size?: string;
+          attachmentId?: number;
         }>(fullKey);
         if (fullResult.value) {
           base64Image = fullResult.value;
@@ -3041,11 +3064,18 @@ export default {
         }
       }
 
-      if (!base64Image) {
-        // Image not cached - fetch from WordPress and proxy directly (no redirect)
+      // Stale when a version is requested and the KV copy was stored for a different
+      // attachment (or predates attachmentId metadata) - treat like a cache miss.
+      const kvStale = !!base64Image
+        && !!requestedVersion
+        && String(metadata?.attachmentId ?? '') !== requestedVersion;
+
+      if (!base64Image || kvStale) {
+        // Image not cached (or stale) - fetch from WordPress and proxy directly (no redirect)
         const product = await env.PRODUCTS_KV.get<SyncedProduct>(`product:slug:${slug}`, 'json');
         if (product && product.images && product.images[imageIndex]) {
           const originalUrl = product.images[imageIndex].src;
+          const currentAttachmentId = product.images[imageIndex].id;
           if (originalUrl) {
             // If resizing requested, use Cloudflare cdn-cgi Image Resizing
             if (requestedWidth || requestedFormat) {
@@ -3091,7 +3121,7 @@ export default {
                 const res = await fetch(webpUrl, { headers: { 'User-Agent': 'Hercules-Product-Sync/1.0' } });
                 if (res.ok) {
                   const imageBuffer = await res.arrayBuffer();
-                  ctx.waitUntil(cacheImageInKV(env.PRODUCTS_KV, imageBuffer, 'image/webp', originalUrl, kvKey, imageIndex, requestedSize || 'full'));
+                  ctx.waitUntil(cacheImageInKV(env.PRODUCTS_KV, imageBuffer, 'image/webp', originalUrl, kvKey, imageIndex, requestedSize || 'full', currentAttachmentId));
                   const proxyWebpResponse = new Response(imageBuffer, {
                     headers: {
                       'Content-Type': 'image/webp',
@@ -3110,7 +3140,7 @@ export default {
                 if (res.ok) {
                   const imageBuffer = await res.arrayBuffer();
                   const contentType = res.headers.get('content-type') || 'image/png';
-                  ctx.waitUntil(cacheImageInKV(env.PRODUCTS_KV, imageBuffer, contentType, originalUrl, kvKey, imageIndex, requestedSize || 'full'));
+                  ctx.waitUntil(cacheImageInKV(env.PRODUCTS_KV, imageBuffer, contentType, originalUrl, kvKey, imageIndex, requestedSize || 'full', currentAttachmentId));
                   const proxyFallbackResponse = new Response(imageBuffer, {
                     headers: {
                       'Content-Type': contentType,
@@ -3125,7 +3155,11 @@ export default {
             }
           }
         }
-        return new Response('Image not found', { status: 404 });
+        // Stale KV copy but the WordPress refetch failed: serve the stale bytes
+        // below rather than breaking the page with a 404.
+        if (!base64Image) {
+          return new Response('Image not found', { status: 404 });
+        }
       }
 
       // If resizing requested, use Cloudflare Image Resizing via cdn-cgi URL
@@ -3181,15 +3215,19 @@ export default {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      // Return image with caching headers; also populate Cloudflare edge cache
+      // Return image with caching headers; also populate Cloudflare edge cache.
+      // A stale copy served here (WordPress refetch failed) must stay revalidatable:
+      // short TTL and no edge-cache write, so the fresh bytes can take over on retry.
       const kvResponse = new Response(bytes, {
         headers: {
           'Content-Type': metadata?.contentType || 'image/png',
-          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+          'Cache-Control': kvStale ? 'public, max-age=300' : 'public, max-age=86400',
           'Access-Control-Allow-Origin': '*',
         },
       });
-      ctx.waitUntil(edgeCache.put(cacheKey, kvResponse.clone()));
+      if (!kvStale) {
+        ctx.waitUntil(edgeCache.put(cacheKey, kvResponse.clone()));
+      }
       return kvResponse;
     }
 
@@ -3329,8 +3367,10 @@ export default {
             priceDisplay = `€${parseFloat(product.price).toFixed(2)}`;
           }
 
-          // Get thumbnail - use local cached image URL
-          const thumbnail = product.slug ? `${WORKER_URL}/image/${product.slug}` : '';
+          // Get thumbnail - use local cached image URL (versioned by attachment id)
+          const thumbnail = product.slug
+            ? `${WORKER_URL}/image/${product.slug}${product.images?.[0]?.id ? `?v=${product.images[0].id}` : ''}`
+            : '';
 
           return {
             id: product.id,

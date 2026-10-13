@@ -60,19 +60,23 @@ const WORKER_URL = 'https://hercules-product-sync-live.gilles-86d.workers.dev';
 const imageCount = product.cached_image_count || Math.min(product.images?.length || 0, 10);
 const galleryImages = (product.images || []).slice(0, imageCount).map((img, index) => {
   // Worker URL format: /image/{slug} for index 0, /image/{slug}/{index} for gallery
+  // ?v={attachment id} versions the URL so browsers/edge never keep a replaced image
   const baseUrl = index === 0
     ? `${WORKER_URL}/image/${product.slug}`
     : `${WORKER_URL}/image/${product.slug}/${index}`;
+  const version = img.id ? `v=${img.id}` : '';
   return {
-    thumb: `${baseUrl}?size=thumb`,  // 100x100 cached thumbnail (~2-5KB)
-    main: baseUrl,                    // 361x361 cached main image (~10-15KB)
+    thumb: `${baseUrl}?size=thumb${version ? `&${version}` : ''}`,  // 100x100 cached thumbnail (~2-5KB)
+    main: version ? `${baseUrl}?${version}` : baseUrl,              // 361x361 cached main image (~10-15KB)
     original: img.src,                // Original WordPress URL (full resolution ~1000x1000)
     alt: img.alt || product.name
   };
 });
 
-// Worker main image URL - 361x361 cached image (fast initial load)
-const workerImageUrl = `${WORKER_URL}/image/${product.slug}`;
+// Worker main image URL - 361x361 cached image (versioned by attachment id)
+const workerImageUrl = product.images?.[0]?.id
+  ? `${WORKER_URL}/image/${product.slug}?v=${product.images[0].id}`
+  : `${WORKER_URL}/image/${product.slug}`;
 // Original WordPress URL - full resolution for high-quality upgrade
 const originalImageUrl = product.images?.[0]?.src || workerImageUrl;
 

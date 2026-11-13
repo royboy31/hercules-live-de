@@ -334,7 +334,7 @@ if (jsonLd) {
     })();
   </script>
 
-  <!-- Google Tag Manager - Deferred to after page load for better LCP -->
+  <!-- Google Tag Manager - loaded at once (consent default is set in <head>) -->
   <script is:inline>
     (function() {
       var gtmLoaded = false;
@@ -356,10 +356,9 @@ if (jsonLd) {
         };
         document.head.appendChild(j);
       }
-      // Load GTM after 5s — no interaction trigger to avoid PageSpeed TBT penalty
-      window.addEventListener('load', function() {
-        setTimeout(loadGTM, 5000);
-      });
+      // Load GTM at once, no timer. The Consent Mode default (and the saved-choice
+      // replay) runs in <head>, before this.
+      loadGTM();
     })();
   </script>
 

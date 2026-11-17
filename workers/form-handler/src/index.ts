@@ -679,6 +679,20 @@ function getNewsletterNotificationEmailHtml(data: {
 // REQUEST HANDLERS
 // ============================================================================
 
+// Tracking lot 3: every contact request gets a reference of the same shape as the WordPress quote
+// reference, HER-{SITE}-{YYMMDD}-{6 chars}. The notification email carries it as a "Ref:" line, which
+// is what the Missive sidebar reads to link the quote the team creates to this request.
+const ENQUIRY_SITE = 'DE';
+const ENQUIRY_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // 32 characters: no 0, 1, I or O
+
+function generateEnquiryRef(now: Date): string {
+  const ymd = now.toISOString().slice(2, 10).replace(/-/g, '');
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  let suffix = '';
+  for (const byte of bytes) suffix += ENQUIRY_ALPHABET[byte % ENQUIRY_ALPHABET.length];
+  return `HER-${ENQUIRY_SITE}-${ymd}-${suffix}`;
+}
+
 interface ContactFormData {
   name: string;
   email: string;
@@ -721,6 +735,7 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
     const now = new Date();
     const date = body.date || now.toLocaleDateString('de-DE');
     const time = body.time || now.toLocaleTimeString('de-DE');
+    const enquiryId = generateEnquiryRef(now);
 
     // Process file uploads to R2 if present
     let uploadedFiles: UploadedFileResult[] = [];
@@ -822,6 +837,7 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
       country: contactData.country,
       city: contactData.city,
       language: contactData.language,
+      enquiryId,
     });
     googleSheetsSuccess = sheetsResult.success;
 
@@ -868,6 +884,12 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
             uploadedFiles: uploadedFiles, // Pass uploaded files for clickable links
           });
         }
+
+        // Inside the document, after the footer: one line, the same for the three form types.
+        htmlContent = htmlContent.replace(
+          '</body>',
+          `<p style="font-size:12px; color:#777; text-align:center;">Ref: ${enquiryId}</p>\n</body>`
+        );
 
         // Build Brevo file attachments from uploaded files (base64 data)
         const brevoAttachments: BrevoAttachment[] = [];
@@ -939,6 +961,7 @@ async function handleContactForm(request: Request, env: Env): Promise<Response> 
         JSON.stringify({
           success: true,
           message: 'Nachricht erfolgreich gesendet',
+          enquiry_id: enquiryId,
           details: { googleSheets: googleSheetsSuccess, email: emailSuccess, emailError: emailError || undefined },
         }),
         { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
